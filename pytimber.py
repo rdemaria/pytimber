@@ -26,9 +26,23 @@ java =jpype.JPackage('java')
 ServiceBuilder=cern.accsoft.cals.extr.client.service.ServiceBuilder
 DataLocationPreferences=cern.accsoft.cals.extr.domain.core.datasource.DataLocationPreferences
 VariableDataType=cern.accsoft.cals.extr.domain.core.constants.VariableDataType
+Timestamp=java.sql.Timestamp
 
 null=org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null);
+
+def toTimeStamp(t):
+    if type(t) is str:
+        return Timestamp.valueOf(t)
+    else:
+        sec=int(t)
+        nanos=int((t-sec)*1e9)
+        print sec*1000
+        tt=Timestamp(long(sec*1000))
+        #tt.setNanos(nanos)
+        return tt
+
+
 
 class LDB(object):
     def __init__(self,appid='LHC_MD_ABP_ANALYSIS',clientid='BEAM_PHYSICS',source='mdb'):
@@ -43,8 +57,8 @@ class LDB(object):
       vvv=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern,types)
       return vvv.toString()[1:-1].split(', ')
     def get(self,pattern,t1,t2):
-        ts1=java.sql.Timestamp.valueOf(t1)
-        ts2=java.sql.Timestamp.valueOf(t2)
+        ts1=toTimeStamp(t1)
+        ts2=toTimeStamp(t2)
         types=VariableDataType.ALL
         vvv=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern,types)
         out={}
