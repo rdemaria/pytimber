@@ -42,12 +42,14 @@ def toTimeStamp(t):
         #tt.setNanos(nanos)
         return tt
 
+source_dict={'mdb': DataLocationPreferences.MDB_PRO,
+        'ldb': DataLocationPreferences.LDB_PRO,
+        'all': DataLocationPreferences.MDB_AND_LDB_PRO}
 
 
 class LDB(object):
     def __init__(self,appid='LHC_MD_ABP_ANALYSIS',clientid='BEAM_PHYSICS',source='mdb'):
-        if source=='mdb':
-           loc=DataLocationPreferences.MDB_PRO
+        source=source_dict[source]
         self._builder=ServiceBuilder.getInstance(appid,clientid,loc)
         self._md=self._builder.createMetaService()
         self._ts=self._builder.createTimeseriesService()
