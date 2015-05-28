@@ -48,7 +48,7 @@ source_dict={'mdb': DataLocationPreferences.MDB_PRO,
 
 
 class LDB(object):
-    def __init__(self,appid='LHC_MD_ABP_ANALYSIS',clientid='BEAM_PHYSICS',source='mdb'):
+    def __init__(self,appid='LHC_MD_ABP_ANALYSIS',clientid='BEAM_PHYSICS',source='ldb'):
         source=source_dict[source]
         self._builder=ServiceBuilder.getInstance(appid,clientid,loc)
         self._md=self._builder.createMetaService()
