@@ -31,6 +31,8 @@ Timestamp=java.sql.Timestamp
 null=org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null);
 
+
+
 def toTimeStamp(t):
     if type(t) is str:
         return Timestamp.valueOf(t)
@@ -46,10 +48,15 @@ source_dict={'mdb': DataLocationPreferences.MDB_PRO,
         'ldb': DataLocationPreferences.LDB_PRO,
         'all': DataLocationPreferences.MDB_AND_LDB_PRO}
 
+def toStringList(myArray):
+  myList = java.util.ArrayList()
+  for s in myArray:
+     myList.add(s)
+  return myList
 
 class LDB(object):
     def __init__(self,appid='LHC_MD_ABP_ANALYSIS',clientid='BEAM_PHYSICS',source='mdb'):
-        source=source_dict[source]
+        loc=source_dict[source]
         self._builder=ServiceBuilder.getInstance(appid,clientid,loc)
         self._md=self._builder.createMetaService()
         self._ts=self._builder.createTimeseriesService()
