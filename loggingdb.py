@@ -54,7 +54,7 @@ def toStringList(myArray):
      myList.add(s)
   return myList
 
-class LoggingDB(object):
+class LDB(object):
     def __init__(self,appid='LHC_MD_ABP_ANALYSIS',clientid='BEAM_PHYSICS',source='mdb'):
         loc=source_dict[source]
         self._builder=ServiceBuilder.getInstance(appid,clientid,loc)

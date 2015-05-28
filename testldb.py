@@ -1,6 +1,6 @@
 import pytimber
 
-ldb=pytimber.LDB()
+ldb=pytimber.LoggingDB()
 
 
 print ldb.search('HX:BETA%')
