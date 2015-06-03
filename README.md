@@ -21,7 +21,7 @@ Get data:
     d=ldb.get('LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H',t1,t2)
     print d
 
-Explore vairable hierarcy
+Explore variable hierarchies
 
     ldb.tree
     print dir(ldb.tree)
