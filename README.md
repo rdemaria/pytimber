@@ -9,11 +9,11 @@ Import
 Search for variables
 
     print ldb.search('HX:BETA%')
+
+Get data
+
     t1='2015-05-13 00:00:00.000'
     t2='2015-05-15 00:00:00.000'
-    
-Get data:
-
     d=ldb.get('HX:FILLN',t1,t2)
     print d
     t1='2015-05-13 12:00:00.000'
