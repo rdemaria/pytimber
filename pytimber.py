@@ -77,7 +77,8 @@ class LoggingDB(object):
            data=[]
            datatype=res.getVariableDataType().toString()
            for tt in res:
-               ts=tt.getStamp().fastTime/1000.
+               ts=tt.getStamp()
+               ts=ts.fastTime/1000.+ts.getNanos()/1e9
                if datatype=='VECTORNUMERIC':
                   val=np.array(tt.getDoubleValues())
                elif datatype=='NUMERIC':
