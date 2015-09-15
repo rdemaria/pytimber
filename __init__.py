@@ -1,1 +1,1 @@
-from loggingdb import LoggingDB
+from pytimber import LoggingDB
