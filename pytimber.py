@@ -1,8 +1,5 @@
-import os, glob, time
-import time
-
+import os, glob, time, datetime
 import jpype
-
 import numpy as np
 
 """
@@ -10,13 +7,13 @@ http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dis
 """
 
 _moddir=os.path.dirname(__file__)
-_jar=os.path.join(_moddir,'accsoft-cals-extr-client-nodep.jar')
+_jar=os.path.join(_moddir,'localJars/accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
   libjvm=jpype.getDefaultJVMPath()
   jpype.startJVM(libjvm,'-Djava.class.path=%s'%_jar)
 else:
-  print "Warning jpype started"
+  print("Warning jpype started")
 
 
 #defs
@@ -31,15 +28,15 @@ Timestamp=java.sql.Timestamp
 null=org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null);
 
-
-
 def toTimeStamp(t):
     if type(t) is str:
         return Timestamp.valueOf(t)
-    else:
+    elif type(t) is datetime.datetime:
+        return Timestamp.valueOf( t.strftime("%Y-%m-%d %H:%M:%S") )
+    else:  #Hopefully it's an int or double or something ;)
         sec=int(t)
         nanos=int((t-sec)*1e9)
-        print sec*1000
+        print( sec*1000 )
         tt=Timestamp(long(sec*1000))
         #tt.setNanos(nanos)
         return tt
@@ -62,35 +59,53 @@ class LoggingDB(object):
         self._ts=self._builder.createTimeseriesService()
         self.tree=Hierarchy('root',None,None,self._md)
     def search(self,pattern):
-      types=VariableDataType.ALL
-      vvv=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern,types)
-      return vvv.toString()[1:-1].split(', ')
-    def get(self,pattern,t1,t2):
+        types=VariableDataType.ALL
+        vvv=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern,types)
+        return vvv.toString()[1:-1].split(', ')
+    def get(self,pattern,t1,t2=None):
+        """
+         Queries the logging database.            
+         Returns data between t1 and t2
+         If t2 is None, the last available data point before t1 is returned
+         (search-range is one year)
+        """
         ts1=toTimeStamp(t1)
-        ts2=toTimeStamp(t2)
         types=VariableDataType.ALL
         vvv=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern,types)
         out={}
         for v in vvv:
-           jvar=vvv.getVariable(v)
-           res=self._ts.getDataInTimeWindow(jvar,ts1,ts2)
-           data=[]
-           datatype=res.getVariableDataType().toString()
-           for tt in res:
-               ts=tt.getStamp()
-               ts=ts.fastTime/1000.+ts.getNanos()/1e9
-               if datatype=='VECTORNUMERIC':
-                  val=np.array(tt.getDoubleValues())
-               elif datatype=='NUMERIC':
-                  val=tt.getDoubleValue()
-               else:
-                  val=tt
-               data.append((ts,val))
-           out[v]=zip(*data)
-        return out
-   # def __dir__(self):
-   #     return []
-
+            jvar=vvv.getVariable(v)
+            if t2 is None:
+                res=[self._ts.getLastDataPriorToTimestampWithinDefaultInterval(jvar,ts1)]
+                datatype=res[0].getVariableDataType().toString()
+            else:
+                ts2=toTimeStamp(t2)
+                res=self._ts.getDataInTimeWindow(jvar,ts1,ts2)
+                datatype=res.getVariableDataType().toString()
+            datas=[]
+            tss=[]
+            for tt in res:
+                ts=tt.getStamp()
+                ts=ts.fastTime/1000.+ts.getNanos()/1e9
+                if datatype=='VECTORNUMERIC':
+                   val=np.array(tt.getDoubleValues())
+                elif datatype=='NUMERIC':
+                   val=tt.getDoubleValue()
+                else:
+                   val=tt
+                ts2 = datetime.datetime.fromtimestamp(ts)
+                datas.append( val )
+                tss.append( ts2 )
+                #data.append((ts2,val))
+            # We try to unpack the data as much as possible
+            if len(datas) == 1:
+                out[v]=( ts2, val )
+            else:
+                out[v]=( tss, datas )
+        if len(out) == 1:
+            return out[v]
+        else:
+            return out
 
 def clean_name(s):
     if s[0].isdigit():
