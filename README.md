@@ -1,3 +1,18 @@
+# Fork of pyTimber (10/2015)
+
+Documentation (=examples) in pyTimberExamples.ipynb
+
+Applied some changes to integrate pyTimber in the BI Anaconda installation.
+
+    * Made compatible with Python3
+    * Simplified the return value (less nesting of lists in dicts, etc.)
+    * Specify a point in time or over a time range
+
+
+M. Betz 2015
+
+
+
 # pytimber
 Python Wrapping of CALS API. Usage:
 
