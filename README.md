@@ -27,7 +27,7 @@ Applied some changes to integrate pyTimber in the BI Anaconda installation.
 
 Python Wrapping of CALS API. 
 
-** Documentation: **
+**Documentation:**
 
 See *pyTimberExamples.pynb*.
 
