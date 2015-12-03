@@ -21,9 +21,6 @@ Timestamp=java.sql.Timestamp
 null=org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null)
 
-def testmod():
-    print('hello its me')
-
 def toTimestamp(t):
     if type(t) is str:
         return Timestamp.valueOf(t)
@@ -108,6 +105,80 @@ class LoggingDB(object):
         else:
             variables = None
         return variables
+
+    def processDataset(self, dataset, datatype):
+        datas = []
+        tss = []
+        for tt in dataset:
+            ts = tt.getStamp()
+            ts = ts.fastTime/1000.+ts.getNanos()/1e9
+            ts = datetime.datetime.fromtimestamp(ts)
+            if datatype == 'MATRIXNUMERIC':
+                val = np.array(tt.getMatrixDoubleValues())
+            elif datatype == 'VECTORNUMERIC':
+                val = np.array(tt.getDoubleValues())
+            elif datatype == 'NUMERIC':
+                val = tt.getDoubleValue()
+            elif datatype == 'FUNDAMENTAL':
+                val = 1
+            else:
+                print('Unsupported datatype, returning the java object')
+                val = tt
+            datas.append(val)
+            tss.append(ts)
+        if len(datas) == 1:
+            return (ts, val)
+        else:
+            return (tss, datas)
+            
+
+    def getAligned(self, pattern_or_list, t1, t2, fundamental=None):
+        ts1 = toTimestamp(t1)
+        ts2 = toTimestamp(t2)
+        out = {}
+        master_variable = None
+
+        # Build variable list
+        variables = self.getVariablesList(pattern_or_list, ts1, ts2)
+        if not self._silent: print('List of variables to be queried:')
+        if len(variables) ==  0:
+            if not self._silent: print('None found.')
+            return {}
+        else:
+            for i, v in enumerate(variables):
+                if i == 0:
+                    master_variable = variables.getVariable(0)
+                    master_name = master_variable.toString()
+                    if not self._silent: print('%s (using as master).' % v)
+                else:
+                    if not self._silent: print(v)
+        
+        # Fundamentals
+        if fundamental is not None:
+            fundamentals = self.getFundamentals(ts1, ts2, fundamental)
+            if fundamentals is None:
+                return {}
+
+        # Acquire master dataset
+        if fundamental is not None:
+            master_ds=self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
+        else:
+            master_ds=self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
+        if not self._silent: print('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
+
+        # Prepare master dataset for output
+        out['timestamps'], out[master_name] = self.processDataset(master_ds, master_ds.getVariableDataType().toString())
+
+        # Acquire aligned data based on master dataset timestamps
+        for v in variables:
+            if v == master_name:
+                continue
+            jvar = variables.getVariable(v)
+            res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
+            if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
+            out[v] = self.processDataset(res, res.getVariableDataType().toString())[1]
+
+        return out
         
     def get(self, pattern_or_list, t1, t2=None, fundamental=None):
         """
@@ -152,29 +223,7 @@ class LoggingDB(object):
                     res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
                 if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
-            datas = []
-            tss = []
-            for tt in res:
-                ts = tt.getStamp()
-                ts = ts.fastTime/1000.+ts.getNanos()/1e9
-                ts = datetime.datetime.fromtimestamp(ts)
-                if datatype == 'MATRIXNUMERIC':
-                    val = np.array(tt.getMatrixDoubleValues())
-                elif datatype == 'VECTORNUMERIC':
-                    val = np.array(tt.getDoubleValues())
-                elif datatype == 'NUMERIC':
-                    val = tt.getDoubleValue()
-                elif datatype == 'FUNDAMENTAL':
-                    val = 1
-                else:
-                    print('Unsupported datatype returning the java object')
-                    val = tt
-                datas.append(val)
-                tss.append(ts)
-            if len(datas) == 1:
-                out[v] = (ts, val)
-            else:
-                out[v] = (tss, datas)
+            out[v] = self.processDataset(res, datatype)
         if len(out) == 1:
             return out[v]
         else:
