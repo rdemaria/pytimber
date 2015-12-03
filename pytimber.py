@@ -2,7 +2,12 @@ import os, glob, time, datetime
 import jpype
 import numpy as np
 
-_jar = '/afs/cern.ch/work/c/chernals/private/accsoft-cals-extr-client-nodep.jar'
+"""
+http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
+"""
+
+_moddir=os.path.dirname(__file__)
+_jar=os.path.join(_moddir,'localJars/accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
     libjvm = jpype.getDefaultJVMPath()
