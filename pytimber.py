@@ -131,9 +131,6 @@ class LoggingDB(object):
                 val = tt
             datas.append(val)
             tss.append(ts)
-        if len(datas) == 1:
-            return (ts, val)
-        else:
             return (tss, datas)
             
 
