@@ -131,7 +131,7 @@ class LoggingDB(object):
                 val = tt
             datas.append(val)
             tss.append(ts)
-            return (tss, datas)
+        return (tss, datas)
             
 
     def getAligned(self, pattern_or_list, t1, t2, fundamental=None):
@@ -179,7 +179,6 @@ class LoggingDB(object):
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
             out[v] = self.processDataset(res, res.getVariableDataType().toString())[1]
-
         return out
         
     def get(self, pattern_or_list, t1, t2=None, fundamental=None):
@@ -226,10 +225,7 @@ class LoggingDB(object):
                 datatype = res.getVariableDataType().toString()
                 if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
             out[v] = self.processDataset(res, datatype)
-        if len(out) == 1:
-            return out[v]
-        else:
-            return out
+        return out
     
 class Hierarchy(object):
     def __init__(self,name,obj,src,varsrc):
