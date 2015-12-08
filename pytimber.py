@@ -63,7 +63,7 @@ source_dict={'mdb' : DataLocationPreferences.MDB_PRO,
              }
 
 class LoggingDB(object):
-    def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS', source='mdb', silent=False):
+    def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS', source='all', silent=False):
         loc = source_dict[source]
         self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
         self._md = self._builder.createMetaService()
@@ -139,6 +139,12 @@ class LoggingDB(object):
         ts2 = toTimestamp(t2)
         out = {}
         master_variable = None
+        
+        # Fundamentals
+        if fundamental is not None:
+            fundamentals = self.getFundamentals(ts1, ts2, fundamental)
+            if fundamentals is None:
+                return {}
 
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
@@ -155,12 +161,6 @@ class LoggingDB(object):
                 else:
                     if not self._silent: print(v)
         
-        # Fundamentals
-        if fundamental is not None:
-            fundamentals = self.getFundamentals(ts1, ts2, fundamental)
-            if fundamentals is None:
-                return {}
-
         # Acquire master dataset
         if fundamental is not None:
             master_ds=self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
