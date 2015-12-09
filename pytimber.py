@@ -176,8 +176,10 @@ class LoggingDB(object):
             if v == master_name:
                 continue
             jvar = variables.getVariable(v)
+            start_time = time.time()
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
+            print(time.time()-start_time, "seconds for aqn")
             out[v] = self.processDataset(res, res.getVariableDataType().toString())[1]
         return out
         
