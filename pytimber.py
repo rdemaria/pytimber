@@ -127,7 +127,7 @@ class LoggingDB(object):
             elif datatype == 'FUNDAMENTAL':
                 val = 1
             elif datatype == 'TEXTUAL':
-                val = tt.getTextValue()
+                val = tt.getVarcharValue()
             else:
                 print('Unsupported datatype, returning the java object')
                 val = tt
