@@ -126,6 +126,8 @@ class LoggingDB(object):
                 val = tt.getDoubleValue()
             elif datatype == 'FUNDAMENTAL':
                 val = 1
+            elif datatype == 'TEXTUAL':
+                val = tt.getTextValue()
             else:
                 print('Unsupported datatype, returning the java object')
                 val = tt
