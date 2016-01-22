@@ -20,7 +20,7 @@ class install(_install):
 setuptools.setup(
     name='pytimber',
     version=pytimber.__version__,
-    description='Python to FESA/LSA/INCA interface via JAPC',
+    description='A Python wrapping of CALS API',
     author='Riccardo De Maria',
     author_email='riccardo.de.maria@cern.ch',
     url='https://github.com/rdemaria/pytimber',
