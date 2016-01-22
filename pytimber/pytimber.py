@@ -7,23 +7,32 @@ http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dis
 """
 
 try:
+    # Try to get a lit of .jars from cmmnbuild_dep_manager.
     import cmmnbuild_dep_manager
     mgr = cmmnbuild_dep_manager.Manager()
     jarlist = mgr.jars()
-    jarlist.append( os.path.abspath("./") )     # Allows to use a local log4j.properties file
-    if os.name == "nt":                         # We are running on Windows, Java expects a ";" between classpaths
-        _jar = ";".join( jarlist )
+
+    # Allows to use a local log4j.properties file
+    jarlist.append(os.path.abspath("./"))
+
+    if os.name == "nt":
+        # We are running on Windows, Java expects a ";" between
+        # classpaths.
+        _jar = ";".join(jarlist)
     else:
-        _jar = ":".join( jarlist )    # ":" works for linux and maybe also some other systems?
+        # ":" works for linux and maybe also some other systems?
+        _jar = ":".join(jarlist)
 except ImportError:
+    # Could not import cmmnbuild_dep_manager -- it is probably not
+    # installed. Fall back to using the locally bundled .jar file.
     _moddir=os.path.dirname(__file__)
     _jar=os.path.join(_moddir,'jars/accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
-  libjvm=jpype.getDefaultJVMPath()
-  jpype.startJVM(libjvm,'-Djava.class.path=%s'%_jar)
+    libjvm=jpype.getDefaultJVMPath()
+    jpype.startJVM(libjvm,'-Djava.class.path=%s'%_jar)
 else:
-  print("Warning jpype started")
+    print("Warning jpype started")
 
 
 #defs
