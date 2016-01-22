@@ -1,6 +1,12 @@
 # pytimber
 
-A Python wrapping of CALS API. Usage:
+A Python wrapping of CALS API.
+
+## Installation
+
+    pip install git+https://github.com/rdemaria/pytimber.git
+
+## Usage
 
 Import
 
