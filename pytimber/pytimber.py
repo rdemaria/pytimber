@@ -7,7 +7,7 @@ http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dis
 """
 
 _moddir=os.path.dirname(__file__)
-_jar=os.path.join(_moddir,'localJars/accsoft-cals-extr-client-nodep.jar')
+_jar=os.path.join(_moddir,'jars/accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
   libjvm=jpype.getDefaultJVMPath()
@@ -60,7 +60,7 @@ class LoggingDB(object):
         self.tree=Hierarchy('root',None,None,self._md)
     def search(self,pattern):
         """
-            Search for parameter names. 
+            Search for parameter names.
             Wildcard is `%`.
         """
         types=VariableDataType.ALL
@@ -69,14 +69,14 @@ class LoggingDB(object):
     def get(self,pattern,t1,t2=None):
         """
          Queries the logging database with `pattern`.
-         
+
          Returns data between t1 and t2
          If t2 is `None`, the last available data point before t1 is returned
          (search-range is one year)
-         
+
          t1 and t2 can be python `datetime` objects or strings with this format:
          `2015-10-12 18:12:32.453255123`
-         
+
          Returns:
          ---------
          `datetime` timestamp(s), data
