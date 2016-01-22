@@ -6,8 +6,18 @@ import numpy as np
 http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
 """
 
-_moddir=os.path.dirname(__file__)
-_jar=os.path.join(_moddir,'jars/accsoft-cals-extr-client-nodep.jar')
+try:
+    import cmmnbuild_dep_manager
+    mgr = cmmnbuild_dep_manager.Manager()
+    jarlist = mgr.jars()
+    jarlist.append( os.path.abspath("./") )     # Allows to use a local log4j.properties file
+    if os.name == "nt":                         # We are running on Windows, Java expects a ";" between classpaths
+        _jar = ";".join( jarlist )
+    else:
+        _jar = ":".join( jarlist )    # ":" works for linux and maybe also some other systems?
+except ImportError:
+    _moddir=os.path.dirname(__file__)
+    _jar=os.path.join(_moddir,'jars/accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
   libjvm=jpype.getDefaultJVMPath()

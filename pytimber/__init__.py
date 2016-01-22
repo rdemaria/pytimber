@@ -1,5 +1,9 @@
 __version__ = "1.0.0"
 
+cmmnbuild_deps = [
+    "accsoft-cals-extr-client"
+]
+
 # When running setuptools without required dependencies installed
 # we need to be able to access __version__, so print a warning but
 # continue
