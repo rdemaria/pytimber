@@ -40,7 +40,7 @@ Explore variable hierarchies:
 
 ```python
 ldb.tree
-print(dir(ldb.tree)
+print(dir(ldb.tree))
 print(ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars())
 ```
 
