@@ -6,14 +6,33 @@ import numpy as np
 http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
 """
 
-_moddir=os.path.dirname(__file__)
-_jar=os.path.join(_moddir,'localJars/accsoft-cals-extr-client-nodep.jar')
+try:
+    # Try to get a lit of .jars from cmmnbuild_dep_manager.
+    import cmmnbuild_dep_manager
+    mgr = cmmnbuild_dep_manager.Manager()
+    jarlist = mgr.jars()
+
+    # Allows to use a local log4j.properties file
+    jarlist.append(os.path.abspath("./"))
+
+    if os.name == "nt":
+        # We are running on Windows, Java expects a ";" between
+        # classpaths.
+        _jar = ";".join(jarlist)
+    else:
+        # ":" works for linux and maybe also some other systems?
+        _jar = ":".join(jarlist)
+except ImportError:
+    # Could not import cmmnbuild_dep_manager -- it is probably not
+    # installed. Fall back to using the locally bundled .jar file.
+    _moddir=os.path.dirname(__file__)
+    _jar=os.path.join(_moddir,'jars/accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
-  libjvm=jpype.getDefaultJVMPath()
-  jpype.startJVM(libjvm,'-Djava.class.path=%s'%_jar)
+    libjvm=jpype.getDefaultJVMPath()
+    jpype.startJVM(libjvm,'-Djava.class.path=%s'%_jar)
 else:
-  print("Warning jpype started")
+    print("Warning jpype started")
 
 
 #defs
@@ -60,7 +79,7 @@ class LoggingDB(object):
         self.tree=Hierarchy('root',None,None,self._md)
     def search(self,pattern):
         """
-            Search for parameter names. 
+            Search for parameter names.
             Wildcard is `%`.
         """
         types=VariableDataType.ALL
@@ -69,14 +88,14 @@ class LoggingDB(object):
     def get(self,pattern,t1,t2=None):
         """
          Queries the logging database with `pattern`.
-         
+
          Returns data between t1 and t2
          If t2 is `None`, the last available data point before t1 is returned
          (search-range is one year)
-         
+
          t1 and t2 can be python `datetime` objects or strings with this format:
          `2015-10-12 18:12:32.453255123`
-         
+
          Returns:
          ---------
          `datetime` timestamp(s), data
