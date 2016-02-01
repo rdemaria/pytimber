@@ -15,7 +15,7 @@ try:
     # do not exist, so fall back to locally bundled .jar file in this case.
     if not mgr.is_registered("pytimber"):
         print("WARNING: pytimber is not registered with cmmnbuild_dep_manager "
-              " so falling back to bundled jar. Things may not work as "
+              "so falling back to bundled jar. Things may not work as "
               "expected...")
         raise ImportError
 

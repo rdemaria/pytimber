@@ -1,6 +1,6 @@
 # pytimber
 
-A Python wrapping of the CALS API.
+Python wrapping of CALS API.
 
 ## Installation
 
