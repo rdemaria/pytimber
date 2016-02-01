@@ -10,6 +10,15 @@ try:
     # Try to get a lit of .jars from cmmnbuild_dep_manager.
     import cmmnbuild_dep_manager
     mgr = cmmnbuild_dep_manager.Manager()
+
+    # During first installation with cmmnbuild_dep_manager some necessary jars
+    # do not exist, so fall back to locally bundled .jar file in this case.
+    if not mgr.is_registered("pytimber"):
+        print("WARNING: pytimber is not registered with cmmnbuild_dep_manager "
+              "so falling back to bundled jar. Things may not work as "
+              "expected...")
+        raise ImportError
+
     jarlist = mgr.jars()
 
     # Allows to use a local log4j.properties file
@@ -26,7 +35,7 @@ except ImportError:
     # Could not import cmmnbuild_dep_manager -- it is probably not
     # installed. Fall back to using the locally bundled .jar file.
     _moddir=os.path.dirname(__file__)
-    _jar=os.path.join(_moddir,'jars/accsoft-cals-extr-client-nodep.jar')
+    _jar=os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
     libjvm=jpype.getDefaultJVMPath()
