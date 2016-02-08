@@ -39,9 +39,9 @@ def toTimeStamp(t):
     else:
         sec=int(t)
         nanos=int((t-sec)*1e9)
-        print sec*1000
+        #print sec*1000
         tt=Timestamp(long(sec*1000))
-        #tt.setNanos(nanos)
+        tt.setNanos(nanos)
         return tt
 
 source_dict={'mdb': DataLocationPreferences.MDB_PRO,
@@ -71,12 +71,13 @@ class LoggingDB(object):
         types=VariableDataType.ALL
         vvv=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern,types)
         out={}
-        for v in vvv:
+        for v in range(vvv.getVariableCount()):
            jvar=vvv.getVariable(v)
            res=self._ts.getDataInTimeWindow(jvar,ts1,ts2)
            data=[]
            datatype=res.getVariableDataType().toString()
-           for tt in res:
+           for ntt in range(res.size()):
+               tt=res.get(ntt)
                ts=tt.getStamp()
                ts=ts.fastTime/1000.+ts.getNanos()/1e9
                if datatype=='VECTORNUMERIC':
@@ -86,7 +87,7 @@ class LoggingDB(object):
                else:
                   val=tt
                data.append((ts,val))
-           out[v]=zip(*data)
+           out[jvar.toString()]=zip(*data)
         return out
    # def __dir__(self):
    #     return []
