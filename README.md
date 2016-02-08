@@ -1,28 +1,46 @@
 # pytimber
-Python Wrapping of CALS API. Usage:
 
-Import
+Python wrapping of CALS API.
 
-    import pytimber
-    ldb=pytimber.LoggingDB()
+## Installation
 
-Search for variables
+```sh
+pip install git+https://github.com/rdemaria/pytimber.git
+```
 
-    print ldb.search('HX:BETA%')
+## Usage
 
-Get data
+Import:
 
-    t1='2015-05-13 00:00:00.000'
-    t2='2015-05-15 00:00:00.000'
-    d=ldb.get('HX:FILLN',t1,t2)
-    print d
-    t1='2015-05-13 12:00:00.000'
-    t2='2015-05-13 12:00:01.000'
-    d=ldb.get('LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H',t1,t2)
-    print d
+```python
+import pytimber
+ldb=pytimber.LoggingDB()
+```
 
-Explore variable hierarchies
+Search for variables:
 
-    ldb.tree
-    print dir(ldb.tree)
-    print ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars()
+```python
+print(ldb.search('HX:BETA%'))
+```
+
+Get data:
+
+```python
+t1='2015-05-13 00:00:00.000'
+t2='2015-05-15 00:00:00.000'
+d=ldb.get('HX:FILLN',t1,t2)
+print(d)
+t1='2015-05-13 12:00:00.000'
+t2='2015-05-13 12:00:01.000'
+d=ldb.get('LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H',t1,t2)
+print(d)
+```
+
+Explore variable hierarchies:
+
+```python
+ldb.tree
+print(dir(ldb.tree))
+print(ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars())
+```
+
