@@ -64,9 +64,9 @@ def toTimeStamp(t):
     else:  #Hopefully it's an int or double or something ;)
         sec=int(t)
         nanos=int((t-sec)*1e9)
-        print( sec*1000 )
+        #print( sec*1000 )
         tt=Timestamp(long(sec*1000))
-        #tt.setNanos(nanos)
+        tt.setNanos(nanos)
         return tt
 
 source_dict={'mdb': DataLocationPreferences.MDB_PRO,
