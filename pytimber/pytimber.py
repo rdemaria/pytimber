@@ -19,9 +19,9 @@ try:
     # During first installation with cmmnbuild_dep_manager some necessary jars
     # do not exist, so fall back to locally bundled .jar file in this case.
     if not mgr.is_registered("pytimber"):
-        print("WARNING: pytimber is not registered with cmmnbuild_dep_manager "
-              "so falling back to bundled jar. Things may not work as "
-              "expected...")
+        log.warn("pytimber is not registered with cmmnbuild_dep_manager "
+                 "so falling back to bundled jar. Things may not work as "
+                 "expected...")
         raise ImportError
 
     jarlist = mgr.jars()
@@ -44,9 +44,9 @@ except ImportError:
 
 if not jpype.isJVMStarted():
     libjvm = jpype.getDefaultJVMPath()
-    jpype.startJVM(libjvm,'-Djava.class.path=%s'%_jar)
+    jpype.startJVM(libjvm,'-Djava.class.path={0}'.format(_jar))
 else:
-    print('Warning: JVM already started')
+    log.warn('JVM already started')
 
 # Definitions of Java packages
 cern=jpype.JPackage('cern')
@@ -103,13 +103,6 @@ class LoggingDB(object):
         self._md = self._builder.createMetaService()
         self._ts = self._builder.createTimeseriesService()
         self.tree = Hierarchy('root', None, None, self._md)
-        self._silent = silent
-
-    def mute(self):
-        self._silent = True
-
-    def unmute(self):
-        self._silent = False
 
     def search(self, pattern):
         """
@@ -121,14 +114,13 @@ class LoggingDB(object):
         return v.toString()[1:-1].split(', ')
 
     def getFundamentals(self, t1, t2, fundamental):
-        if not self._silent:
-            print('Querying fundamentals (pattern: {0}):'.format(fundamental))
+        log.info('Querying fundamentals (pattern: {0}):'.format(fundamental))
         fundamentals = self._md.getFundamentalsInTimeWindowWithNameLikePattern(t1, t2, fundamental)
         if fundamentals is None:
-            if not self._silent: print('No fundamental found in time window')
+            log.info('No fundamental found in time window')
         else:
             for f in fundamentals:
-                if not self._silent: print(f)
+                log.info(f)
         return fundamentals
 
     def getVariablesList(self, pattern_or_list, t1, t2):
@@ -163,7 +155,7 @@ class LoggingDB(object):
             elif datatype == 'TEXTUAL':
                 val = tt.getVarcharValue()
             else:
-                print('Unsupported datatype, returning the java object')
+                self.warn('Unsupported datatype, returning the java object')
                 val = tt
             datas.append(val)
             tss.append(ts)
@@ -188,29 +180,26 @@ class LoggingDB(object):
 
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
-        if not self._silent:
-            print('List of variables to be queried:')
         if len(variables) ==  0:
-            if not self._silent:
-                print('None found.')
+            log.warning('No variables found.')
             return {}
         else:
+            logvars = []
             for i, v in enumerate(variables):
                 if i == 0:
                     master_variable = variables.getVariable(0)
                     master_name = master_variable.toString()
-                    if not self._silent:
-                        print('%s (using as master).' % v)
+                    logvars.append('{0} (using as master)'.format(v))
                 else:
-                    if not self._silent: print(v)
+                    logvars.append(v)
+                log.info('List of variables to be queried: {0}'.format(', '.join(logvars)))
 
         # Acquire master dataset
         if fundamental is not None:
             master_ds=self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
         else:
             master_ds=self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
-        if not self._silent:
-            print('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
+        log.info('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
 
         # Prepare master dataset for output
         out['timestamps'], out[master_name] = self.processDataset(master_ds, master_ds.getVariableDataType().toString(),unixtime)
@@ -222,9 +211,8 @@ class LoggingDB(object):
             jvar = variables.getVariable(v)
             start_time = time.time()
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
-            if not self._silent:
-                print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
-                print(time.time()-start_time, "seconds for aqn")
+            log.info('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
+            log.info(time.time()-start_time, "seconds for aqn")
             out[v] = self.processDataset(res, res.getVariableDataType().toString(),unixtime)[1]
         return out
 
@@ -241,17 +229,18 @@ class LoggingDB(object):
 
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
-        if not self._silent: print('List of variables to be queried:')
-        if len(variables) is 0:
-            if not self._silent: print('None found, aborting.')
+        if len(variables) == 0:
+            log.warning('No variables found.')
             return {}
         else:
+            logvars = []
             for v in variables:
-                if not self._silent: print(v)
+                logvars.append(v)
+            log.info('List of variables to be queried: {0}'.format(', '.join(logvars)))
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            print('Unsupported: if filtering  by fundamentals you must provide and correct time window')
+            self.warn('Unsupported: if filtering  by fundamentals you must provide and correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -264,14 +253,14 @@ class LoggingDB(object):
             if t2 is None:
                 res = [self._ts.getLastDataPriorToTimestampWithinDefaultInterval(jvar, ts1)]
                 datatype = res[0].getVariableDataType().toString()
-                if not self._silent: print('Retrieved {0} values for {1}'.format(1, jvar.getVariableName()))
+                log.info('Retrieved {0} values for {1}'.format(1, jvar.getVariableName()))
             else:
                 if fundamental is not None:
                     res = self._ts.getDataInTimeWindowFilteredByFundamentals(jvar, ts1, ts2, fundamentals)
                 else:
                     res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
-                if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
+                log.info('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
             out[v] = self.processDataset(res, datatype,unixtime)
         return out
 
@@ -309,7 +298,7 @@ class Hierarchy(object):
         else:
           name=self.obj.getHierarchyName()
           desc=self.obj.getDescription()
-          return "<%s: %s>"%(name,desc)
+          return "<{0}: {1}>".format(name,desc)
 
     def get_vars(self):
         if self.obj is not None:
