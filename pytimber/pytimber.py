@@ -162,14 +162,14 @@ class LoggingDB(object):
             datas.append(val)
             tss.append(ts)
         return (tss, datas)
-            
+
 
     def getAligned(self, pattern_or_list, t1, t2, fundamental=None):
         ts1 = toTimestamp(t1)
         ts2 = toTimestamp(t2)
         out = {}
         master_variable = None
-        
+
         # Fundamentals
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -190,7 +190,7 @@ class LoggingDB(object):
                     if not self._silent: print('%s (using as master).' % v)
                 else:
                     if not self._silent: print(v)
-        
+
         # Acquire master dataset
         if fundamental is not None:
             master_ds=self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
@@ -212,7 +212,7 @@ class LoggingDB(object):
             print(time.time()-start_time, "seconds for aqn")
             out[v] = self.processDataset(res, res.getVariableDataType().toString())[1]
         return out
-        
+
     def get(self, pattern_or_list, t1, t2=None, fundamental=None):
         """
         Query the database for a list of variables or for variables whose name matches a pattern (string).
@@ -220,7 +220,7 @@ class LoggingDB(object):
         If a fundamental pattern is provided, the end of the time window as to be explicitely provided.
         """
         ts1 = toTimestamp(t1)
-        ts2 = toTimestamp(t2)       
+        ts2 = toTimestamp(t2)
         out = {}
 
         # Build variable list
@@ -241,7 +241,7 @@ class LoggingDB(object):
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
             if fundamentals is None:
                 return {}
-           
+
         # Acquire
         for v in variables:
             jvar = variables.getVariable(v)
@@ -258,7 +258,7 @@ class LoggingDB(object):
                 if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
             out[v] = self.processDataset(res, datatype)
         return out
-    
+
 class Hierarchy(object):
     def __init__(self,name,obj,src,varsrc):
         self.name=name
@@ -266,14 +266,14 @@ class Hierarchy(object):
         self.varsrc=varsrc
         if src is not None:
           self.src=src
-        
+
     def _get_childs(self):
         if self.obj is None:
             objs=self.src.getHierachies(1)
         else:
             objs=self.src.getChildHierarchies(self.obj)
         return dict([(cleanName(hh.hierarchyName),hh) for hh in objs])
-    
+
     def __getattr__(self,k):
         if k=='src':
             self.src=self.varsrc.getAllHierarchies()
@@ -283,10 +283,10 @@ class Hierarchy(object):
             return self._dict
         else:
             return Hierarchy(k,self._dict[k],self.src,self.varsrc)
-        
+
     def __dir__(self):
         return sorted(self._dict.keys())
-    
+
     def __repr__(self):
         if self.obj is None:
           return "<Top Hierarchy>"
@@ -294,7 +294,7 @@ class Hierarchy(object):
           name=self.obj.getHierarchyName()
           desc=self.obj.getDescription()
           return "<%s: %s>"%(name,desc)
-    
+
     def get_vars(self):
         if self.obj is not None:
           vvv=self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(self.obj,VariableDataType.ALL)
