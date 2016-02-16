@@ -5,7 +5,8 @@ import jpype
 import numpy as np
 
 """
-http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
+Latest version of the standalone jar is availale here:
+    http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
 """
 
 logging.basicConfig()
@@ -24,18 +25,7 @@ try:
                  "expected...")
         raise ImportError
 
-    jarlist = mgr.jars()
-
-    # Allows to use a local log4j.properties file
-    jarlist.append(os.path.abspath("./"))
-
-    if os.name == "nt":
-        # We are running on Windows, Java expects a ";" between
-        # classpaths.
-        _jar = ";".join(jarlist)
-    else:
-        # ":" works for linux and maybe also some other systems?
-        _jar = ":".join(jarlist)
+    _jar = mgr.class_path()
 except ImportError:
     # Could not import cmmnbuild_dep_manager -- it is probably not
     # installed. Fall back to using the locally bundled .jar file.
@@ -43,10 +33,9 @@ except ImportError:
     _jar=os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
-    libjvm = jpype.getDefaultJVMPath()
-    jpype.startJVM(libjvm,'-Djava.class.path={0}'.format(_jar))
+    jpype.startJVM(jpype.getDefaultJVMPath(), '-Djava.class.path={0}'.format(_jar))
 else:
-    log.warn('JVM already started')
+    log.warn('JVM is already started')
 
 # Definitions of Java packages
 cern=jpype.JPackage('cern')
