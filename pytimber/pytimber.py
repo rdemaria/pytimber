@@ -91,7 +91,8 @@ source_dict={'mdb' : DataLocationPreferences.MDB_PRO,
              }
 
 class LoggingDB(object):
-    def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS', source='all', silent=False):
+    def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
+                       source='all', silent=False):
         loc = source_dict[source]
         self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
         self._md = self._builder.createMetaService()
@@ -115,7 +116,8 @@ class LoggingDB(object):
         return v.toString()[1:-1].split(', ')
 
     def getFundamentals(self, t1, t2, fundamental):
-        if not self._silent: print('Querying fundamentals (pattern: {0}):'.format(fundamental))
+        if not self._silent:
+            print('Querying fundamentals (pattern: {0}):'.format(fundamental))
         fundamentals = self._md.getFundamentalsInTimeWindowWithNameLikePattern(t1, t2, fundamental)
         if fundamentals is None:
             if not self._silent: print('No fundamental found in time window')
