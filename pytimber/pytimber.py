@@ -1,10 +1,15 @@
 import os, glob, time, datetime
+import logging
+
 import jpype
 import numpy as np
 
 """
 http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
 """
+
+logging.basicConfig()
+log=logging.getLogger(__name__)
 
 try:
     # Try to get a lit of .jars from cmmnbuild_dep_manager.
@@ -141,13 +146,12 @@ class LoggingDB(object):
             variables = None
         return variables
 
-    def processDataset(self, dataset, datatype):
+    def processDataset(self, dataset, datatype, unixtime):
         datas = []
         tss = []
         for tt in dataset:
             ts = tt.getStamp()
             ts = ts.fastTime/1000.+ts.getNanos()/1e9
-            ts = datetime.datetime.fromtimestamp(ts)
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues())
             elif datatype == 'VECTORNUMERIC':
@@ -163,10 +167,14 @@ class LoggingDB(object):
                 val = tt
             datas.append(val)
             tss.append(ts)
+        if not unixtime:
+           tss=map(datetime.datetime.fromtimestamp,tss)
+        tss=np.array(tss)
         return (tss, datas)
 
 
-    def getAligned(self, pattern_or_list, t1, t2, fundamental=None):
+    def getAligned(self, pattern_or_list, t1, t2,
+                        fundamental=None, unixtime=True):
         ts1 = toTimestamp(t1)
         ts2 = toTimestamp(t2)
         out = {}
@@ -180,16 +188,19 @@ class LoggingDB(object):
 
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
-        if not self._silent: print('List of variables to be queried:')
+        if not self._silent:
+            print('List of variables to be queried:')
         if len(variables) ==  0:
-            if not self._silent: print('None found.')
+            if not self._silent:
+                print('None found.')
             return {}
         else:
             for i, v in enumerate(variables):
                 if i == 0:
                     master_variable = variables.getVariable(0)
                     master_name = master_variable.toString()
-                    if not self._silent: print('%s (using as master).' % v)
+                    if not self._silent:
+                        print('%s (using as master).' % v)
                 else:
                     if not self._silent: print(v)
 
@@ -198,10 +209,11 @@ class LoggingDB(object):
             master_ds=self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
         else:
             master_ds=self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
-        if not self._silent: print('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
+        if not self._silent:
+            print('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
 
         # Prepare master dataset for output
-        out['timestamps'], out[master_name] = self.processDataset(master_ds, master_ds.getVariableDataType().toString())
+        out['timestamps'], out[master_name] = self.processDataset(master_ds, master_ds.getVariableDataType().toString(),unixtime)
 
         # Acquire aligned data based on master dataset timestamps
         for v in variables:
@@ -213,10 +225,11 @@ class LoggingDB(object):
             if not self._silent:
                 print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
                 print(time.time()-start_time, "seconds for aqn")
-            out[v] = self.processDataset(res, res.getVariableDataType().toString())[1]
+            out[v] = self.processDataset(res, res.getVariableDataType().toString(),unixtime)[1]
         return out
 
-    def get(self, pattern_or_list, t1, t2=None, fundamental=None):
+    def get(self, pattern_or_list, t1, t2=None,
+                  fundamental=None, unixtime=True):
         """
         Query the database for a list of variables or for variables whose name matches a pattern (string).
         If no pattern if given for the fundamental all the data are returned.
@@ -259,7 +272,7 @@ class LoggingDB(object):
                     res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
                 if not self._silent: print('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
-            out[v] = self.processDataset(res, datatype)
+            out[v] = self.processDataset(res, datatype,unixtime)
         return out
 
 class Hierarchy(object):
