@@ -119,8 +119,10 @@ class LoggingDB(object):
         if fundamentals is None:
             log.info('No fundamental found in time window')
         else:
+            logfuns = []
             for f in fundamentals:
-                log.info(f)
+                logfuns.append(f)
+            log.info('List of fundamentals found: {0}'.format(', '.join(logfuns)))
         return fundamentals
 
     def getVariablesList(self, pattern_or_list, t1, t2):
