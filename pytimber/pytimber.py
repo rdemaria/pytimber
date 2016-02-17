@@ -60,6 +60,8 @@ source_dict = {
     'all': DataLocationPreferences.MDB_AND_LDB_PRO
 }
 
+def test():
+    print("OK")
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
@@ -146,8 +148,8 @@ class LoggingDB(object):
             tss.append(ts)
         if not unixtime:
             tss = list(map(datetime.datetime.fromtimestamp, tss))
-        tss = np.array(tss)
-        datas = np.array(datas)
+        #tss = np.array(tss)
+        #datas = np.array(datas)
         return (tss, datas)
 
     def getAligned(self, pattern_or_list, t1, t2,
