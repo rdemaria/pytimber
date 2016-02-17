@@ -10,9 +10,8 @@ import logging
 import jpype
 import numpy as np
 
-"""
-Latest version of the standalone jar is availale here:
-    http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
+"""Latest version of the standalone jar is availale here:
+http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
 """
 
 logging.basicConfig()
@@ -39,28 +38,32 @@ except ImportError:
     _jar = os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
-    jpype.startJVM(jpype.getDefaultJVMPath(), '-Djava.class.path={0}'.format(_jar))
+    libjvm = jpype.getDefaultJVMPath()
+    jpype.startJVM(libjvm, '-Djava.class.path={0}'.format(_jar))
 else:
     log.warn('JVM is already started')
 
 # Definitions of Java packages
-cern=jpype.JPackage('cern')
-org=jpype.JPackage('org')
-java=jpype.JPackage('java')
-ServiceBuilder=cern.accsoft.cals.extr.client.service.ServiceBuilder
-DataLocationPreferences=cern.accsoft.cals.extr.domain.core.datasource.DataLocationPreferences
-VariableDataType=cern.accsoft.cals.extr.domain.core.constants.VariableDataType
-Timestamp=java.sql.Timestamp
-null=org.apache.log4j.varia.NullAppender()
+cern = jpype.JPackage('cern')
+org = jpype.JPackage('org')
+java = jpype.JPackage('java')
+ServiceBuilder = cern.accsoft.cals.extr.client.service.ServiceBuilder
+DataLocationPreferences = cern.accsoft.cals.extr.domain.core.datasource.DataLocationPreferences
+VariableDataType = cern.accsoft.cals.extr.domain.core.constants.VariableDataType
+Timestamp = java.sql.Timestamp
+null = org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null)
 
-source_dict={ 'mdb' : DataLocationPreferences.MDB_PRO,
-              'ldb' : DataLocationPreferences.LDB_PRO,
-              'all' : DataLocationPreferences.MDB_AND_LDB_PRO }
+source_dict = {
+    'mdb': DataLocationPreferences.MDB_PRO,
+    'ldb': DataLocationPreferences.LDB_PRO,
+    'all': DataLocationPreferences.MDB_AND_LDB_PRO
+}
+
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
-                       source='all', silent=False):
+                 source='all', silent=False):
         loc = source_dict[source]
         self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
         self._md = self._builder.createMetaService()
@@ -77,8 +80,8 @@ class LoggingDB(object):
         else:
             tt = datetime.datetime.fromtimestamp(t)
             ts = Timestamp.valueOf(tt.strftime("%Y-%m-%d %H:%M:%S.%f"))
-            sec=int(t)
-            nanos=int((t-sec)*1e9)
+            sec = int(t)
+            nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
             return ts
 
@@ -89,10 +92,7 @@ class LoggingDB(object):
         return myList
 
     def search(self, pattern):
-        """
-        Search for parameter names.
-        Wildcard is '%'.
-        """
+        """Search for parameter names. Wildcard is '%'."""
         types = VariableDataType.ALL
         v = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
         return v.toString()[1:-1].split(', ')
@@ -110,8 +110,7 @@ class LoggingDB(object):
         return fundamentals
 
     def getVariablesList(self, pattern_or_list, t1, t2):
-        """
-        Get a list of variables based on a list of strings or a pattern.
+        """Get a list of variables based on a list of strings or a pattern.
         Wildcard for the pattern is '%'.
         Assumes t1 and t2 to be Java TimeStamp objects
         """
@@ -146,13 +145,12 @@ class LoggingDB(object):
             datas.append(val)
             tss.append(ts)
         if not unixtime:
-           tss=map(datetime.datetime.fromtimestamp,tss)
-        tss=np.array(tss)
+            tss = map(datetime.datetime.fromtimestamp, tss)
+        tss = np.array(tss)
         return (tss, datas)
 
-
     def getAligned(self, pattern_or_list, t1, t2,
-                        fundamental=None, unixtime=True):
+                   fundamental=None, unixtime=True):
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
         out = {}
@@ -166,7 +164,7 @@ class LoggingDB(object):
 
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
-        if len(variables) ==  0:
+        if len(variables) == 0:
             log.warning('No variables found.')
             return {}
         else:
@@ -182,13 +180,17 @@ class LoggingDB(object):
 
         # Acquire master dataset
         if fundamental is not None:
-            master_ds=self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
+            master_ds = self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
         else:
-            master_ds=self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
+            master_ds = self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
         log.info('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
 
         # Prepare master dataset for output
-        out['timestamps'], out[master_name] = self.processDataset(master_ds, master_ds.getVariableDataType().toString(),unixtime)
+        out['timestamps'], out[master_name] = self.processDataset(
+            master_ds,
+            master_ds.getVariableDataType().toString(),
+            unixtime
+        )
 
         # Acquire aligned data based on master dataset timestamps
         for v in variables:
@@ -199,15 +201,18 @@ class LoggingDB(object):
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             log.info('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
             log.info(time.time()-start_time, "seconds for aqn")
-            out[v] = self.processDataset(res, res.getVariableDataType().toString(),unixtime)[1]
+            out[v] = self.processDataset(res, res.getVariableDataType().toString(), unixtime)[1]
         return out
 
     def get(self, pattern_or_list, t1, t2=None,
-                  fundamental=None, unixtime=True):
-        """
-        Query the database for a list of variables or for variables whose name matches a pattern (string).
+            fundamental=None, unixtime=True):
+        """Query the database for a list of variables or for variables whose
+        name matches a pattern (string).
+
         If no pattern if given for the fundamental all the data are returned.
-        If a fundamental pattern is provided, the end of the time window as to be explicitely provided.
+
+        If a fundamental pattern is provided, the end of the time window as to
+        be explicitely provided.
         """
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
@@ -226,7 +231,7 @@ class LoggingDB(object):
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            self.warn('Unsupported: if filtering  by fundamentals you must provide and correct time window')
+            self.warn('Unsupported: if filtering by fundamentals you must provide a correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -247,23 +252,24 @@ class LoggingDB(object):
                     res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
                 log.info('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
-            out[v] = self.processDataset(res, datatype,unixtime)
+            out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
+
 class Hierarchy(object):
-    def __init__(self,name,obj,src,varsrc):
-        self.name=name
-        self.obj=obj
-        self.varsrc=varsrc
+    def __init__(self, name, obj, src, varsrc):
+        self.name = name
+        self.obj = obj
+        self.varsrc = varsrc
         if src is not None:
-          self.src=src
+            self.src = src
 
     def _get_childs(self):
         if self.obj is None:
-            objs=self.src.getHierachies(1)
+            objs = self.src.getHierachies(1)
         else:
-            objs=self.src.getChildHierarchies(self.obj)
-        return dict([(self.cleanName(hh.hierarchyName),hh) for hh in objs])
+            objs = self.src.getChildHierarchies(self.obj)
+        return dict([(self.cleanName(hh.hierarchyName), hh) for hh in objs])
 
     def cleanName(self, s):
         if s[0].isdigit():
@@ -276,30 +282,30 @@ class Hierarchy(object):
                 out.append(ss)
         return ''.join(out)
 
-    def __getattr__(self,k):
-        if k=='src':
-            self.src=self.varsrc.getAllHierarchies()
+    def __getattr__(self, k):
+        if k == 'src':
+            self.src = self.varsrc.getAllHierarchies()
             return self.src
-        elif k=='_dict':
-            self._dict=self._get_childs()
+        elif k == '_dict':
+            self._dict = self._get_childs()
             return self._dict
         else:
-            return Hierarchy(k,self._dict[k],self.src,self.varsrc)
+            return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
         return sorted(self._dict.keys())
 
     def __repr__(self):
         if self.obj is None:
-          return "<Top Hierarchy>"
+            return "<Top Hierarchy>"
         else:
-          name=self.obj.getHierarchyName()
-          desc=self.obj.getDescription()
-          return "<{0}: {1}>".format(name,desc)
+            name = self.obj.getHierarchyName()
+            desc = self.obj.getDescription()
+            return "<{0}: {1}>".format(name, desc)
 
     def get_vars(self):
         if self.obj is not None:
-          vvv=self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(self.obj,VariableDataType.ALL)
-          return vvv.toString()[1:-1].split(', ')
+            vvv = self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(self.obj, VariableDataType.ALL)
+            return vvv.toString()[1:-1].split(', ')
         else:
-          return []
+            return []
