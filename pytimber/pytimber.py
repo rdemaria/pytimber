@@ -145,7 +145,7 @@ class LoggingDB(object):
             datas.append(val)
             tss.append(ts)
         if not unixtime:
-            tss = map(datetime.datetime.fromtimestamp, tss)
+            tss = list(map(datetime.datetime.fromtimestamp, tss))
         tss = np.array(tss)
         return (tss, datas)
 
