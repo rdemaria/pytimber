@@ -84,7 +84,7 @@ def cleanName(s):
         s = '_'+s
     out = []
     for ss in s:
-        if ss in ' _;><':
+        if ss in ' _;></':
             out.append('_')
         else:
             out.append(ss)
