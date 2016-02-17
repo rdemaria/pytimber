@@ -1,0 +1,12 @@
+#!/bin/bash
+
+ls *.py | xargs python &>test.out
+
+diff test.out test.ref
+
+if [[ $? -eq 0 ]]
+then
+  echo "test passed"
+else
+  echo "test failed"
+fi

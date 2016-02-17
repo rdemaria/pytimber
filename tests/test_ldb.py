@@ -46,6 +46,6 @@ print(dir(ldb.tree))
 
 print('------------------------------------------------------------------------')
 
-print(ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars())
+print(ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars()[:10])
 
 print('------------------------------------------------------------------------')
