@@ -6,6 +6,7 @@ from setuptools.command.install import install as _install
 
 import pytimber
 
+
 class install(_install):
     def run(self):
         try:
@@ -26,9 +27,8 @@ setuptools.setup(
     url='https://github.com/rdemaria/pytimber',
     packages=['pytimber'],
     package_dir={'pytimber': 'pytimber'},
-    install_requires=[ 'JPype1>=0.6.1' ],
-    cmdclass={ 'install': install },
+    install_requires=['JPype1>=0.6.1'],
+    cmdclass={'install': install},
     package_data={'pytimber': ['jars/*']},
     zip_safe=False
 )
-
