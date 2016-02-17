@@ -1,12 +1,16 @@
 #!/bin/bash
 
-ls *.py | xargs python &>test.out
-
-diff test.out test.ref
-
-if [[ $? -eq 0 ]]
-then
-  echo "test passed"
-else
-  echo "test failed"
-fi
+for ttt in test_*.py
+do
+  out=${ttt%.*}.out
+  ref=${ttt%.*}.ref
+  python $ttt &>$out
+  diff $ref $out
+  if [[ $? -eq 0 ]]
+  then
+      echo "$ttt passed"
+      rm $out
+  else
+      echo "$ttt failed"
+  fi
+done
