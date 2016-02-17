@@ -148,8 +148,8 @@ class LoggingDB(object):
             tss.append(ts)
         if not unixtime:
             tss = list(map(datetime.datetime.fromtimestamp, tss))
-        #tss = np.array(tss)
-        #datas = np.array(datas)
+        tss = np.array(tss)
+        datas = np.array(datas)
         return (tss, datas)
 
     def getAligned(self, pattern_or_list, t1, t2,
