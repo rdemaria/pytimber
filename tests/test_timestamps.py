@@ -1,20 +1,23 @@
 from pytimber import *
 import time
 
+ldb = pytimber.LoggingDB()
 
-ta=toTimeStamp("2015-10-12 12:12:32.453255123")
+time_str = "2015-10-12 12:12:32.453255123"
+print(time_str)
+print('------------------------------------------------------------------------')
 
-unix=int(ta.getTime()/1000.)+ta.getNanos()/1e9
+ta=ldb.toTimestamp(time_str)
+print(ta.toLocaleString())
+print(ta.getTime(), ta.getNanos())
+print('------------------------------------------------------------------------')
 
-time.asctime(time.localtime(unix))
+unix=int(ta.getTime()/1000.0)+ta.getNanos()/1e9
+print(unix)
+print(time.asctime(time.localtime(unix)))
+print('------------------------------------------------------------------------')
 
-tb=toTimeStamp(unix)
-
-ta.getNanos()
-ta.getTime()
-ta.toLocaleString()
-
-tb.getNanos()
-tb.getTime()
-tb.toLocaleString()
-
+tb=ldb.toTimestamp(unix)
+print(tb.toLocaleString())
+print(tb.getTime(), tb.getNanos())
+print('------------------------------------------------------------------------')

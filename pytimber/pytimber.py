@@ -1,4 +1,8 @@
-import os, glob, time, datetime
+import os
+import glob
+import time
+import datetime
+import six
 import logging
 
 import jpype
@@ -10,7 +14,7 @@ Latest version of the standalone jar is availale here:
 """
 
 logging.basicConfig()
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 try:
     # Try to get a lit of .jars from cmmnbuild_dep_manager.
@@ -29,8 +33,8 @@ try:
 except ImportError:
     # Could not import cmmnbuild_dep_manager -- it is probably not
     # installed. Fall back to using the locally bundled .jar file.
-    _moddir=os.path.dirname(__file__)
-    _jar=os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
+    _moddir = os.path.dirname(__file__)
+    _jar = os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
     jpype.startJVM(jpype.getDefaultJVMPath(), '-Djava.class.path={0}'.format(_jar))
@@ -48,41 +52,9 @@ Timestamp=java.sql.Timestamp
 null=org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null)
 
-def toTimestamp(t):
-    if type(t) is str:
-        return Timestamp.valueOf(t)
-    elif type(t) is datetime.datetime:
-        return Timestamp.valueOf(t.strftime("%Y-%m-%d %H:%M:%S"))
-    elif t is None:
-        return None
-    else:
-        sec=int(t)
-        nanos=int((t-sec)*1e9)
-        tt=Timestamp(long(sec*1000))
-        tt.setNanos(nanos)
-        return tt
-
-def toStringList(myArray):
-    myList = java.util.ArrayList()
-    for s in myArray:
-        myList.add(s)
-    return myList
-
-def cleanName(s):
-    if s[0].isdigit():
-        s = '_'+s
-    out = []
-    for ss in s:
-        if ss in ' _;><':
-            out.append('_')
-        else:
-            out.append(ss)
-    return ''.join(out)
-
-source_dict={'mdb' : DataLocationPreferences.MDB_PRO,
-             'ldb' : DataLocationPreferences.LDB_PRO,
-             'all' : DataLocationPreferences.MDB_AND_LDB_PRO
-             }
+source_dict={ 'mdb' : DataLocationPreferences.MDB_PRO,
+              'ldb' : DataLocationPreferences.LDB_PRO,
+              'all' : DataLocationPreferences.MDB_AND_LDB_PRO }
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
@@ -92,6 +64,27 @@ class LoggingDB(object):
         self._md = self._builder.createMetaService()
         self._ts = self._builder.createTimeseriesService()
         self.tree = Hierarchy('root', None, None, self._md)
+
+    def toTimestamp(self, t):
+        if isinstance(t, six.string_types):
+            return Timestamp.valueOf(t)
+        elif type(t) is datetime.datetime:
+            return Timestamp.valueOf(t.strftime("%Y-%m-%d %H:%M:%S.%f"))
+        elif t is None:
+            return None
+        else:
+            tt = datetime.datetime.fromtimestamp(t)
+            ts = Timestamp.valueOf(tt.strftime("%Y-%m-%d %H:%M:%S.%f"))
+            sec=int(t)
+            nanos=int((t-sec)*1e9)
+            ts.setNanos(nanos)
+            return ts
+
+    def toStringList(self, myArray):
+        myList = java.util.ArrayList()
+        for s in myArray:
+            myList.add(s)
+        return myList
 
     def search(self, pattern):
         """
@@ -120,10 +113,10 @@ class LoggingDB(object):
         Wildcard for the pattern is '%'.
         Assumes t1 and t2 to be Java TimeStamp objects
         """
-        if type(pattern_or_list) is str:
+        if isinstance(pattern_or_list, six.string_types):
             types = VariableDataType.ALL
             variables = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern_or_list, types)
-        elif type(pattern_or_list) is list:
+        elif isinstance(pattern_or_list, list):
             variables = self._md.getVariablesWithNameInListofStrings(java.util.Arrays.asList(pattern_or_list))
         else:
             variables = None
@@ -158,8 +151,8 @@ class LoggingDB(object):
 
     def getAligned(self, pattern_or_list, t1, t2,
                         fundamental=None, unixtime=True):
-        ts1 = toTimestamp(t1)
-        ts2 = toTimestamp(t2)
+        ts1 = self.toTimestamp(t1)
+        ts2 = self.toTimestamp(t2)
         out = {}
         master_variable = None
 
@@ -214,8 +207,8 @@ class LoggingDB(object):
         If no pattern if given for the fundamental all the data are returned.
         If a fundamental pattern is provided, the end of the time window as to be explicitely provided.
         """
-        ts1 = toTimestamp(t1)
-        ts2 = toTimestamp(t2)
+        ts1 = self.toTimestamp(t1)
+        ts2 = self.toTimestamp(t2)
         out = {}
 
         # Build variable list
@@ -268,7 +261,18 @@ class Hierarchy(object):
             objs=self.src.getHierachies(1)
         else:
             objs=self.src.getChildHierarchies(self.obj)
-        return dict([(cleanName(hh.hierarchyName),hh) for hh in objs])
+        return dict([(self.cleanName(hh.hierarchyName),hh) for hh in objs])
+
+    def cleanName(self, s):
+        if s[0].isdigit():
+            s = '_'+s
+        out = []
+        for ss in s:
+            if ss in ' _;><':
+                out.append('_')
+            else:
+                out.append(ss)
+        return ''.join(out)
 
     def __getattr__(self,k):
         if k=='src':
