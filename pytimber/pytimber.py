@@ -48,8 +48,10 @@ cern = jpype.JPackage('cern')
 org = jpype.JPackage('org')
 java = jpype.JPackage('java')
 ServiceBuilder = cern.accsoft.cals.extr.client.service.ServiceBuilder
-DataLocationPreferences = cern.accsoft.cals.extr.domain.core.datasource.DataLocationPreferences
-VariableDataType = cern.accsoft.cals.extr.domain.core.constants.VariableDataType
+DataLocationPreferences = \
+        cern.accsoft.cals.extr.domain.core.datasource.DataLocationPreferences
+VariableDataType = \
+        cern.accsoft.cals.extr.domain.core.constants.VariableDataType
 Timestamp = java.sql.Timestamp
 null = org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null)
@@ -60,8 +62,10 @@ source_dict = {
     'all': DataLocationPreferences.MDB_AND_LDB_PRO
 }
 
+
 def test():
     print("OK")
+
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
@@ -101,14 +105,16 @@ class LoggingDB(object):
 
     def getFundamentals(self, t1, t2, fundamental):
         log.info('Querying fundamentals (pattern: {0}):'.format(fundamental))
-        fundamentals = self._md.getFundamentalsInTimeWindowWithNameLikePattern(t1, t2, fundamental)
+        fundamentals = self._md.getFundamentalsInTimeWindowWithNameLikePattern(
+                        t1, t2, fundamental)
         if fundamentals is None:
             log.info('No fundamental found in time window')
         else:
             logfuns = []
             for f in fundamentals:
                 logfuns.append(f)
-            log.info('List of fundamentals found: {0}'.format(', '.join(logfuns)))
+            log.info('List of fundamentals found: {0}'.format(
+                ', '.join(logfuns)))
         return fundamentals
 
     def getVariablesList(self, pattern_or_list, t1, t2):
@@ -118,9 +124,11 @@ class LoggingDB(object):
         """
         if isinstance(pattern_or_list, six.string_types):
             types = VariableDataType.ALL
-            variables = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern_or_list, types)
+            variables = self._md.getVariablesOfDataTypeWithNameLikePattern(
+                    pattern_or_list, types)
         elif isinstance(pattern_or_list, list):
-            variables = self._md.getVariablesWithNameInListofStrings(java.util.Arrays.asList(pattern_or_list))
+            variables = self._md.getVariablesWithNameInListofStrings(
+                    java.util.Arrays.asList(pattern_or_list))
         else:
             variables = None
         return variables
@@ -179,14 +187,17 @@ class LoggingDB(object):
                     logvars.append('{0} (using as master)'.format(v))
                 else:
                     logvars.append(v)
-                log.info('List of variables to be queried: {0}'.format(', '.join(logvars)))
+                log.info('List of variables to be queried: {0}'.format(
+                    ', '.join(logvars)))
 
         # Acquire master dataset
         if fundamental is not None:
-            master_ds = self._ts.getDataInTimeWindowFilteredByFundamentals(master_variable, ts1, ts2, fundamentals)
+            master_ds = self._ts.getDataInTimeWindowFilteredByFundamentals(
+                    master_variable, ts1, ts2, fundamentals)
         else:
             master_ds = self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
-        log.info('Retrieved {0} values for {1} (master)'.format(master_ds.size(), master_name))
+        log.info('Retrieved {0} values for {1} (master)'.format(
+            master_ds.size(), master_name))
 
         # Prepare master dataset for output
         out['timestamps'], out[master_name] = self.processDataset(
@@ -202,9 +213,11 @@ class LoggingDB(object):
             jvar = variables.getVariable(v)
             start_time = time.time()
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
-            log.info('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
+            log.info('Retrieved {0} values for {1}'.format(
+                res.size(), jvar.getVariableName()))
             log.info(time.time()-start_time, "seconds for aqn")
-            out[v] = self.processDataset(res, res.getVariableDataType().toString(), unixtime)[1]
+            out[v] = self.processDataset(
+                       res, res.getVariableDataType().toString(), unixtime)[1]
         return out
 
     def get(self, pattern_or_list, t1, t2=None,
@@ -230,11 +243,13 @@ class LoggingDB(object):
             logvars = []
             for v in variables:
                 logvars.append(v)
-            log.info('List of variables to be queried: {0}'.format(', '.join(logvars)))
+            log.info('List of variables to be queried: {0}'.format(
+                ', '.join(logvars)))
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            self.warn('Unsupported: if filtering by fundamentals you must provide a correct time window')
+            self.warn('Unsupported: if filtering by fundamentals'
+                      'you must provide a correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -245,16 +260,21 @@ class LoggingDB(object):
         for v in variables:
             jvar = variables.getVariable(v)
             if t2 is None:
-                res = [self._ts.getLastDataPriorToTimestampWithinDefaultInterval(jvar, ts1)]
+                res = \
+                  [self._ts.getLastDataPriorToTimestampWithinDefaultInterval(
+                    jvar, ts1)]
                 datatype = res[0].getVariableDataType().toString()
-                log.info('Retrieved {0} values for {1}'.format(1, jvar.getVariableName()))
+                log.info('Retrieved {0} values for {1}'.format(
+                           1, jvar.getVariableName()))
             else:
                 if fundamental is not None:
-                    res = self._ts.getDataInTimeWindowFilteredByFundamentals(jvar, ts1, ts2, fundamentals)
+                    res = self._ts.getDataInTimeWindowFilteredByFundamentals(
+                            jvar, ts1, ts2, fundamentals)
                 else:
                     res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
-                log.info('Retrieved {0} values for {1}'.format(res.size(), jvar.getVariableName()))
+                log.info('Retrieved {0} values for {1}'.format(
+                    res.size(), jvar.getVariableName()))
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
@@ -308,7 +328,8 @@ class Hierarchy(object):
 
     def get_vars(self):
         if self.obj is not None:
-            vvv = self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(self.obj, VariableDataType.ALL)
+            vvv = self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(
+                    self.obj, VariableDataType.ALL)
             return vvv.toString()[1:-1].split(', ')
         else:
             return []
