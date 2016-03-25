@@ -101,7 +101,8 @@ class PageStore(object):
     def __getattr__(self,variable):
         return self.get_var(variable,last=True)
     def delete(self):
-        shutil.rmtree(self.pagedir)
+        if os.path.exists(self.pagedir):
+          shutil.rmtree(self.pagedir)
         os.unlink(self.dbname)
     def store_page(self,variable,idx,rec):
         pageid=self.get_last_pageid()+1
@@ -184,13 +185,13 @@ class PageStore(object):
           self.store_page(variable,idx,rec)
     def merge_page(self,variable,page,idx,rec):
        pidx,prec=page.get_all()
-       self.delete_page(page,keep=False)
+       self.delete_page(page,keep=True)
        nidx,nrec=merge(pidx,prec,idx,rec)
        self.store_page(variable,nidx,nrec)
-    def search(self,variable):
+    def search(self,searchexp="%"):
        cur=self.db.cursor()
-       sql="""SELECT UNIQUE name FROM pages"""
-       return list(execute(sql))
+       sql="""SELECT DISTINCT name FROM pages WHERE name LIKE ?"""
+       return zip(*list(cur.execute(sql,[searchexp])))[0]
     def get_lim(self,variable):
        cur=self.db.cursor()
        sql="""SELECT MIN(idxa),MAX(idxb) FROM PAGES
@@ -200,5 +201,8 @@ class PageStore(object):
     def rebalance(self,variable,size):
        a,b=self.get_lim(variable)
        pages=self.get_pages_all(variable)
+    def info(self):
+       for name in self.search():
+           print name,len(self.get_pages_all(name))
 
 
