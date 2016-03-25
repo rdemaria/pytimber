@@ -131,17 +131,20 @@ class PageStore(object):
         pages=list(cur.execute(sql,[variable]))
         return pages
     def get(self,variable,idxa,idxb):
-        pages=self.get_pages(variable,idxa,idxb)
-        page=Page(self.pagedir,*pages[0])
-        out=[page.get(idxa,idxb)]
-        for res in pages[1:-1]:
+        data={}
+        for name in self.search(variable):
+          pages=self.get_pages(variable,idxa,idxb)
+          page=Page(self.pagedir,*pages[0])
+          out=[page.get(idxa,idxb)]
+          for res in pages[1:-1]:
             page=Page(self.pagedir,*res)
             out.append(page.get_all())
-        if len(pages)>1:
-          page=Page(self.pagedir,*pages[-1])
-          out.append(page.get(idxa,idxb))
-        idx,rec=zip(*out)
-        return concatenate(idx),concatenate(rec)
+          if len(pages)>1:
+            page=Page(self.pagedir,*pages[-1])
+            out.append(page.get(idxa,idxb))
+          idx,rec=zip(*out)
+          data[name]=concatenate(idx),concatenate(rec)
+        return data
     def get_idx(self,variable,idxa,idxb):
         pages=self.get_pages(variable,idxa,idxb)
         page=Page(self.pagedir,*pages[0])
