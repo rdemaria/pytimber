@@ -127,7 +127,7 @@ class PageStore(object):
                FROM pages WHERE name==?
                AND created < datetime("now") AND deleted IS NULL
                ORDER BY idxa"""
-        pages=list(cur.execute(sql,[variable,idxa,idxb]))
+        pages=list(cur.execute(sql,[variable]))
         return pages
     def get(self,variable,idxa,idxb):
         pages=self.get_pages(variable,idxa,idxb)
@@ -161,24 +161,30 @@ class PageStore(object):
            page.delete()
         self.db.commit()
     def store(self,variable,idx,rec):
+        count=len(idx)
+        if count==0 or len(rec)!=count:
+          msg="idx,rec length mismatch %d!=%d"%(len(idx),len(rec))
+          raise ValueError,msg
         idxa=idx[0]
         idxb=idx[-1]
         pages=self.get_pages(variable,idxa,idxb)
         pages=[Page(self.pagedir,*res) for res in pages]
         for page in pages:
-          if idx[0]<page.idxa:
-            cut=idx.searchsorted(page.idxa)
-            self.store_page(variable,idx[:cut],rec[:cut])
-            idx=idx[cut:];rec=rec[cut:]
-          if idx[0]<=page.idxb:
-            cut=idx.searchsorted(page.idxb,side='right')
-            self.merge_page(variable,page,idx[:cut],rec[:cut])
-            idx=idx[cut:];rec=rec[cut:]
+          if len(idx)>0:
+           # if idx[0]<page.idxa:
+           #   cut=idx.searchsorted(page.idxa)
+#          #    self.merge_page(variable,page,idx[:cut],rec[:cut])
+           #   self.store_page(variable,idx[:cut],rec[:cut])
+           #   idx=idx[cut:];rec=rec[cut:]
+            if idx[0]<=page.idxb:
+              cut=idx.searchsorted(page.idxb,side='right')
+              self.merge_page(variable,page,idx[:cut],rec[:cut])
+              idx=idx[cut:];rec=rec[cut:]
         if len(idx)>0:
           self.store_page(variable,idx,rec)
     def merge_page(self,variable,page,idx,rec):
        pidx,prec=page.get_all()
-       self.delete_page(page)
+       self.delete_page(page,keep=False)
        nidx,nrec=merge(pidx,prec,idx,rec)
        self.store_page(variable,nidx,nrec)
     def search(self,variable):
