@@ -164,7 +164,10 @@ class PageStore(object):
         if keep==False:
            page.delete()
         self.db.commit()
-    def store(self,variable,idx,rec):
+    def store(self,data):
+        for variables,(idx,rec) in data:
+            self.store_variable(variable,idx,rec)
+    def store_variable(self,variable,idx,rec):
         count=len(idx)
         if count==0 or len(rec)!=count:
           msg="idx,rec length mismatch %d!=%d"%(len(idx),len(rec))

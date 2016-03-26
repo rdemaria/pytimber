@@ -54,7 +54,7 @@ class Page(object):
            rec=map(np.array,rec)
            lengths=np.array(lengths,dtype='<i8')
            rectypes=[rrr.dtype.str for rrr in rec]
-           if len(rectypes)>1:
+           if len(set(rectypes))>1:
                msg="types mismatch in variable length data: %s"%rectypes
                raise ValueError,msg
            rectype=rectypes[0]
