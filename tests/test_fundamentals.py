@@ -5,4 +5,8 @@ log = pytimber.LoggingDB(source='all')
 
 now = datetime.now()
 fundamental = 'CPS:%:SFTPRO%'
-log.get('CPS.TGM:USER%', now - timedelta(minutes = 10), now, fundamental)
+log.get('CPS.TGM:USER%', now - timedelta(minutes = 10), now,
+        fundamental=fundamental)
+
+
+print(log.searchFundamental('%'),now - timedelta(minutes = 10))

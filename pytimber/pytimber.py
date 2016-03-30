@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# R. De Maria, T. Levens, C. Hernalsteens
+
 import os
 import glob
 import time
@@ -143,6 +145,8 @@ class LoggingDB(object):
                 val = np.array(tt.getMatrixDoubleValues())
             elif datatype == 'VECTORNUMERIC':
                 val = np.array(tt.getDoubleValues())
+            elif datatype == 'VECTORSTRING':
+                val = np.array(tt.getStringValues())
             elif datatype == 'NUMERIC':
                 val = tt.getDoubleValue()
             elif datatype == 'FUNDAMENTAL':
@@ -150,7 +154,7 @@ class LoggingDB(object):
             elif datatype == 'TEXTUAL':
                 val = tt.getVarcharValue()
             else:
-                self.warn('Unsupported datatype, returning the java object')
+                log.warn('Unsupported datatype, returning the java object')
                 val = tt
             datas.append(val)
             tss.append(ts)
@@ -220,6 +224,19 @@ class LoggingDB(object):
                        res, res.getVariableDataType().toString(), unixtime)[1]
         return out
 
+    def searchFundamental(self, fundamental, t1, t2=None):
+        """Search fundamental
+        """
+        ts1 = self.toTimestamp(t1)
+        if t2 is None:
+            t2=time.time()
+        ts2 = self.toTimestamp(t2)
+        fundamentals = self.getFundamentals(ts1, ts2, fundamental)
+        if fundamentals is not None:
+            return list(fundamentals.getVariableNames())
+        else:
+            return []
+
     def get(self, pattern_or_list, t1, t2=None,
             fundamental=None, unixtime=True):
         """Query the database for a list of variables or for variables whose
@@ -237,7 +254,7 @@ class LoggingDB(object):
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
         if len(variables) == 0:
-            log.warning('No variables found.')
+            log.warn('No variables found.')
             return {}
         else:
             logvars = []
@@ -248,7 +265,7 @@ class LoggingDB(object):
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            self.warn('Unsupported: if filtering by fundamentals'
+            log.warn('Unsupported: if filtering by fundamentals'
                       'you must provide a correct time window')
             return {}
         if fundamental is not None:
@@ -286,6 +303,9 @@ class Hierarchy(object):
         self.varsrc = varsrc
         if src is not None:
             self.src = src
+        for vvv in self.get_vars():
+            if len(vvv)>0:
+              setattr(self,self.cleanName(vvv),vvv)
 
     def _get_childs(self):
         if self.obj is None:
@@ -299,7 +319,7 @@ class Hierarchy(object):
             s = '_'+s
         out = []
         for ss in s:
-            if ss in ' _;></':
+            if ss in ' _;></:.':
                 out.append('_')
             else:
                 out.append(ss)
@@ -316,7 +336,8 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
-        return sorted(self._dict.keys())
+        vvv=sorted([self.cleanName(i) for i in self.get_vars() if len(i)>0])
+        return sorted(self._dict.keys())+vvv
 
     def __repr__(self):
         if self.obj is None:
