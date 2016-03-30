@@ -4,8 +4,13 @@ Python wrapping of CALS API.
 
 ## Installation
 
+Install a python distribution (e.g. anaconda)
+
 ```sh
+pip install --upgrade pip
+pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
 pip install git+https://github.com/rdemaria/pytimber.git
+pip install git+https://github.com/rdemaria/pagestore.git
 ```
 
 ## Usage
