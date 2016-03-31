@@ -98,7 +98,7 @@ class PageStore(object):
         return ret
     def get_last_pageid(self):
         cur=self.db.cursor()
-        lastid=list(cur.execute("SELECT MAX(pageid) FROM pages"))[0][0]
+        lastid=cur.execute("SELECT MAX(pageid) FROM pages").fetchone()[0]
         if lastid is None:
             return 0
         return lastid
@@ -109,14 +109,15 @@ class PageStore(object):
           shutil.rmtree(self.pagedir)
         os.unlink(self.dbname)
     def store_page(self,variable,idx,rec):
-        print("Store page %s"%variable)
+        #print("Store page %s"%variable)
         pageid=self.get_last_pageid()+1
         page=Page.from_data(idx,rec,self.pagedir,pageid)
         sql="""INSERT INTO pages VALUES
                (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
         cur=self.db.cursor()
         cur.execute(sql,[variable]+page._tolist()+[None])
-        self.db.commit()
+        cur.close()
+        #self.db.commit()
     def get_pages(self,variable,idxa=None,idxb=None):
         cur=self.db.cursor()
         idxa,idxb=self.get_lim(variable,idxa,idxb)
@@ -226,10 +227,10 @@ class PageStore(object):
        cur=self.db.cursor()
        if idxa is None:
          sql="""SELECT MIN(idxa) FROM PAGES WHERE name==?"""
-         idxa=cur.execute(sql,[variable]).next()[0]
+         idxa=cur.execute(sql,[variable]).fetchone()[0]
        if idxb is None:
          sql="""SELECT MAX(idxb) FROM PAGES WHERE name==?"""
-         idxb=cur.execute(sql,[variable]).next()[0]
+         idxb=cur.execute(sql,[variable]).fetchone()[0]
        return idxa,idxb
     def rebalance(self,variables,maxpagesize):
        for variable in self.search(variables):
@@ -241,13 +242,11 @@ class PageStore(object):
            page=Page(self.pagedir,*pagedata)
            if acc!=0 or page.recsize<maxpagesize/2:
              acc+=page.recsize
+             tomerge.append(page)
              if acc> maxpagesize:
                self.merge_pages(variable,tomerge)
-               acc=0
-               tomerge=[]
-             else:
-               tomerge.append(page)
-       if len(tomerge)>0:
+               acc=0; tomerge=[]
+       if len(tomerge)>1:
            self.merge_pages(variable,tomerge)
        return self
     def get_info(self,variable=None):
@@ -257,17 +256,18 @@ class PageStore(object):
          suf+=' WHERE name=="%s"'%variable
          out=''
        else:
-         nvars=cur.execute("SELECT COUNT(DISTINCT name) FROM pages").next()[0]
+         nvars=cur.execute("SELECT COUNT(DISTINCT name) FROM pages").fetchone()[0]
          out='%s variables, '%(human_readable(nvars))
-       npages=cur.execute("SELECT COUNT(*)"+suf).next()[0]
-       nrecords=cur.execute("SELECT SUM(count)"+suf).next()[0]
-       nsize=cur.execute("SELECT SUM(recsize)"+suf).next()[0]
-       asize=cur.execute("SELECT AVG(recsize)"+suf).next()[0]
+       npages=cur.execute("SELECT COUNT(*)"+suf).fetchone()[0]
+       nrecords=cur.execute("SELECT SUM(count)"+suf).fetchone()[0]
+       nsize=cur.execute("SELECT SUM(recsize)"+suf).fetchone()[0]
+       asize=cur.execute("SELECT AVG(recsize)"+suf).fetchone()[0]
        if npages>0:
          data=tuple(map(human_readable,(npages,nrecords,nsize,asize)))
          out+=("%s pages, %s records, %sB total, %sB/page"%data)
        return out
     def merge_pages(self,variable,pages):
+        print "Merging %d pages"%len(pages)
         out=[page.get_all() for page in pages]
         idxlist,reclist=zip(*out)
         self.store_page(variable,concatenate(idxlist),concatenate(reclist))
