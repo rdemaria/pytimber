@@ -94,9 +94,10 @@ class Page(object):
         cc=self.count
         reclen=self.reclen
         if reclen==-1:
-            lengths=fromfile(self.lenpath,dtype='<i8',count=cc)
+            lengths=np.fromfile(self.lenpath,dtype='<i8',count=cc)
             recfh=open(self.recpath)
-            rec=[np.fromfile(fh,dtype=self.rectype,count=cc) for cc in lengths]
+            rec=[np.fromfile(recfh,dtype=self.rectype,count=cc)
+                                                  for cc in lengths]
             recfh.close()
         elif reclen==0:
             rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
@@ -128,10 +129,21 @@ class Page(object):
         a=idx.searchsorted(idxa,side='left')
         b=idx.searchsorted(idxb,side='right')
         return idx[a:b:skip]
-    def count(self,idxa,idxb):
-        pass
-    def get_recsize(self,idxa,idxb):
-        pass
+    def get_range(self,idxa,idxb):
+        a=idx.searchsorted(idxa,side='left')
+        b=idx.searchsorted(idxb,side='right')
+        return a,b
+    def get_count(self,idxa,idxb,skip=1):
+        return len(self.get_idx(idxa,idxb,skip=skip))
+    def get_recsize(self,idxa,idxb,skip=1):
+        if self.reclen>=0:
+            itemsize=self.recsize/self.count
+            return self.count(idxa,idxb,skip=skip)*itemsize
+        else:
+           a,b=self.get_range(idxa,idxb)
+           items=np.sum(np.fromfile(self.lenpath,
+                                     dtype='<i8',count=cc)[a:b:skip])
+           return items*np.dtype(self.rectype).itemsize
     def check(self):
         sha=hashlib.md5()
         sha=hashfile(sha,self.idxpath)
@@ -141,6 +153,8 @@ class Page(object):
           sha=hashfile(sha,self.recpath+'.gz')
         else:
           sha=hashfile(sha,self.recpath)
+        res=sha.hexdigest()==self.checksum
+        if res==False:
+            print("Checksum failsed for page %s"%self.pageid)
         return sha.hexdigest()==self.checksum
-
 

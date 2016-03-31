@@ -91,7 +91,8 @@ def combine_data(data,vtype=float,ttype=float):
   for k in data.keys():
     t,v=data[k]
     t=_np.array(t,dtype=ttype)
-    v=_np.array(v,dtype=vtype)
+    v=[_np.array(vv,dtype=vtype) for vv in v]
+    v=_np.array(v)
     if v.shape[-1]==1:
       v=v.reshape(v.shape[0])
     data[k]=[t,v]
