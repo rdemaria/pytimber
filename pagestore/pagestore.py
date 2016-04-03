@@ -35,15 +35,19 @@ def human_readable(size,suffixes=' kMGTEZ'):
 
 
 class PageStore(object):
-    def __init__(self,dbname,pagedir=None):
+    def __init__(self,dbname,pagedir=None,maxpagesize=0):
         self.dbname=dbname
         try:
-            self.db=sqlite3.connect(dbname)
+            self.db=sqlite3.connect(dbname,isolation_level="IMMEDIATE")
         except sqlite3.Error:
-          print 'Error creating database %s'%dbname
+          print('Error creating database %s'%dbname)
           sys.exit(1)
-        cur=self.db.cursor()
-        sql="""CREATE TABLE IF NOT EXISTS pages(
+        self.create_db()
+        self.set_pagedir(pagedir)
+        self.set_var('maxpagesize',maxpagesize)
+    def create_db(self):
+        sql="""
+        CREATE TABLE IF NOT EXISTS pages(
               name   STRING,
               pageid INTEGER,
               idxtype STRING,
@@ -56,30 +60,30 @@ class PageStore(object):
               comp    STRING,
               created NUMERIC,
               checksum STRING,
-              deleted NUMERIC);"""
-        cur.execute(sql)
-        sql="""CREATE TABLE IF NOT EXISTS conf(
+              deleted NUMERIC);
+        CREATE INDEX IF NOT EXISTS page_index ON pages(pageid);
+        CREATE TABLE IF NOT EXISTS conf(
               variable STRING,
               value   STRING,
               timestamp STRING);"""
-        cur.execute(sql)
-        cur.close()
-        if pagedir is None:
-            self.pagedir=self.get_var('pagedir')
-        else:
-            self.set_pagedir(pagedir)
+        self.db.executescript(sql)
         self.db.commit()
+        return self
     def set_var(self,name,value):
-        cur=self.db.cursor()
-        sql="INSERT INTO conf VALUES (?,?,datetime('now'))"
-        cur.execute(sql,(name,value))
-        cur.close()
-        #setattr(self,name,value)
+        if value is None:
+            value=self.get_var(name)
+        else:
+            cur=self.db.cursor()
+            sql="INSERT INTO conf VALUES (?,?,datetime('now'))"
+            cur.execute(sql,(name,value))
+        setattr(self,name,value)
+        self.db.commit()
     def set_pagedir(self,dirpath):
         if not os.path.isdir(dirpath):
             os.mkdir(dirpath)
         dirpath=os.path.abspath(dirpath)
         self.set_var('pagedir',dirpath)
+        self.db.commit()
     def get_var(self,name,last=True):
         cur=self.db.cursor()
         sql="""SELECT value,timestamp FROM conf
@@ -114,17 +118,15 @@ class PageStore(object):
         page=Page.from_data(idx,rec,self.pagedir,pageid)
         sql="""INSERT INTO pages VALUES
                (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-        cur=self.db.cursor()
-        cur.execute(sql,[variable]+page._tolist()+[None])
-        cur.close()
-        #self.db.commit()
+        self.db.execute(sql,[variable]+page._tolist()+[None])
+        self.db.commit()
     def get_pages(self,variable,idxa=None,idxb=None):
         cur=self.db.cursor()
         idxa,idxb=self.get_lim(variable,idxa,idxb)
         sql="""SELECT pageid,idxtype,count,idxa,idxb,
                       rectype,reclen,recsize,comp,checksum
                FROM pages WHERE name==? AND idxb>=? AND idxa<=?
-               AND created < strftime('%s','now') AND deleted IS NULL
+               AND deleted IS NULL
                ORDER BY idxa"""
         pages=list(cur.execute(sql,[variable,idxa,idxb]))
         return pages
@@ -133,16 +135,19 @@ class PageStore(object):
         for variable in self.search(variables):
           idxa,idxb=self.get_lim(variable,idxa,idxb)
           pages=self.get_pages(variable,idxa,idxb)
-          page=Page(self.pagedir,*pages[0])
-          out=[page.get(idxa,idxb)]
-          for res in pages[1:-1]:
-            page=Page(self.pagedir,*res)
-            out.append(page.get_all())
-          if len(pages)>1:
-            page=Page(self.pagedir,*pages[-1])
-            out.append(page.get(idxa,idxb))
-          idx,rec=zip(*out)
-          data[variable]=concatenate(idx),concatenate(rec)
+          if len(pages)>0:
+            page=Page(self.pagedir,*pages[0],check=True)
+            out=[page.get(idxa,idxb)]
+            for res in pages[1:-1]:
+              page=Page(self.pagedir,*res,check=True)
+              out.append(page.get_all())
+            if len(pages)>1:
+              page=Page(self.pagedir,*pages[-1],check=True)
+              out.append(page.get(idxa,idxb))
+            idx,rec=zip(*out)
+            data[variable]=concatenate(idx),concatenate(rec)
+          else:
+            data[variable]=[],[]
         return data
     def get_idx(self,variable,idxa=None,idxb=None):
         idxa,idxb=self.get_lim(variable,idxa,idxb)
@@ -182,13 +187,9 @@ class PageStore(object):
         self.db.commit()
         if keep is False:
            page.delete()
-    def store(self,data,overwrite=True):
+    def store(self,data):
         for variable,(idx,rec) in data.items():
-            if overwrite is True:
-              self.store_variable(variable,idx,rec)
-            else:
-              if len(idx)!=self.count(variable,idx[0],idx[-1]):
-                self.store_variable(variable,idx,rec)
+            self.store_variable(variable,idx,rec)
     def store_variable(self,variable,idx,rec):
         count=len(idx)
         if count>0:
@@ -212,7 +213,8 @@ class PageStore(object):
                 idx=idx[cut:];rec=rec[cut:]
           if len(idx)>0:
              self.store_page(variable,idx,rec)
-        #self.rebalance(variable,2e7)
+        if self.maxpagesize>0:
+           self.rebalance(variable,self.maxpagesize)
     def merge_page(self,variable,page,idx,rec):
        pidx,prec=page.get_all()
        self.delete_page(page,keep=False)
@@ -267,7 +269,7 @@ class PageStore(object):
          out+=("%s pages, %s records, %sB total, %sB/page"%data)
        return out
     def merge_pages(self,variable,pages):
-        print "Merging %d pages"%len(pages)
+        print("Merging %d pages"%len(pages))
         out=[page.get_all() for page in pages]
         idxlist,reclist=zip(*out)
         self.store_page(variable,concatenate(idxlist),concatenate(reclist))

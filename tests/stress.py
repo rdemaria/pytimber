@@ -1,26 +1,35 @@
+import time
+
 from pagestore import *
 from numpy import *
 
 from numpy.random import *
 
 def mkrnd(calls=10,rng=100,test=True,pagedir='testdata'):
-    db=PageStore('test.db',pagedir=pagedir)
+    db=PageStore('test.db',pagedir=pagedir,maxpagesize=1e6)
+    totrec={}
     for cc in range(calls):
       a=randint(rng)
       b=a+randint(rng)
       step=randint(1,3)
       idx=arange(a,b+3,step)
       rec=rand(len(idx))
-      print cc,a,b,step
-      db.store('var',idx,rec)
+      print db.get_info()
+      db.store({'var':(idx,rec)})
+      totrec.update(zip(idx,rec))
       if test:
-        for i,r in zip(idx,rec):
-          [[ii],[rr]]=db.get('var',i,i)
-          assert ii==i
-          assert rr==r
+       for i,r in sorted(totrec.items()):
+        out=db.get('var',i,i)['var']
+        try:
+          [[ii],[rr]]=out
+        except ValueError:
+          print "Error"
+          print out
     return db
 
-db=mkrnd(30,100,test=True)
+db=mkrnd(5,300,test=True)
+
+db.get('var',0,1000)['var']
 
 db.delete()
 

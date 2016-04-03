@@ -21,7 +21,7 @@ def hashfile(sha,fpath,BUF_SIZE = 65536):
 class Page(object):
     def __init__(self,pagedir,pageid,
                       idxtype,count,idxa,idxb,
-                      rectype,reclen,recsize,comp,checksum):
+                      rectype,reclen,recsize,comp,checksum,check=False):
        self.pageid=pageid
        self.pagedir=pagedir
        self.rectype=rectype
@@ -39,7 +39,7 @@ class Page(object):
        self.idxpath=os.path.join(base+'.idx')
        if self.reclen == -1:
          self.lenpath=os.path.join(base+'.len')
-       if self.checksum is not None:
+       if check and self.checksum is not None:
          assert self.check()
     @classmethod
     def from_data(cls,idx,rec,pagedir,pageid,comp=None):
