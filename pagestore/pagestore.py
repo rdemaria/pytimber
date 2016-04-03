@@ -35,7 +35,10 @@ def human_readable(size,suffixes=' kMGTEZ'):
 
 
 class PageStore(object):
-    def __init__(self,dbname,pagedir=None,maxpagesize=0):
+    def __repr__(self):
+        fmt="PageStore(%r,pagedir=%r,maxpagesize=%r)"
+        return fmt%(self.dbname,self.pagedir,self.maxpagesize)
+    def __init__(self,dbname,pagedir=None,maxpagesize=None):
         self.dbname=dbname
         try:
             self.db=sqlite3.connect(dbname,isolation_level="IMMEDIATE")
@@ -44,7 +47,7 @@ class PageStore(object):
           sys.exit(1)
         self.create_db()
         self.set_pagedir(pagedir)
-        self.set_var('maxpagesize',maxpagesize)
+        self.set_var('maxpagesize',maxpagesize,0)
     def create_db(self):
         sql="""
         CREATE TABLE IF NOT EXISTS pages(
@@ -69,31 +72,33 @@ class PageStore(object):
         self.db.executescript(sql)
         self.db.commit()
         return self
-    def set_var(self,name,value):
+    def set_var(self,name,value,default=None):
         if value is None:
             value=self.get_var(name)
-        else:
-            cur=self.db.cursor()
-            sql="INSERT INTO conf VALUES (?,?,datetime('now'))"
-            cur.execute(sql,(name,value))
+        if value is None:
+            value=default
+        cur=self.db.cursor()
+        sql="INSERT INTO conf VALUES (?,?,datetime('now'))"
+        cur.execute(sql,(name,value))
         setattr(self,name,value)
         self.db.commit()
+        return value
     def set_pagedir(self,dirpath):
+        if dirpath is None:
+            dirpath=self.get_var('pagedir','data')
         if not os.path.isdir(dirpath):
             os.mkdir(dirpath)
         dirpath=os.path.abspath(dirpath)
         self.set_var('pagedir',dirpath)
-        self.db.commit()
-    def get_var(self,name,last=True):
+    def get_var(self,name,default=None):
         cur=self.db.cursor()
-        sql="""SELECT value,timestamp FROM conf
-               WHERE variable=? ORDER BY timestamp"""
-        ret=list(cur.execute(sql,(name,)))
-        if last:
-            if len(ret)>0:
-              return ret[-1][0]
-            else:
-              raise AttributeError
+        sql="""SELECT value FROM conf
+               WHERE variable=? ORDER BY timestamp DESC LIMIT 1"""
+        ret=cur.execute(sql,(name,)).fetchone()
+        if ret:
+            return ret[0]
+        else:
+            return default
     def get_vars(self):
         cur=self.db.cursor()
         sql="""SELECT * FROM conf
@@ -106,8 +111,6 @@ class PageStore(object):
         if lastid is None:
             return 0
         return lastid
-    def __getattr__(self,variable):
-        return self.get_var(variable,last=True)
     def delete(self):
         if os.path.exists(self.pagedir):
           shutil.rmtree(self.pagedir)
@@ -133,22 +136,26 @@ class PageStore(object):
     def get(self,variables,idxa=None,idxb=None):
         data={}
         for variable in self.search(variables):
-          idxa,idxb=self.get_lim(variable,idxa,idxb)
-          pages=self.get_pages(variable,idxa,idxb)
-          if len(pages)>0:
-            page=Page(self.pagedir,*pages[0],check=True)
-            out=[page.get(idxa,idxb)]
-            for res in pages[1:-1]:
-              page=Page(self.pagedir,*res,check=True)
-              out.append(page.get_all())
-            if len(pages)>1:
-              page=Page(self.pagedir,*pages[-1],check=True)
-              out.append(page.get(idxa,idxb))
-            idx,rec=zip(*out)
-            data[variable]=concatenate(idx),concatenate(rec)
-          else:
-            data[variable]=[],[]
+            data[variable]=self.get_variable(variable,idxa=idxa,idxb=idxb)
         return data
+    def get_variable(self,variable,idxa=None,idxb=None):
+        idxa,idxb=self.get_lim(variable,idxa,idxb)
+        pages=self.get_pages(variable,idxa,idxb)
+        if len(pages)>0:
+          page=Page(self.pagedir,*pages[0],check=True)
+          out=[page.get(idxa,idxb)]
+          for res in pages[1:-1]:
+            page=Page(self.pagedir,*res,check=True)
+            out.append(page.get_all())
+          if len(pages)>1:
+            page=Page(self.pagedir,*pages[-1],check=True)
+            out.append(page.get(idxa,idxb))
+          idx,rec=zip(*out)
+          idx=concatenate(idx)
+          rec=concatenate(rec)
+        else:
+          idx=[];rec=[]
+        return idx,rec
     def get_idx(self,variable,idxa=None,idxb=None):
         idxa,idxb=self.get_lim(variable,idxa,idxb)
         pages=self.get_pages(variable,idxa,idxb)
@@ -192,6 +199,7 @@ class PageStore(object):
             self.store_variable(variable,idx,rec)
     def store_variable(self,variable,idx,rec):
         count=len(idx)
+        idx=np.array(idx)
         if count>0:
           if  len(rec)!=count:
             msg="idx,rec length mismatch %d!=%d"%(len(idx),len(rec))

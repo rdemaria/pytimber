@@ -50,7 +50,13 @@ class Page(object):
        lengths=[len(rrr) if hasattr(rrr,'__len__') else 0 for rrr in rec]
        if len(set(lengths))>1:
            reclen=-1
-           rec=map(np.array,rec)
+           out=[]
+           for rrr in rec:
+               rrr=np.array(rrr)
+               if rrr.ndim==0:
+                   rrr=np.array([rrr]).view('S1')
+               out.append(rrr)
+           rec=out
            lengths=np.array(lengths,dtype='<i8')
            rectypes=[rrr.dtype.str for rrr in rec]
            if len(set(rectypes))>1:
@@ -59,8 +65,11 @@ class Page(object):
            rectype=rectypes[0]
            recsize=sum(lengths)*rec[0].dtype.itemsize
        else:
-           reclen=lengths[0]
            rec=np.array(rec)
+           if rec.ndim==1:
+               reclen=0
+           else:
+              reclen=rec.shape[1]
            recsize=rec.nbytes
            rectype=rec.dtype.str
        idx=np.array(idx)
@@ -98,6 +107,8 @@ class Page(object):
             rec=[np.fromfile(recfh,dtype=self.rectype,count=cc)
                                                   for cc in lengths]
             recfh.close()
+            if 'S' in self.rectype:
+                rec=[rrr.tostring() for rrr in rec]
         elif reclen==0:
             rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
         else:

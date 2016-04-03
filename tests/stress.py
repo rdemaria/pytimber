@@ -5,8 +5,8 @@ from numpy import *
 
 from numpy.random import *
 
-def mkrnd(calls=10,rng=100,test=True,pagedir='testdata'):
-    db=PageStore('test.db',pagedir=pagedir,maxpagesize=1e6)
+def mkrnd(calls=10,rng=100,test=True):
+    db=PageStore('test.db',maxpagesize=100)
     totrec={}
     for cc in range(calls):
       a=randint(rng)
