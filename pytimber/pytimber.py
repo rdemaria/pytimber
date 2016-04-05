@@ -96,13 +96,15 @@ class LoggingDB(object):
             ts.setNanos(nanos)
             return ts
 
-    def fromTimestamp(self, ts):
+    def fromTimestamp(self, ts, unixtime):
         if ts is None:
             return None
         else:
-            return datetime.datetime.fromtimestamp(
-                ts.fastTime / 1000.0 + ts.getNanos() / 1.0e9
-            )
+            t = ts.fastTime / 1000.0 + ts.getNanos() / 1.0e9
+            if unixtime:
+                return t
+            else:
+                return datetime.datetime.fromtimestamp(t)
 
     def toStringList(self, myArray):
         myList = java.util.ArrayList()
@@ -150,7 +152,7 @@ class LoggingDB(object):
         datas = []
         tss = []
         for tt in dataset:
-            ts = self.fromTimestamp(tt.getStamp())
+            ts = self.fromTimestamp(tt.getStamp(), unixtime)
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues())
             elif datatype == 'VECTORNUMERIC':
@@ -168,8 +170,6 @@ class LoggingDB(object):
                 val = tt
             datas.append(val)
             tss.append(ts)
-        if not unixtime:
-            tss = list(map(datetime.datetime.fromtimestamp, tss))
         tss = np.array(tss)
         datas = np.array(datas)
         return (tss, datas)
@@ -305,7 +305,7 @@ class LoggingDB(object):
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
-    def getLHCFillData(self, fill_number=None):
+    def getLHCFillData(self, fill_number=None, unixtime=True):
         """Gets times and beam modes for a particular LHC fill.
         Parameter fill_number can be an integer to get a particular fill or
         None to get the last completed fill.
@@ -322,15 +322,17 @@ class LoggingDB(object):
         else:
             return {
                 'fillNumber': data.getFillNumber(),
-                'startTime': self.fromTimestamp(data.getStartTime()),
-                'endTime': self.fromTimestamp(data.getEndTime()),
+                'startTime': self.fromTimestamp(data.getStartTime(), unixtime),
+                'endTime': self.fromTimestamp(data.getEndTime(), unixtime),
                 'beamModes': {mode.getBeamModeValue().toString(): {
-                    'startTime': self.fromTimestamp(mode.getStartTime()),
-                    'endTime': self.fromTimestamp(mode.getEndTime())
+                    'startTime':
+                        self.fromTimestamp(mode.getStartTime(), unixtime),
+                    'endTime':
+                        self.fromTimestamp(mode.getEndTime(), unixtime)
                 } for mode in data.getBeamModes()}
             }
 
-    def getLHCFillsByTime(self, t1, t2, beam_modes=None):
+    def getLHCFillsByTime(self, t1, t2, beam_modes=None, unixtime=True):
         """Returns a list of the fills between t1 and t2.
         Optional parameter beam_modes allows filtering by beam modes.
         """
@@ -365,7 +367,10 @@ class LoggingDB(object):
                 )
             )
 
-        return [self.getLHCFillData(fill) for fill in fills.getFillNumbers()]
+        return [
+            self.getLHCFillData(fill, unixtime)
+            for fill in fills.getFillNumbers()
+        ]
 
 
 class Hierarchy(object):
