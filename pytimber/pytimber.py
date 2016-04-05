@@ -317,15 +317,18 @@ class LoggingDB(object):
         else:
             data = self._FillService.getLastCompletedLHCFillAndBeamModes()
 
-        return {
-            'fillNumber': data.getFillNumber(),
-            'startTime': self.fromTimestamp(data.getStartTime()),
-            'endTime': self.fromTimestamp(data.getEndTime()),
-            'beamModes': {mode.getBeamModeValue().toString(): {
-                'startTime': self.fromTimestamp(mode.getStartTime()),
-                'endTime': self.fromTimestamp(mode.getEndTime())
-            } for mode in data.getBeamModes()}
-        }
+        if data is None:
+            return None
+        else:
+            return {
+                'fillNumber': data.getFillNumber(),
+                'startTime': self.fromTimestamp(data.getStartTime()),
+                'endTime': self.fromTimestamp(data.getEndTime()),
+                'beamModes': {mode.getBeamModeValue().toString(): {
+                    'startTime': self.fromTimestamp(mode.getStartTime()),
+                    'endTime': self.fromTimestamp(mode.getEndTime())
+                } for mode in data.getBeamModes()}
+            }
 
     def getLHCFillsByTime(self, t1, t2, beam_modes=None):
         """Returns a list of the fills between t1 and t2.
