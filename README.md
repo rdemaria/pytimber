@@ -72,3 +72,7 @@ t1 = t2 - datetime.timedelta(hours=48)
 fills = ldb.getLHCFillsByTime(t1, t2, beam_modes="RAMP")
 print([f['fillNumber'] for f in fills])
 ```
+
+By default all times are returned as Unix timestamps. If you pass
+`unixtime=False` to `get()`, `getAligned()`, `getLHCFillData()` or
+`getLHCFillsByTime()` then `datetime` objects are returned instead.
