@@ -57,6 +57,8 @@ VariableDataType = \
 Timestamp = java.sql.Timestamp
 null = org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null)
+BeamModeValue = \
+    cern.accsoft.cals.extr.domain.core.constants.BeamModeValue
 
 source_dict = {
     'mdb': DataLocationPreferences.MDB_PRO,
@@ -76,12 +78,13 @@ class LoggingDB(object):
         self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
         self._md = self._builder.createMetaService()
         self._ts = self._builder.createTimeseriesService()
+        self._FillService = FillService = self._builder.createLHCFillService()
         self.tree = Hierarchy('root', None, None, self._md)
 
     def toTimestamp(self, t):
         if isinstance(t, six.string_types):
             return Timestamp.valueOf(t)
-        elif type(t) is datetime.datetime:
+        elif isinstance(t, datetime.datetime):
             return Timestamp.valueOf(t.strftime("%Y-%m-%d %H:%M:%S.%f"))
         elif t is None:
             return None
@@ -92,6 +95,14 @@ class LoggingDB(object):
             nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
             return ts
+
+    def fromTimestamp(self, ts):
+        if ts is None:
+            return None
+        else:
+            return datetime.datetime.fromtimestamp(
+                ts.fastTime / 1000.0 + ts.getNanos() / 1.0e9
+            )
 
     def toStringList(self, myArray):
         myList = java.util.ArrayList()
@@ -139,8 +150,7 @@ class LoggingDB(object):
         datas = []
         tss = []
         for tt in dataset:
-            ts = tt.getStamp()
-            ts = ts.fastTime/1000.+ts.getNanos()/1e9
+            ts = self.fromTimestamp(tt.getStamp())
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues())
             elif datatype == 'VECTORNUMERIC':
@@ -294,6 +304,65 @@ class LoggingDB(object):
                     res.size(), jvar.getVariableName()))
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
+
+    def getLHCFillData(self, fill_number=None):
+        """Gets times and beam modes for a particular LHC fill.
+        Parameter fill_number can be an integer to get a particular fill or
+        None to get the last completed fill.
+        """
+        if isinstance(fill_number, int):
+            data = self._FillService.getLHCFillAndBeamModesByFillNumber(
+                fill_number
+            )
+        else:
+            data = self._FillService.getLastCompletedLHCFillAndBeamModes()
+
+        return {
+            'fillNumber': data.getFillNumber(),
+            'startTime': self.fromTimestamp(data.getStartTime()),
+            'endTime': self.fromTimestamp(data.getEndTime()),
+            'beamModes': {mode.getBeamModeValue().toString(): {
+                'startTime': self.fromTimestamp(mode.getStartTime()),
+                'endTime': self.fromTimestamp(mode.getEndTime())
+            } for mode in data.getBeamModes()}
+        }
+
+    def getLHCFillsByTime(self, t1, t2, beam_modes=None):
+        """Returns a list of the fills between t1 and t2.
+        Optional parameter beam_modes allows filtering by beam modes.
+        """
+        ts1 = self.toTimestamp(t1)
+        ts2 = self.toTimestamp(t2)
+
+        if beam_modes is None:
+            fills = self._FillService.getLHCFillsAndBeamModesInTimeWindow(
+                ts1, ts2
+            )
+        else:
+            if isinstance(beam_modes, str):
+                beam_modes = beam_modes.split(",")
+
+            valid_beam_modes = [
+                mode
+                for mode in beam_modes
+                if BeamModeValue.isBeamModeValue(mode)
+            ]
+
+            if len(valid_beam_modes) == 0:
+                raise ValueError('no valid beam modes found')
+
+            java_beam_modes = BeamModeValue.parseBeamModes(
+                ",".join(valid_beam_modes)
+            )
+
+            fills = (
+                self._FillService
+                .getLHCFillsAndBeamModesInTimeWindowContainingBeamModes(
+                    ts1, ts2, java_beam_modes
+                )
+            )
+
+        return [self.getLHCFillData(fill) for fill in fills.getFillNumbers()]
 
 
 class Hierarchy(object):
