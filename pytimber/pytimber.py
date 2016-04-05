@@ -239,7 +239,7 @@ class LoggingDB(object):
         """
         ts1 = self.toTimestamp(t1)
         if t2 is None:
-            t2=time.time()
+            t2 = time.time()
         ts2 = self.toTimestamp(t2)
         fundamentals = self.getFundamentals(ts1, ts2, fundamental)
         if fundamentals is not None:
@@ -276,7 +276,7 @@ class LoggingDB(object):
         # Fundamentals
         if fundamental is not None and ts2 is None:
             log.warn('Unsupported: if filtering by fundamentals'
-                      'you must provide a correct time window')
+                     'you must provide a correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -373,8 +373,8 @@ class Hierarchy(object):
         if src is not None:
             self.src = src
         for vvv in self.get_vars():
-            if len(vvv)>0:
-              setattr(self,self.cleanName(vvv),vvv)
+            if len(vvv) > 0:
+                setattr(self, self.cleanName(vvv), vvv)
 
     def _get_childs(self):
         if self.obj is None:
@@ -405,8 +405,8 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
-        vvv=sorted([self.cleanName(i) for i in self.get_vars() if len(i)>0])
-        return sorted(self._dict.keys())+vvv
+        v = sorted([self.cleanName(i) for i in self.get_vars() if len(i) > 0])
+        return sorted(self._dict.keys()) + v
 
     def __repr__(self):
         if self.obj is None:
