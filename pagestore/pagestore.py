@@ -194,6 +194,10 @@ class PageStore(object):
         self.db.commit()
         if keep is False:
            page.delete()
+    def delete_variable(self,variable):
+        for  page in self.get_pages(variable):
+          page=Page(self.pagedir,page)
+          self.delete_page(page)
     def store(self,data):
         for variable,(idx,rec) in data.items():
             self.store_variable(variable,idx,rec)
