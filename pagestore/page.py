@@ -54,6 +54,8 @@ class Page(object):
            for rrr in rec:
                rrr=np.array(rrr)
                if rrr.ndim==0:
+                   rrr.reshape([1])
+               if 'S' in rrr.dtype.str:
                    rrr=np.array([rrr]).view('S1')
                out.append(rrr)
            rec=out

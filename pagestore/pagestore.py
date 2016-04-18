@@ -120,7 +120,7 @@ class PageStore(object):
         pageid=self.get_last_pageid()+1
         page=Page.from_data(idx,rec,self.pagedir,pageid)
         sql="""INSERT INTO pages VALUES
-               (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+             (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
         self.db.execute(sql,[variable]+page._tolist()+[None])
         self.db.commit()
     def get_pages(self,variable,idxa=None,idxb=None):
@@ -196,7 +196,7 @@ class PageStore(object):
            page.delete()
     def delete_variable(self,variable):
         for  page in self.get_pages(variable):
-          page=Page(self.pagedir,page)
+          page=Page(self.pagedir,*page)
           self.delete_page(page)
     def store(self,data):
         for variable,(idx,rec) in data.items():
