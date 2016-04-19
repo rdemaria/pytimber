@@ -287,6 +287,16 @@ class PageStore(object):
         self.store_page(variable,concatenate(idxlist),concatenate(reclist))
         for page in pages:
           self.delete_page(page,keep=False)
+    def split_pages(self,variable,maxsize):
+       for pagedata in self.get_pages(variable):
+           page=Page(self.pagedir,*pagedata)
+           chunks=int(page.recsize/maxsize)
+           step=int(page.count/chunks)
+           print "Splitting in %d pages"%chunk
+           for i in range(0,page.count,step):
+               idx,rec=page.get_all()
+               self.store_page(variable,idx[i:i+step],rec[i:i+step])
+           self.delete_page(page,keep=False)
     def prune_delete_pages(self,timestamp=None):
         cur=self.db.cursor()
         if timestamp is None:
