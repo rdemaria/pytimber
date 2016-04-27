@@ -4,7 +4,7 @@ Python wrapping of CALS API.
 
 ## Installation
 
-Install a Python distribution (e.g. Anaconda) then:
+Install a Python distribution (e.g. Anaconda) and a recent Java version (1.8) then:
 
 ```sh
 pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
