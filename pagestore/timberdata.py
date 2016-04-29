@@ -9,12 +9,10 @@ Usage:
 import os
 import time
 import gzip
+import numpy as np
 
-import numpy as _np
+import localdate as _date
 
-import rdmdate as _date
-
-import time as _t
 
 
 def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
@@ -94,14 +92,14 @@ def combine_data(data,vtype=float,ttype=float):
     outt=[]
     for tt,vv in zip(t,v):
         try:
-          vvv=_np.array(vv,dtype=vtype)
+          vvv=np.array(vv,dtype=vtype)
           outv.append(vvv)
           outt.append(tt)
         except ValueError:
           print("Warning %s at %s not converted"%(repr(vv),tt))
           pass
-    t=_np.array(outt,dtype=ttype)
-    v=_np.array(outv)
+    t=np.array(outt,dtype=ttype)
+    v=np.array(outv)
     if v.shape[-1]==1:
       v=v.reshape(v.shape[0])
     data[k]=[t,v]
