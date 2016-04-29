@@ -7,7 +7,7 @@ import pagestore
 
 setuptools.setup(
     name='pagestore',
-    version="0.0.7",
+    version=pagestore.__version__,
     description='Database of pages of data',
     author='Riccardo De Maria',
     author_email='riccardo.de.maria@cern.ch',
