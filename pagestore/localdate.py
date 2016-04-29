@@ -2,7 +2,27 @@ import time,pytz,datetime
 import re
 
 
-from rdmdate import parsedate_myl
+def parsedate_myl(s):
+  """Read a string in the '2010-06-10 00:00:00.123 TZ?' format and return
+  the unix time."""
+  stime='00:00:00'
+  ssec=0
+  stz=gettz()
+  parts=s.split(' ')
+  sdate=parts[0]
+  if len(parts)>1:
+    stime=parts[1]
+  if len(parts)==3:
+    stz=parts[2]
+  stimes=stime.split('.')
+  if len(stimes)==2:
+    stime=stimes[0]
+    ssec=int(float('0.'+stimes[1])*1e6)
+  t=time.strptime('%s %s'%(sdate,stime),'%Y-%m-%d %H:%M:%S')
+  stz=gettz(myzones.get(stz))
+  dt=datetime(t[0],t[1],t[2],t[3],t[4],t[5],ssec,stz)
+  epoch=time.mktime(dt.timetuple())+dt.microsecond / 1000000.0
+  return epoch
 
 def parsedate(t):
   try:
