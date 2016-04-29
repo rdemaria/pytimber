@@ -76,3 +76,27 @@ print([f['fillNumber'] for f in fills])
 By default all times are returned as Unix timestamps. If you pass
 `unixtime=False` to `get()`, `getAligned()`, `getLHCFillData()` or
 `getLHCFillsByTime()` then `datetime` objects are returned instead.
+
+##Usage with PageStore
+
+```python
+import pagestore
+
+mydb=pagestore.PageStore("mydata","./")
+
+t1=time.mktime(time.strptime('Fri Apr 25 00:00:00 2016'))
+mydb.store(ldb.get('%RQTD%I_MEAS', t1, t1+60))
+mydb.store(ldb.get('%RQTD%I_MEAS', t1+60, t1+120))
+
+mydata=mydb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS',t1+90,t1+110)
+data=ldb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS',t1+90,t1+110)
+for k in data:
+  print(mydata[k][0]-data[k][0])
+  print(mydata[k][1]-data[k][1])
+
+```
+
+
+
+
+
