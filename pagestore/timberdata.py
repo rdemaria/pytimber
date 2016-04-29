@@ -73,8 +73,8 @@ def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
       #print trec,t1,t2,
       #print (t1 is None or trec>=t1) and (t2 is None or trec<=t2)
       if (t1 is None or trec>=t1) and (t2 is None or trec<=t2) and count<nmax:
-        t.append(trec)
         vrec=ll[1:]
+        t.append(trec)
         v.append(vrec)
         count+=1
     elif header:
@@ -90,9 +90,18 @@ def combine_data(data,vtype=float,ttype=float):
   """Combine and change data type"""
   for k in data.keys():
     t,v=data[k]
-    t=_np.array(t,dtype=ttype)
-    v=[_np.array(vv,dtype=vtype) for vv in v]
-    v=_np.array(v)
+    outv=[]
+    outt=[]
+    for tt,vv in zip(t,v):
+        try:
+          vvv=_np.array(vv,dtype=vtype)
+          outv.append(vvv)
+          outt.append(tt)
+        except ValueError:
+          print("Warning %s at %s not converted"%(repr(vv),tt))
+          pass
+    t=_np.array(outt,dtype=ttype)
+    v=_np.array(outv)
     if v.shape[-1]==1:
       v=v.reshape(v.shape[0])
     data[k]=[t,v]
