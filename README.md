@@ -82,7 +82,7 @@ By default all times are returned as Unix timestamps. If you pass
 ```python
 import pagestore
 
-mydb=pagestore.PageStore("mydata","./")
+mydb=pagestore.PageStore("mydata.db","./datadb")
 
 t1=time.mktime(time.strptime('Fri Apr 25 00:00:00 2016'))
 mydb.store(ldb.get('%RQTD%I_MEAS', t1, t1+60))
