@@ -324,12 +324,14 @@ class LoggingDB(object):
                 'fillNumber': data.getFillNumber(),
                 'startTime': self.fromTimestamp(data.getStartTime(), unixtime),
                 'endTime': self.fromTimestamp(data.getEndTime(), unixtime),
-                'beamModes': {mode.getBeamModeValue().toString(): {
+                'beamModes': [{
+                    'mode':
+                        mode.getBeamModeValue().toString(),
                     'startTime':
                         self.fromTimestamp(mode.getStartTime(), unixtime),
                     'endTime':
                         self.fromTimestamp(mode.getEndTime(), unixtime)
-                } for mode in data.getBeamModes()}
+                } for mode in data.getBeamModes()]
             }
 
     def getLHCFillsByTime(self, t1, t2, beam_modes=None, unixtime=True):
