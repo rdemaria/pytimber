@@ -71,9 +71,9 @@ class SearchName(object):
       for name in names.split(','):
         if name.startswith('/'):
           res=self.search(name[1:])
-          print "Using the following names:"
+          print("Using the following names:")
           for name in res:
-            print name
+            print(name)
           out.extend(res)
         else:
           out.append(name)
