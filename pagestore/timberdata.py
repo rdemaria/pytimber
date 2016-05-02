@@ -11,7 +11,7 @@ import time
 import gzip
 import numpy as np
 
-import localdate as _date
+import .localdate as _date
 
 
 
