@@ -11,7 +11,7 @@ import time
 import gzip
 import numpy as np
 
-import .localdate as _date
+from .localdate import parsedate, parsedata_myl
 
 
 
@@ -30,9 +30,9 @@ def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
     and a numeric index.
   """
   if type(t1) is str:
-    t1=_date.parsedate(t1)
+    t1=parsedate(t1)
   if type(t2) is str:
-    t2=_date.parsedate(t2)
+    t2=parsedate(t2)
   data={}
   dataon=False
   header=True
@@ -65,9 +65,9 @@ def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
       if tformat=='unix':
         trec=float(ll[0])/1000.
       elif tformat=='utc':
-        trec=_date.parsedate_myl(ll[0]+' UTC')
+        trec=parsedate_myl(ll[0]+' UTC')
       else:
-        trec=_date.parsedate_myl(ll[0])
+        trec=parsedate_myl(ll[0])
       if (t1 is None or trec>=t1) and (t2 is None or trec<=t2) and count<nmax:
         vrec=ll[1:]
         t.append(trec)
