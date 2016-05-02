@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as pl
 import matplotlib.gridspec as gridspec
 
-from localdate import parsedate,dumpdate,dumpdateutc,SearchName
+from .localdate import parsedate,dumpdate,dumpdateutc,SearchName
 
 def flattenoverlap(v,test=100,start=0):
   #Merge overlapping array of data. Expecting data in axis 1
