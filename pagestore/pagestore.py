@@ -3,7 +3,7 @@ import os,sys,shutil
 import sqlite3
 import numpy as np
 
-from page import Page
+from .page import Page
 
 def merge(idx0,rec0,idx1,rec1):
     sel={};val=[rec0,rec1]
@@ -207,7 +207,7 @@ class PageStore(object):
         if count>0:
           if  len(rec)!=count:
             msg="idx,rec length mismatch %d!=%d"%(len(idx),len(rec))
-            raise ValueError,msg
+            raise ValueError(msg)
           idxa=idx[0]
           idxb=idx[-1]
           pages=self.get_pages(variable,idxa,idxb)
@@ -293,7 +293,7 @@ class PageStore(object):
            if page.recsize>maxsize:
              chunks=int(page.recsize/maxsize)
              step=int(page.count/chunks)
-             print "Splitting in %d pages"%chunks
+             print("Splitting in %d pages"%chunks)
              for i in range(0,page.count,step):
                idx,rec=page.get_all()
                self.store_page(variable,idx[i:i+step],rec[i:i+step])

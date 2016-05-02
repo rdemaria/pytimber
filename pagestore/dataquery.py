@@ -11,7 +11,7 @@ def flattenoverlap(v,test=100,start=0):
   #Merge overlapping array of data. Expecting data in axis 1
   out=[v[0]]
   stat=[]
-  print "Flatten: ...",
+  print("Flatten: ...")
   for j in range(1,len(v)):
     v1=v[j-1]
     v2=v[j]
@@ -22,10 +22,10 @@ def flattenoverlap(v,test=100,start=0):
         newi=i+test
         break
     if newi==0:
-      print "Warning: no overlap for chunk %d,%d"%((j-1,j))
+      print("Warning: no overlap for chunk %d,%d"%((j-1,j)))
     out.append(v2[newi:])
     stat.append(newi)
-  print "average overlap %.2f samples"%np.average(stat)
+  print("average overlap %.2f samples"%np.average(stat))
   return np.hstack(out)
 
 class rdmDateFormatter(matplotlib.ticker.Formatter):
@@ -258,7 +258,7 @@ class DataQuery(object):
     except IndexError:#catch exception in case last entry of array is 1
       start=start[:-1]
       end  =tbmode[np.where(nbmode==1)[0][:-1]+1]
-      print 'time window for bm='+bm+'lies partly outside the requested time window'
+      print('time window for bm='+bm+'lies partly outside the requested time window')
     return zip(map(dumpdate,start),map(dumpdate,end))
   def plot_2d(self,vscale='auto',rel_time=False,date_axes=True,timezone='local'):
     """plot data with date in local time"""
@@ -349,7 +349,7 @@ class DataQuery(object):
       pl.subplot(row,col,i+1)
       t,val=self.data[name]
       val=self.flatten(name)#flatten data as spectogram takes the complete data array as input
-      print "dq.flatten('%s')"%name
+      print("dq.flatten('%s')"%name)
       im=pl.specgram(val,NFFT=NFFT,Fs=Fs,noverlap=noverlap)[-1]
       pl.title(name)
       if realtime:
@@ -361,7 +361,7 @@ class DataQuery(object):
       fmt='%H:%M:%S', realtime=False):
     t,val=self.data[name]
     val=self.flatten(name)
-    print "dq.flatten('%s')"%name
+    print("dq.flatten('%s')"%name)
     im=pl.specgram(val,NFFT=NFFT,Fs=Fs,noverlap=noverlap)[-1]
     pl.title(name)
     if realtime:
@@ -382,7 +382,7 @@ class DataQuery(object):
     t,val=self.data[name]
     if(NFFT==None): (nn,NFFT)=np.shape(val)
     ff=np.linspace(1,NFFT,NFFT)*Fs/(NFFT*2)#frequency vector
-    if(frange <> None):#take only data in range (fstart,fend)=frange
+    if(frange != None):#take only data in range (fstart,fend)=frange
       fstart,fend=frange#get the index fstart, fend
       df=Fs/(NFFT*2)#spacing between frequencies
       ifstart=int(fstart/df)

@@ -46,7 +46,7 @@ class Page(object):
        count=len(idx)
        if count==0 or len(rec)!=count:
           msg="idx,rec length mismatch %d!=%d"%(len(idx),len(rec))
-          raise ValueError,msg
+          raise ValueError(msg)
        lengths=[len(rrr) if hasattr(rrr,'__len__') else 0 for rrr in rec]
        if len(set(lengths))>1:
            reclen=-1
@@ -63,7 +63,7 @@ class Page(object):
            rectypes=[rrr.dtype.str for rrr in rec]
            if len(set(rectypes))>1:
                msg="types mismatch in variable length data: %s"%rectypes
-               raise ValueError,msg
+               raise ValueError(msg)
            rectype=rectypes[0]
            recsize=sum(lengths)*rec[0].dtype.itemsize
        else:
