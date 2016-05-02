@@ -11,7 +11,7 @@ import time
 import gzip
 import numpy as np
 
-from .localdate import parsedate, parsedata_myl
+from .localdate import parsedate, parsedate_myl
 
 
 
