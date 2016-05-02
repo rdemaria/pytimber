@@ -41,7 +41,7 @@ def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
       vname=l.split()[1]
       count=0
       if debug is True:
-        print 'Found var %s' % vname
+        print('Found var %s' % vname)
       if vname in data:
         t,v=data[vname]
       else:
@@ -68,8 +68,6 @@ def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
         trec=_date.parsedate_myl(ll[0]+' UTC')
       else:
         trec=_date.parsedate_myl(ll[0])
-      #print trec,t1,t2,
-      #print (t1 is None or trec>=t1) and (t2 is None or trec<=t2)
       if (t1 is None or trec>=t1) and (t2 is None or trec<=t2) and count<nmax:
         vrec=ll[1:]
         t.append(trec)
@@ -77,7 +75,7 @@ def load(fh,sep=',',t1=None,t2=None,debug=False,nmax=1e99,types=(float,float)):
         count+=1
     elif header:
       if debug is True:
-        print l
+        print(l)
       log.append(l)
   if types is not None:
     ttype,vtype=types
@@ -152,14 +150,14 @@ def _icat(fnames):
 
 def pprint(data):
   """Pretty print data, last dimension is from the first record"""
-  print "CERN DB data:"
+  print("CERN DB data:")
   for k in data.keys():
     t,v=data[k]
     recl=set()
     for ii,vv in enumerate(v):
       recl.add(len(vv))
     recl=' or '.join([str(i) for i in recl])
-    print "  ['%s'][1] => v[%d][%s]" %( k,len(t),recl)
+    print("  ['%s'][1] => v[%d][%s]" %( k,len(t),recl))
 
 
 def merge_out(fnames):
