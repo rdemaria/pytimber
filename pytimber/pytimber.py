@@ -23,13 +23,16 @@ try:
     # Try to get a lit of .jars from cmmnbuild_dep_manager.
     import cmmnbuild_dep_manager
     mgr = cmmnbuild_dep_manager.Manager()
+    logging.getLogger(
+        'cmmnbuild_dep_manager.cmmnbuild_dep_manager'
+    ).setLevel(logging.WARNING)
 
     # During first installation with cmmnbuild_dep_manager some necessary jars
     # do not exist, so fall back to locally bundled .jar file in this case.
-    if not mgr.is_registered("pytimber"):
-        log.warn("pytimber is not registered with cmmnbuild_dep_manager "
-                 "so falling back to bundled jar. Things may not work as "
-                 "expected...")
+    if not mgr.is_registered('pytimber'):
+        log.warning('pytimber is not registered with cmmnbuild_dep_manager '
+                    'so falling back to bundled jar. Things may not work as '
+                    'expected...')
         raise ImportError
 
     _jar = mgr.class_path()
@@ -43,7 +46,7 @@ if not jpype.isJVMStarted():
     libjvm = jpype.getDefaultJVMPath()
     jpype.startJVM(libjvm, '-Djava.class.path={0}'.format(_jar))
 else:
-    log.warn('JVM is already started')
+    log.warning('JVM is already started')
 
 # Definitions of Java packages
 cern = jpype.JPackage('cern')
@@ -68,29 +71,31 @@ source_dict = {
 
 
 def test():
-    print("OK")
+    print('OK')
 
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
-                 source='all', silent=False):
+                 source='all', silent=False, loglevel=None):
         loc = source_dict[source]
         self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
         self._md = self._builder.createMetaService()
         self._ts = self._builder.createTimeseriesService()
         self._FillService = FillService = self._builder.createLHCFillService()
         self.tree = Hierarchy('root', None, None, self._md)
+        if loglevel is not None:
+            log.setLevel(loglevel)
 
     def toTimestamp(self, t):
         if isinstance(t, six.string_types):
             return Timestamp.valueOf(t)
         elif isinstance(t, datetime.datetime):
-            return Timestamp.valueOf(t.strftime("%Y-%m-%d %H:%M:%S.%f"))
+            return Timestamp.valueOf(t.strftime('%Y-%m-%d %H:%M:%S.%f'))
         elif t is None:
             return None
         else:
             tt = datetime.datetime.fromtimestamp(t)
-            ts = Timestamp.valueOf(tt.strftime("%Y-%m-%d %H:%M:%S.%f"))
+            ts = Timestamp.valueOf(tt.strftime('%Y-%m-%d %H:%M:%S.%f'))
             sec = int(t)
             nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
@@ -166,7 +171,7 @@ class LoggingDB(object):
             elif datatype == 'TEXTUAL':
                 val = tt.getVarcharValue()
             else:
-                log.warn('Unsupported datatype, returning the java object')
+                log.warning('Unsupported datatype, returning the java object')
                 val = tt
             datas.append(val)
             tss.append(ts)
@@ -229,14 +234,13 @@ class LoggingDB(object):
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             log.info('Retrieved {0} values for {1}'.format(
                 res.size(), jvar.getVariableName()))
-            log.info(time.time()-start_time, "seconds for aqn")
+            log.info(time.time()-start_time, 'seconds for aqn')
             out[v] = self.processDataset(
                        res, res.getVariableDataType().toString(), unixtime)[1]
         return out
 
     def searchFundamental(self, fundamental, t1, t2=None):
-        """Search fundamental
-        """
+        """Search fundamental"""
         ts1 = self.toTimestamp(t1)
         if t2 is None:
             t2 = time.time()
@@ -264,7 +268,7 @@ class LoggingDB(object):
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
         if len(variables) == 0:
-            log.warn('No variables found.')
+            log.warning('No variables found.')
             return {}
         else:
             logvars = []
@@ -275,8 +279,8 @@ class LoggingDB(object):
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            log.warn('Unsupported: if filtering by fundamentals'
-                     'you must provide a correct time window')
+            log.warning('Unsupported: if filtering by fundamentals'
+                        'you must provide a correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -347,7 +351,7 @@ class LoggingDB(object):
             )
         else:
             if isinstance(beam_modes, str):
-                beam_modes = beam_modes.split(",")
+                beam_modes = beam_modes.split(',')
 
             valid_beam_modes = [
                 mode
@@ -359,7 +363,7 @@ class LoggingDB(object):
                 raise ValueError('no valid beam modes found')
 
             java_beam_modes = BeamModeValue.parseBeamModes(
-                ",".join(valid_beam_modes)
+                ','.join(valid_beam_modes)
             )
 
             fills = (
@@ -420,11 +424,11 @@ class Hierarchy(object):
 
     def __repr__(self):
         if self.obj is None:
-            return "<Top Hierarchy>"
+            return '<Top Hierarchy>'
         else:
             name = self.obj.getHierarchyName()
             desc = self.obj.getDescription()
-            return "<{0}: {1}>".format(name, desc)
+            return '<{0}: {1}>'.format(name, desc)
 
     def get_vars(self):
         if self.obj is not None:
