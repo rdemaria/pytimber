@@ -101,9 +101,12 @@ for k in data:
 
 ## Installation with cmmnbuild-dep-manager
 
-cmmnbuild-dep-manager provides automatic resolution of Java dependencies for
-CERN packages. It is required to use pytimber with other CERN libraries, such
-as PyJapc.
+[cmmnbuild-dep-manager][cmmnbuild-dep-manager] provides automatic resolution of
+Java dependencies for CERN packages. It is required to use pytimber with other
+CERN libraries, such as [PyJapc][pyjapc].
+
+[cmmnbuild-dep-manager]: https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager
+[pyjapc]: https://gitlab.cern.ch/scripting-tools/pyjapc
 
 The installation must be done from a machine connected to the CERN network:
 
