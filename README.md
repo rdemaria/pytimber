@@ -7,13 +7,8 @@ Python wrapping of CALS API.
 Install a Python distribution (e.g. Anaconda) and a recent Java version (1.8) then:
 
 ```sh
-pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
 pip install git+https://github.com/rdemaria/pytimber.git
-pip install git+https://github.com/rdemaria/pagestore.git
 ```
-
-_Note: cmmnbuild-dep-manager is optional but is required for compatibility with
-other CERN packages using JPype (such as PyJapc)_
 
 ## Usage
 
@@ -77,7 +72,15 @@ By default all times are returned as Unix timestamps. If you pass
 `unixtime=False` to `get()`, `getAligned()`, `getLHCFillData()` or
 `getLHCFillsByTime()` then `datetime` objects are returned instead.
 
-##Usage with PageStore
+## Usage with PageStore
+
+Installation (assuming pytimber is already installed):
+
+```sh
+pip install git+https://github.com/rdemaria/pagestore.git
+```
+
+Usage example:
 
 ```python
 import pagestore
@@ -96,7 +99,30 @@ for k in data:
 
 ```
 
+## Installation with cmmnbuild-dep-manager
 
+[cmmnbuild-dep-manager][cmmnbuild-dep-manager] provides automatic resolution of
+Java dependencies for CERN packages. It is required to use pytimber with other
+CERN libraries, such as [PyJapc][pyjapc].
 
+[cmmnbuild-dep-manager]: https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager
+[pyjapc]: https://gitlab.cern.ch/scripting-tools/pyjapc
 
+The installation must be done from a machine connected to the CERN network:
 
+```sh
+pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
+pip install git+https://github.com/rdemaria/pytimber.git
+```
+
+pytimber is automatically registered with cmmnbuild-dep-manager during
+installation and the necessary jars are downloaded.
+
+Note: if cmmnbuild-dep-manager is installed _after_ pytimber, it is necessary
+to manually register it and download the jars:
+
+```python
+import cmmnbuild_dep_manager
+mgr = cmmnbuild_dep_manager.Manager()
+mgr.install('pytimber')
+```
