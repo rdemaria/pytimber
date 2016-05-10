@@ -79,7 +79,7 @@ class PageStore(object):
             value=default
         setattr(self,name,value)
         return value
-    def store_var(self,name):
+    def store_var(self,name,value):
         cur=self.db.cursor()
         sql="INSERT INTO conf VALUES (?,?,datetime('now'))"
         cur.execute(sql,(name,value))
