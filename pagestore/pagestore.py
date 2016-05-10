@@ -77,12 +77,13 @@ class PageStore(object):
             value=self.get_var(name)
         if value is None:
             value=default
+        setattr(self,name,value)
+        return value
+    def store_var(self,name):
         cur=self.db.cursor()
         sql="INSERT INTO conf VALUES (?,?,datetime('now'))"
         cur.execute(sql,(name,value))
-        setattr(self,name,value)
         self.db.commit()
-        return value
     def set_pagedir(self,dirpath):
         if dirpath is None:
             dirpath=self.get_var('pagedir','data')
