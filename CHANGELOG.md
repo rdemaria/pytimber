@@ -1,5 +1,9 @@
 # pytimber changelog
 
+## 04/2016 (T. Levens)
+
+  * Added functions to get LHC fill information.
+
 ## 01/2016 (T. Levens)
 
   * Updated repository structure

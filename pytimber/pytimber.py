@@ -23,13 +23,16 @@ try:
     # Try to get a lit of .jars from cmmnbuild_dep_manager.
     import cmmnbuild_dep_manager
     mgr = cmmnbuild_dep_manager.Manager()
+    logging.getLogger(
+        'cmmnbuild_dep_manager.cmmnbuild_dep_manager'
+    ).setLevel(logging.WARNING)
 
     # During first installation with cmmnbuild_dep_manager some necessary jars
     # do not exist, so fall back to locally bundled .jar file in this case.
-    if not mgr.is_registered("pytimber"):
-        log.warn("pytimber is not registered with cmmnbuild_dep_manager "
-                 "so falling back to bundled jar. Things may not work as "
-                 "expected...")
+    if not mgr.is_registered('pytimber'):
+        log.warning('pytimber is not registered with cmmnbuild_dep_manager '
+                    'so falling back to bundled jar. Things may not work as '
+                    'expected...')
         raise ImportError
 
     _jar = mgr.class_path()
@@ -45,7 +48,7 @@ if not jpype.isJVMStarted():
       libjvm = jpype.getDefaultJVMPath()
     jpype.startJVM(libjvm, '-Djava.class.path={0}'.format(_jar))
 else:
-    log.warn('JVM is already started')
+    log.warning('JVM is already started')
 
 # Definitions of Java packages
 cern = jpype.JPackage('cern')
@@ -59,6 +62,8 @@ VariableDataType = \
 Timestamp = java.sql.Timestamp
 null = org.apache.log4j.varia.NullAppender()
 org.apache.log4j.BasicConfigurator.configure(null)
+BeamModeValue = \
+    cern.accsoft.cals.extr.domain.core.constants.BeamModeValue
 
 source_dict = {
     'mdb': DataLocationPreferences.MDB_PRO,
@@ -68,32 +73,45 @@ source_dict = {
 
 
 def test():
-    print("OK")
+    print('OK')
 
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
-                 source='all', silent=False):
+                 source='all', silent=False, loglevel=None):
         loc = source_dict[source]
         self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
         self._md = self._builder.createMetaService()
         self._ts = self._builder.createTimeseriesService()
+        self._FillService = FillService = self._builder.createLHCFillService()
         self.tree = Hierarchy('root', None, None, self._md)
+        if loglevel is not None:
+            log.setLevel(loglevel)
 
     def toTimestamp(self, t):
         if isinstance(t, six.string_types):
             return Timestamp.valueOf(t)
-        elif type(t) is datetime.datetime:
-            return Timestamp.valueOf(t.strftime("%Y-%m-%d %H:%M:%S.%f"))
+        elif isinstance(t, datetime.datetime):
+            return Timestamp.valueOf(t.strftime('%Y-%m-%d %H:%M:%S.%f'))
         elif t is None:
             return None
         else:
             tt = datetime.datetime.fromtimestamp(t)
-            ts = Timestamp.valueOf(tt.strftime("%Y-%m-%d %H:%M:%S.%f"))
+            ts = Timestamp.valueOf(tt.strftime('%Y-%m-%d %H:%M:%S.%f'))
             sec = int(t)
             nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
             return ts
+
+    def fromTimestamp(self, ts, unixtime):
+        if ts is None:
+            return None
+        else:
+            t = ts.fastTime / 1000.0 + ts.getNanos() / 1.0e9
+            if unixtime:
+                return t
+            else:
+                return datetime.datetime.fromtimestamp(t)
 
     def toStringList(self, myArray):
         myList = java.util.ArrayList()
@@ -141,8 +159,7 @@ class LoggingDB(object):
         datas = []
         tss = []
         for tt in dataset:
-            ts = tt.getStamp()
-            ts = ts.fastTime/1000.+ts.getNanos()/1e9
+            ts = self.fromTimestamp(tt.getStamp(), unixtime)
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues())
             elif datatype == 'VECTORNUMERIC':
@@ -156,12 +173,10 @@ class LoggingDB(object):
             elif datatype == 'TEXTUAL':
                 val = tt.getVarcharValue()
             else:
-                log.warn('Unsupported datatype, returning the java object')
+                log.warning('Unsupported datatype, returning the java object')
                 val = tt
             datas.append(val)
             tss.append(ts)
-        if not unixtime:
-            tss = list(map(datetime.datetime.fromtimestamp, tss))
         tss = np.array(tss)
         datas = np.array(datas)
         return (tss, datas)
@@ -221,17 +236,16 @@ class LoggingDB(object):
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             log.info('Retrieved {0} values for {1}'.format(
                 res.size(), jvar.getVariableName()))
-            log.info(time.time()-start_time, "seconds for aqn")
+            log.info(time.time()-start_time, 'seconds for aqn')
             out[v] = self.processDataset(
                        res, res.getVariableDataType().toString(), unixtime)[1]
         return out
 
     def searchFundamental(self, fundamental, t1, t2=None):
-        """Search fundamental
-        """
+        """Search fundamental"""
         ts1 = self.toTimestamp(t1)
         if t2 is None:
-            t2=time.time()
+            t2 = time.time()
         ts2 = self.toTimestamp(t2)
         fundamentals = self.getFundamentals(ts1, ts2, fundamental)
         if fundamentals is not None:
@@ -256,7 +270,7 @@ class LoggingDB(object):
         # Build variable list
         variables = self.getVariablesList(pattern_or_list, ts1, ts2)
         if len(variables) == 0:
-            log.warn('No variables found.')
+            log.warning('No variables found.')
             return {}
         else:
             logvars = []
@@ -267,8 +281,8 @@ class LoggingDB(object):
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            log.warn('Unsupported: if filtering by fundamentals'
-                      'you must provide a correct time window')
+            log.warning('Unsupported: if filtering by fundamentals'
+                        'you must provide a correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -297,6 +311,75 @@ class LoggingDB(object):
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
+    def getLHCFillData(self, fill_number=None, unixtime=True):
+        """Gets times and beam modes for a particular LHC fill.
+        Parameter fill_number can be an integer to get a particular fill or
+        None to get the last completed fill.
+        """
+        if isinstance(fill_number, int):
+            data = self._FillService.getLHCFillAndBeamModesByFillNumber(
+                fill_number
+            )
+        else:
+            data = self._FillService.getLastCompletedLHCFillAndBeamModes()
+
+        if data is None:
+            return None
+        else:
+            return {
+                'fillNumber': data.getFillNumber(),
+                'startTime': self.fromTimestamp(data.getStartTime(), unixtime),
+                'endTime': self.fromTimestamp(data.getEndTime(), unixtime),
+                'beamModes': [{
+                    'mode':
+                        mode.getBeamModeValue().toString(),
+                    'startTime':
+                        self.fromTimestamp(mode.getStartTime(), unixtime),
+                    'endTime':
+                        self.fromTimestamp(mode.getEndTime(), unixtime)
+                } for mode in data.getBeamModes()]
+            }
+
+    def getLHCFillsByTime(self, t1, t2, beam_modes=None, unixtime=True):
+        """Returns a list of the fills between t1 and t2.
+        Optional parameter beam_modes allows filtering by beam modes.
+        """
+        ts1 = self.toTimestamp(t1)
+        ts2 = self.toTimestamp(t2)
+
+        if beam_modes is None:
+            fills = self._FillService.getLHCFillsAndBeamModesInTimeWindow(
+                ts1, ts2
+            )
+        else:
+            if isinstance(beam_modes, str):
+                beam_modes = beam_modes.split(',')
+
+            valid_beam_modes = [
+                mode
+                for mode in beam_modes
+                if BeamModeValue.isBeamModeValue(mode)
+            ]
+
+            if len(valid_beam_modes) == 0:
+                raise ValueError('no valid beam modes found')
+
+            java_beam_modes = BeamModeValue.parseBeamModes(
+                ','.join(valid_beam_modes)
+            )
+
+            fills = (
+                self._FillService
+                .getLHCFillsAndBeamModesInTimeWindowContainingBeamModes(
+                    ts1, ts2, java_beam_modes
+                )
+            )
+
+        return [
+            self.getLHCFillData(fill, unixtime)
+            for fill in fills.getFillNumbers()
+        ]
+
 
 class Hierarchy(object):
     def __init__(self, name, obj, src, varsrc):
@@ -306,8 +389,8 @@ class Hierarchy(object):
         if src is not None:
             self.src = src
         for vvv in self.get_vars():
-            if len(vvv)>0:
-              setattr(self,self.cleanName(vvv),vvv)
+            if len(vvv) > 0:
+                setattr(self, self.cleanName(vvv), vvv)
 
     def _get_childs(self):
         if self.obj is None:
@@ -338,16 +421,16 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
-        vvv=sorted([self.cleanName(i) for i in self.get_vars() if len(i)>0])
-        return sorted(self._dict.keys())+vvv
+        v = sorted([self.cleanName(i) for i in self.get_vars() if len(i) > 0])
+        return sorted(self._dict.keys()) + v
 
     def __repr__(self):
         if self.obj is None:
-            return "<Top Hierarchy>"
+            return '<Top Hierarchy>'
         else:
             name = self.obj.getHierarchyName()
             desc = self.obj.getDescription()
-            return "<{0}: {1}>".format(name, desc)
+            return '<{0}: {1}>'.format(name, desc)
 
     def get_vars(self):
         if self.obj is not None:
