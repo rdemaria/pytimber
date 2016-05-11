@@ -40,7 +40,9 @@ except ImportError:
     _jar = os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
 
 if not jpype.isJVMStarted():
-    libjvm = jpype.getDefaultJVMPath()
+    libjvm = os.environ.get('JAVA_JVM_LIB')
+    if libjvm is None:
+      libjvm = jpype.getDefaultJVMPath()
     jpype.startJVM(libjvm, '-Djava.class.path={0}'.format(_jar))
 else:
     log.warn('JVM is already started')
