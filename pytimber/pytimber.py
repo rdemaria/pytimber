@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# R. De Maria, T. Levens, C. Hernalsteens
+# Authors:
+#   R. De Maria
+#   T. Levens
+#   C. Hernalsteens
+#   M. Betz
 
 import os
 import glob
@@ -404,7 +408,7 @@ class Hierarchy(object):
             s = '_'+s
         out = []
         for ss in s:
-            if ss in ' _;></:.':
+            if ss in ' _-;></:.':
                 out.append('_')
             else:
                 out.append(ss)
