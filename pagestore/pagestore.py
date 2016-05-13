@@ -41,12 +41,14 @@ class PageStore(object):
     def __init__(self,dbname,pagedir=None,maxpagesize=None):
         self.dbname=dbname
         try:
-            if dbname.startswith('file:'):
-                uri=True
-            else:
-                uri=False
-            self.db=sqlite3.connect(dbname,
-                    isolation_level="IMMEDIATE",uri=uri)
+            #if dbname.startswith('file:'):
+            #    uri=True
+            #else:
+            #    uri=False
+            #self.db=sqlite3.connect(dbname,
+            #        isolation_level="IMMEDIATE",uri=uri)
+            # not compatible with python 2.7
+            self.db=sqlite3.connect(dbname,isolation_level="IMMEDIATE")
         except sqlite3.Error:
           print('Error creating database %s'%dbname)
           sys.exit(1)
