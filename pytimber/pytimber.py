@@ -220,7 +220,7 @@ class LoggingDB(object):
             return {}
         else:
             logvars = []
-            for i, v in enumerate(variables):
+            for v in variables:
                 if v == master_name:
                     logvars.append('{0} (master)'.format(v))
                 else:
