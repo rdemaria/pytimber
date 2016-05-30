@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# R. De Maria, T. Levens, C. Hernalsteens
+# Authors:
+#   R. De Maria
+#   T. Levens
+#   C. Hernalsteens
+#   M. Betz
 
 import os
 import glob
@@ -139,16 +143,15 @@ class LoggingDB(object):
                 ', '.join(logfuns)))
         return fundamentals
 
-    def getVariablesList(self, pattern_or_list, t1, t2):
+    def getVariablesList(self, pattern_or_list):
         """Get a list of variables based on a list of strings or a pattern.
         Wildcard for the pattern is '%'.
-        Assumes t1 and t2 to be Java TimeStamp objects
         """
         if isinstance(pattern_or_list, six.string_types):
             types = VariableDataType.ALL
             variables = self._md.getVariablesOfDataTypeWithNameLikePattern(
                     pattern_or_list, types)
-        elif isinstance(pattern_or_list, list):
+        elif isinstance(pattern_or_list, (list, tuple)):
             variables = self._md.getVariablesWithNameInListofStrings(
                     java.util.Arrays.asList(pattern_or_list))
         else:
@@ -182,7 +185,8 @@ class LoggingDB(object):
         return (tss, datas)
 
     def getAligned(self, pattern_or_list, t1, t2,
-                   fundamental=None, unixtime=True):
+                   fundamental=None, master=None, unixtime=True):
+        """Get data aligned to a variable"""
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
         out = {}
@@ -195,21 +199,35 @@ class LoggingDB(object):
                 return {}
 
         # Build variable list
-        variables = self.getVariablesList(pattern_or_list, ts1, ts2)
+        variables = self.getVariablesList(pattern_or_list)
+
+        if master is None:
+            if isinstance(pattern_or_list, (list, tuple)):
+                master_variable = variables.getVariable(pattern_or_list[0])
+            else:
+                master_variable = variables.getVariable(0)
+        else:
+            master_variable = variables.getVariable(master)
+
+        if master_variable is None:
+            log.warning('Master variable not found.')
+            return {}
+
+        master_name = master_variable.toString()
+
         if len(variables) == 0:
             log.warning('No variables found.')
             return {}
         else:
             logvars = []
-            for i, v in enumerate(variables):
-                if i == 0:
-                    master_variable = variables.getVariable(0)
-                    master_name = master_variable.toString()
-                    logvars.append('{0} (using as master)'.format(v))
+            for v in variables:
+                if v == master_name:
+                    logvars.append('{0} (master)'.format(v))
                 else:
                     logvars.append(v)
-                log.info('List of variables to be queried: {0}'.format(
-                    ', '.join(logvars)))
+
+            log.info('List of variables to be queried: {0}'.format(
+                ', '.join(logvars)))
 
         # Acquire master dataset
         if fundamental is not None:
@@ -217,6 +235,7 @@ class LoggingDB(object):
                     master_variable, ts1, ts2, fundamentals)
         else:
             master_ds = self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
+
         log.info('Retrieved {0} values for {1} (master)'.format(
             master_ds.size(), master_name))
 
@@ -236,7 +255,7 @@ class LoggingDB(object):
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             log.info('Retrieved {0} values for {1}'.format(
                 res.size(), jvar.getVariableName()))
-            log.info(time.time()-start_time, 'seconds for aqn')
+            log.info('{0} seconds for aqn'.format(time.time()-start_time))
             out[v] = self.processDataset(
                        res, res.getVariableDataType().toString(), unixtime)[1]
         return out
@@ -268,7 +287,7 @@ class LoggingDB(object):
         out = {}
 
         # Build variable list
-        variables = self.getVariablesList(pattern_or_list, ts1, ts2)
+        variables = self.getVariablesList(pattern_or_list)
         if len(variables) == 0:
             log.warning('No variables found.')
             return {}
@@ -404,7 +423,7 @@ class Hierarchy(object):
             s = '_'+s
         out = []
         for ss in s:
-            if ss in ' _;></:.':
+            if ss in ' _-;></:.':
                 out.append('_')
             else:
                 out.append(ss)
