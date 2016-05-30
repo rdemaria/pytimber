@@ -27,7 +27,7 @@ setuptools.setup(
     url='https://github.com/rdemaria/pytimber',
     packages=['pytimber'],
     package_dir={'pytimber': 'pytimber'},
-    install_requires=['JPype1>=0.6.1'],
+    install_requires=['JPype1>=0.6.0'],
     cmdclass={'install': install},
     package_data={'pytimber': ['jars/*']},
     zip_safe=False
