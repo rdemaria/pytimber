@@ -326,8 +326,12 @@ class LoggingDB(object):
                 res = \
                   [self._ts.getNextDataAfterTimestampWithinDefaultInterval(
                     jvar, ts1)]
-                datatype = res[0].getVariableDataType().toString()
-                log.info('Retrieved {0} values for {1}'.format(
+                if res[0] is None:
+                  res=[]
+                  datatype=None
+                else:
+                  datatype = res[0].getVariableDataType().toString()
+                  log.info('Retrieved {0} values for {1}'.format(
                            1, jvar.getVariableName()))
             else:
                 if fundamental is not None:
