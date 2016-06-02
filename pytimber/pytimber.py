@@ -275,7 +275,10 @@ class LoggingDB(object):
     def get(self, pattern_or_list, t1, t2=None,
             fundamental=None, unixtime=True):
         """Query the database for a list of variables or for variables whose
-        name matches a pattern (string).
+        name matches a pattern (string) in a time window from t1 to t2.
+
+        If t2 is missing, None, "last", the last data point before t1 is given
+        If t2 is "next", the first data point after t1 is given.
 
         If no pattern if given for the fundamental all the data are returned.
 
@@ -283,7 +286,8 @@ class LoggingDB(object):
         be explicitely provided.
         """
         ts1 = self.toTimestamp(t1)
-        ts2 = self.toTimestamp(t2)
+        if t2 not in ['last','next',None]:
+          ts2 = self.toTimestamp(t2)
         out = {}
 
         # Build variable list
@@ -311,9 +315,16 @@ class LoggingDB(object):
         # Acquire
         for v in variables:
             jvar = variables.getVariable(v)
-            if t2 is None:
+            if t2 is None or t2=='last':
                 res = \
                   [self._ts.getLastDataPriorToTimestampWithinDefaultInterval(
+                    jvar, ts1)]
+                datatype = res[0].getVariableDataType().toString()
+                log.info('Retrieved {0} values for {1}'.format(
+                           1, jvar.getVariableName()))
+            elif t2=='next':
+                res = \
+                  [self._ts.getNextDataAfterTimestampWithinDefaultInterval(
                     jvar, ts1)]
                 datatype = res[0].getVariableDataType().toString()
                 log.info('Retrieved {0} values for {1}'.format(
