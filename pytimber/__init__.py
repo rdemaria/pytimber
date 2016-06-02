@@ -1,4 +1,4 @@
-__version__ = "2.1.7"
+__version__ = "2.1.8"
 
 cmmnbuild_deps = [
     "accsoft-cals-extr-client"
