@@ -38,7 +38,9 @@ class PageStore(object):
     def __repr__(self):
         fmt="PageStore(%r,pagedir=%r,maxpagesize=%r)"
         return fmt%(self.dbname,self.pagedir,self.maxpagesize)
-    def __init__(self,dbname,pagedir=None,maxpagesize=None):
+    def __init__(self,dbname,pagedir=None,maxpagesize=None,
+                      checksum=False,
+                      keep_deleted_pages=False):
         self.dbname=dbname
         try:
             if dbname.startswith('file:'):
@@ -52,7 +54,9 @@ class PageStore(object):
           sys.exit(1)
         self.create_db()
         self.set_pagedir(pagedir)
-        self.set_var('maxpagesize',maxpagesize,0)
+        self.set_var('maxpagesize',maxpagesize,2**24)
+        self.checksum=checksum
+        self.keep_deleted_pages=keep_deleted_pages
     def create_db(self):
         sql="""
         CREATE TABLE IF NOT EXISTS pages(
@@ -188,9 +192,9 @@ class PageStore(object):
           return tot
         else:
           return 0
-    def delete_page(self,page,keep=False):
+    def delete_page(self,page):
         cur=self.db.cursor()
-        if keep:
+        if self.keep_deleted_pages:
           sql="""UPDATE pages SET deleted=strftime('%s','now')
                  WHERE pageid==?"""
         else:
@@ -198,7 +202,7 @@ class PageStore(object):
           #print("Delete page %s"%page.pageid)
         cur.execute(sql,[page.pageid])
         self.db.commit()
-        if keep is False:
+        if self.keep_deleted_pages is False:
            page.delete()
     def delete_variable(self,variable):
         for  page in self.get_pages(variable):
