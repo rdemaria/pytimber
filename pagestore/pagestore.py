@@ -239,7 +239,7 @@ class PageStore(object):
            self.rebalance(variable,self.maxpagesize)
     def merge_page(self,variable,page,idx,rec):
        pidx,prec=page.get_all()
-       self.delete_page(page,keep=False)
+       self.delete_page(page)
        nidx,nrec=merge(pidx,prec,idx,rec)
        self.store_page(variable,nidx,nrec)
     def search(self,searchexp="%"):
@@ -296,7 +296,7 @@ class PageStore(object):
         idxlist,reclist=zip(*out)
         self.store_page(variable,concatenate(idxlist),concatenate(reclist))
         for page in pages:
-          self.delete_page(page,keep=False)
+          self.delete_page(page)
     def split_pages(self,variable,maxsize):
        for pagedata in self.get_pages(variable):
            page=Page(self.pagedir,*pagedata)
@@ -307,7 +307,7 @@ class PageStore(object):
              for i in range(0,page.count,step):
                idx,rec=page.get_all()
                self.store_page(variable,idx[i:i+step],rec[i:i+step])
-             self.delete_page(page,keep=False)
+             self.delete_page(page)
     def prune_delete_pages(self,timestamp=None):
         cur=self.db.cursor()
         if timestamp is None:
@@ -320,5 +320,5 @@ class PageStore(object):
         pages=list(cur.execute(sql,[timestamp]))
         for pagedata in pages:
             page=Page(self.pagedir,*pagedata)
-            self.delete_page(page,keep=False)
+            self.delete_page(page)
 
