@@ -1,5 +1,22 @@
-import time,pytz,datetime
+import time,pytz
 import re
+from dateutil.tz import gettz,tzlocal
+from datetime import datetime
+
+myzones={'bnl' : 'America/New_York',
+       'cern': 'Europe/Zurich',
+       'fnal': 'America/Chicago',
+       'lbl' : 'America/Los_Angeles',
+       'Z'   : 'UTC'}
+
+myfmt={'myf': '%Y-%m-%d--%H-%M-%S--%z',
+       'myh': '%Y-%m-%d %H:%M:%S %z',
+       'myl': '%Y-%m-%d %H:%M:%S.SSS',
+       'rfc': '%a, %d %b %Y %H:%M:%S %z',
+       'epoch' :'%s',
+       'iso' : '%Y%m%dT%H%M%S%z',
+       'cernlogdb' : '%Y%m%d%H%M%SCET',
+       }
 
 
 def parsedate_myl(s):
