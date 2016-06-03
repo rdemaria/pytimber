@@ -45,8 +45,8 @@ class Page(object):
     def from_data(cls,idx,rec,pagedir,pageid,comp=None):
        count=len(idx)
        if count==0 or len(rec)!=count:
-          msg="idx,rec length mismatch %d!=%d"%(len(idx),len(rec))
-          raise ValueError(msg)
+          msg="Error creating Page %s: idx,rec length mismatch %d!=%d"
+          raise ValueError(msg%(pageid,len(idx),len(rec)))
        lengths=[len(rrr) if hasattr(rrr,'__len__') else 0 for rrr in rec]
        if len(set(lengths))>1:
            reclen=-1
@@ -115,11 +115,22 @@ class Page(object):
             rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
         else:
             rec=np.fromfile(self.recpath,dtype=self.rectype,
-                    count=cc*reclen).reshape(cc,reclen)
+                    count=cc*reclen)
+            if len(rec)<cc*reclen:
+                print rec.shape,cc,reclen
+                msg="Error in Page %s: not enough records:%d!=%d*%d"
+                raise IOError(msg%(self.pageid,cc*reclen,cc,reclen))
+            rec=rec.reshape(cc,reclen)
+        if len(rec)!=cc:
+            msg='Error: Record mismatch in Page %d: %d read vs %d'
+            raise IOError(msg%(self.pageid,len(rec),cc))
         return rec
     def get_idx_all(self):
         cc=self.count
         idx=np.fromfile(self.idxpath,dtype=self.idxtype,count=cc)
+        if len(idx)!=cc:
+            msg='Error: Index mismatch in Page %d: %d read vs  %d'
+            raise IOError(msg%(self.pageid,len(idx),cc))
         return idx
     def delete(self):
         os.unlink(self.recpath)
@@ -168,5 +179,5 @@ class Page(object):
         res=sha.hexdigest()==self.checksum
         if res==False:
             print("Checksum failsed for page %s"%self.pageid)
-        return sha.hexdigest()==self.checksum
+        return res
 

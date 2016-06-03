@@ -192,6 +192,13 @@ class PageStore(object):
           return tot
         else:
           return 0
+    def get_page(self,pageid):
+        cur=self.db.cursor()
+        sql="""SELECT pageid,idxtype,count,idxa,idxb,
+                      rectype,reclen,recsize,comp,checksum
+               FROM pages WHERE pageid=?"""
+        page=cur.execute(sql,[pageid]).fetchone()
+        return page
     def delete_page(self,page):
         cur=self.db.cursor()
         if self.keep_deleted_pages:
