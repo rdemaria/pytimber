@@ -1,14 +1,28 @@
 # pytimber
 
-Python wrapping of CALS API.
+Python wrapping of the [CERN Accelerator Logging Service][cals] (CALS) API.
+
+[cals]: https://wikis.cern.ch/display/CALS/CERN+Accelerator+Logging+Service
 
 ## Installation
 
-Install a Python distribution (e.g. Anaconda) and a recent Java version (1.8) then:
+Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
+(1.8), then simply install pytimber using pip:
 
 ```sh
 pip install git+https://github.com/rdemaria/pytimber.git
 ```
+
+### Notes
+
+  * For Windows, [this][jpype-win] pre-compiled version of JPype seems to work
+    best.
+
+  * In order to use pytimber with other CERN packages that use JPype, see
+    the [section below](#Installation with cmmnbuild-dep-manager).
+
+[anaconda]: https://www.continuum.io/downloads
+[jpype-win]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#jpype
 
 ## Usage
 
@@ -64,7 +78,7 @@ Find all fill number in the last 48 hours that contained a ramp:
 ```python
 t2 = datetime.datetime.now()
 t1 = t2 - datetime.timedelta(hours=48)
-fills = ldb.getLHCFillsByTime(t1, t2, beam_modes="RAMP")
+fills = ldb.getLHCFillsByTime(t1, t2, beam_modes='RAMP')
 print([f['fillNumber'] for f in fills])
 ```
 
@@ -73,6 +87,10 @@ By default all times are returned as Unix timestamps. If you pass
 `getLHCFillsByTime()` then `datetime` objects are returned instead.
 
 ## Usage with PageStore
+
+pytimber can be combined with [PageStore][] for local data storage.
+
+[pagestore]: https://github.com/rdemaria/pagestore
 
 Installation (assuming pytimber is already installed):
 
@@ -83,43 +101,43 @@ pip install git+https://github.com/rdemaria/pagestore.git
 Usage example:
 
 ```python
+import pytimber
 import pagestore
 
-mydb=pagestore.PageStore("mydata.db","./datadb")
+ldb = pytimber.LoggingDB()
+mydb = pagestore.PageStore('mydata.db', './datadb')
 
-t1=time.mktime(time.strptime('Fri Apr 25 00:00:00 2016'))
+t1 = time.mktime(time.strptime('Fri Apr 25 00:00:00 2016'))
 mydb.store(ldb.get('%RQTD%I_MEAS', t1, t1+60))
 mydb.store(ldb.get('%RQTD%I_MEAS', t1+60, t1+120))
 
-mydata=mydb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS',t1+90,t1+110)
-data=ldb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS',t1+90,t1+110)
+mydata = mydb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS', t1+90, t1+110)
+data = ldb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS', t1+90, t1+110)
 for k in data:
-  print(mydata[k][0]-data[k][0])
-  print(mydata[k][1]-data[k][1])
-
+  print(mydata[k][0] - data[k][0])
+  print(mydata[k][1] - data[k][1])
 ```
 
 ## Installation with cmmnbuild-dep-manager
 
-[cmmnbuild-dep-manager][cmmnbuild-dep-manager] provides automatic resolution of
+[cmmnbuild-dep-manager][] provides automatic resolution of
 Java dependencies for CERN packages. It is required to use pytimber with other
-CERN libraries, such as [PyJapc][pyjapc].
+CERN libraries, such as [PyJapc][].
 
 [cmmnbuild-dep-manager]: https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager
 [pyjapc]: https://gitlab.cern.ch/scripting-tools/pyjapc
 
-The installation must be done from a machine connected to the CERN network:
+pytimber is automatically registered with cmmnbuild-dep-manager during
+installation and the necessary jars are downloaded. For this to work, the
+installation must be done from a machine connected to the CERN network.
 
 ```sh
 pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
 pip install git+https://github.com/rdemaria/pytimber.git
 ```
 
-pytimber is automatically registered with cmmnbuild-dep-manager during
-installation and the necessary jars are downloaded.
-
 Note: if cmmnbuild-dep-manager is installed _after_ pytimber, it is necessary
-to manually register it and download the jars:
+to manually register pytimber and download the jars:
 
 ```python
 import cmmnbuild_dep_manager
