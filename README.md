@@ -19,7 +19,7 @@ pip install git+https://github.com/rdemaria/pytimber.git
     best.
 
   * In order to use pytimber with other CERN packages that use JPype, see
-    the [section below](#Installation with cmmnbuild-dep-manager).
+    the [section below](#installation-with-cmmnbuild-dep-manager).
 
 [anaconda]: https://www.continuum.io/downloads
 [jpype-win]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#jpype
