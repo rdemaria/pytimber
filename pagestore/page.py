@@ -125,7 +125,7 @@ class Page(object):
                 msg="Error in Page %s: not enough records:%d!=%d*%d"
                 raise IOError(msg%(self.pageid,cc*reclen,cc,reclen))
             rec=rec.reshape(cc,reclen)
-        if len(rec)!=cc:
+        if len(rec)!=self.count:
             msg='Error: Record mismatch in Page %d: %d read vs %d'
             raise IOError(msg%(self.pageid,len(rec),self.count))
         return rec
@@ -133,7 +133,7 @@ class Page(object):
         cc=self.count
         idx=np.fromfile(self.idxpath,dtype=self.idxtype,count=cc)
         if len(idx)!=cc:
-            msg='Error: Index mismatch in Page %d: %d read vs  %d'
+            msg='Error: Index mismatch in Page %d: %d read vs %d'
             raise IOError(msg%(self.pageid,len(idx),cc))
         return idx
     def delete(self):
