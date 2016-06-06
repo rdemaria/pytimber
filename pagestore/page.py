@@ -127,7 +127,7 @@ class Page(object):
             rec=rec.reshape(cc,reclen)
         if len(rec)!=cc:
             msg='Error: Record mismatch in Page %d: %d read vs %d'
-            raise IOError(msg%(self.pageid,len(rec),cc))
+            raise IOError(msg%(self.pageid,len(rec),self.count))
         return rec
     def get_idx_all(self):
         cc=self.count
