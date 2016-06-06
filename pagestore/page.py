@@ -113,6 +113,8 @@ class Page(object):
             recfh.close()
             if 'S' in self.rectype:
                 rec=[rrr.tostring() for rrr in rec]
+            elif 'U' in self.rectype:
+                rec=[rrr.tostring() for rrr in rec]
         elif reclen==0:
             rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
         else:
