@@ -121,7 +121,6 @@ class Page(object):
             rec=np.fromfile(self.recpath,dtype=self.rectype,
                     count=cc*reclen)
             if len(rec)<cc*reclen:
-                print rec.shape,cc,reclen
                 msg="Error in Page %s: not enough records:%d!=%d*%d"
                 raise IOError(msg%(self.pageid,cc*reclen,cc,reclen))
             rec=rec.reshape(cc,reclen)
