@@ -79,7 +79,7 @@ class Page(object):
        idx=np.array(idx)
        idxtype=idx.dtype.str
        self=cls(pagedir,pageid,idxtype,count,idx[0],idx[-1],
-                        rectype,reclen,recsize,comp,None)
+                        rectype,reclen,int(recsize),comp,None)
        if not os.path.isdir(self.pagepath):
          os.makedirs(self.pagepath)
        idx.tofile(self.idxpath)
