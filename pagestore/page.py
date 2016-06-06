@@ -57,12 +57,14 @@ class Page(object):
                    rrr.reshape([1])
                if 'S' in rrr.dtype.str:
                    rrr=np.array([rrr]).view('S1')
+               elif 'U' in rrr.dtype.str:
+                   rrr=np.array([rrr]).view('U1')
                out.append(rrr)
            rec=out
            lengths=np.array(lengths,dtype='<i8')
            rectypes=[rrr.dtype.str for rrr in rec]
            if len(set(rectypes))>1:
-               msg="types mismatch in variable length data: %s"%rectypes
+               msg="type mismatch in variable length data: %s"%rectypes
                raise ValueError(msg)
            rectype=rectypes[0]
            recsize=sum(lengths)*rec[0].dtype.itemsize
