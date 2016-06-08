@@ -164,17 +164,17 @@ class LoggingDB(object):
         for tt in dataset:
             ts = self.fromTimestamp(tt.getStamp(), unixtime)
             if datatype == 'MATRIXNUMERIC':
-                val = np.array(tt.getMatrixDoubleValues())
+                val = np.array(tt.getMatrixDoubleValues(),dtype=float)
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues())
+                val = np.array(tt.getDoubleValues(),dtype=float)
             elif datatype == 'VECTORSTRING':
-                val = np.array(tt.getStringValues())
+                val = np.array(tt.getStringValues(),dtype='U')
             elif datatype == 'NUMERIC':
                 val = tt.getDoubleValue()
             elif datatype == 'FUNDAMENTAL':
                 val = 1
             elif datatype == 'TEXTUAL':
-                val = tt.getVarcharValue()
+                val = unicode(tt.getVarcharValue())
             else:
                 log.warning('Unsupported datatype, returning the java object')
                 val = tt
