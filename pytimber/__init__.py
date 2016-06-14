@@ -1,4 +1,6 @@
-__version__ = "2.1.10"
+# -*- coding: utf-8 -*-
+
+__version__ = "2.2.0"
 
 cmmnbuild_deps = [
     "accsoft-cals-extr-client"
@@ -9,9 +11,9 @@ cmmnbuild_deps = [
 # continue
 try:
     from .pytimber import LoggingDB
-    from .dataquery import DataQuery, parsedate, dumpdate, \
-                           flattenoverlap,set_xaxis_date, \
-                           set_xaxis_utctime, set_xlim_date, get_xlim_date
+    from .dataquery import (DataQuery, parsedate, dumpdate,
+                            flattenoverlap, set_xaxis_date,
+                            set_xaxis_utctime, set_xlim_date, get_xlim_date)
     from . import timberdata
 except ImportError:
     import logging

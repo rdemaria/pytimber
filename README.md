@@ -7,21 +7,27 @@ Python wrapping of the [CERN Accelerator Logging Service][cals] (CALS) API.
 ## Installation
 
 Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
-(1.8), then simply install pytimber using pip:
+(1.8), then install pytimber using pip:
+
+[anaconda]: https://www.continuum.io/downloads
 
 ```sh
+pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
 pip install git+https://github.com/rdemaria/pytimber.git
 ```
+
+[cmmnbuild-dep-manager][] provides automatic resolution of
+Java dependencies for CERN packages. It is required to use pytimber with other
+CERN libraries, such as [PyJapc][].
+
+[cmmnbuild-dep-manager]: https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager
+[pyjapc]: https://gitlab.cern.ch/scripting-tools/pyjapc
 
 ### Notes
 
   * For Windows, [this][jpype-win] pre-compiled version of JPype seems to work
     best.
 
-  * In order to use pytimber with other CERN packages that use JPype, see
-    the [section below](#installation-with-cmmnbuild-dep-manager).
-
-[anaconda]: https://www.continuum.io/downloads
 [jpype-win]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#jpype
 
 ## Usage
@@ -116,31 +122,4 @@ data = ldb.get('RPMBB.UA47.RQTD.A45B2:I_MEAS', t1+90, t1+110)
 for k in data:
   print(mydata[k][0] - data[k][0])
   print(mydata[k][1] - data[k][1])
-```
-
-## Installation with cmmnbuild-dep-manager
-
-[cmmnbuild-dep-manager][] provides automatic resolution of
-Java dependencies for CERN packages. It is required to use pytimber with other
-CERN libraries, such as [PyJapc][].
-
-[cmmnbuild-dep-manager]: https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager
-[pyjapc]: https://gitlab.cern.ch/scripting-tools/pyjapc
-
-pytimber is automatically registered with cmmnbuild-dep-manager during
-installation and the necessary jars are downloaded. For this to work, the
-installation must be done from a machine connected to the CERN network.
-
-```sh
-pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
-pip install git+https://github.com/rdemaria/pytimber.git
-```
-
-Note: if cmmnbuild-dep-manager is installed _after_ pytimber, it is necessary
-to manually register pytimber and download the jars:
-
-```python
-import cmmnbuild_dep_manager
-mgr = cmmnbuild_dep_manager.Manager()
-mgr.install('pytimber')
 ```

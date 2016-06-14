@@ -8,15 +8,13 @@ import pytimber
 
 
 class install(_install):
+    '''Install and perform the jar resolution'''
     def run(self):
-        try:
-            import cmmnbuild_dep_manager
-            mgr = cmmnbuild_dep_manager.Manager()
-            mgr.install('pytimber')
-            print('registered pytimber with cmmnbuild_dep_manager')
-        except ImportError:
-            pass
-        _install.run(self)
+        import cmmnbuild_dep_manager
+        mgr = cmmnbuild_dep_manager.Manager()
+        mgr.install('pytimber')
+        print('registered pytimber with cmmnbuild_dep_manager')
+        super().run(self)
 
 setuptools.setup(
     name='pytimber',
@@ -26,9 +24,19 @@ setuptools.setup(
     author_email='riccardo.de.maria@cern.ch',
     url='https://github.com/rdemaria/pytimber',
     packages=['pytimber'],
-    package_dir={'pytimber': 'pytimber'},
-    install_requires=['JPype1>=0.6.0'],
-    cmdclass={'install': install},
-    package_data={'pytimber': ['jars/*']},
+    package_dir={
+        'pytimber': 'pytimber'
+    },
+    setup_requires=[
+        'cmmnbuild-dep-manager'
+    ],
+    install_requires=[
+        'numpy',
+        'JPype1',
+        'cmmnbuild-dep-manager'
+    ],
+    cmdclass={
+        'install': install
+    },
     zip_safe=False
 )
