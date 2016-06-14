@@ -145,7 +145,11 @@ class PageStore(object):
         return pages
     def get(self,variables,idxa=None,idxb=None):
         data={}
-        for variable in self.search(variables):
+        if isinstance(variables,str):
+            varlist=self.search(variables)
+        elif isinstance(variables, (list, tuple)):
+            varlist=variables
+        for variable in varlist:
             data[variable]=self.get_variable(variable,idxa=idxa,idxb=idxb)
         return data
     def get_variable(self,variable,idxa=None,idxb=None):
