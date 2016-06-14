@@ -51,17 +51,17 @@ class Page(object):
        if len(set(lengths))>1:
            reclen=-1
            out=[]
+           nlengths=[]
            for rrr in rec:
                rrr=np.array(rrr)
-               if rrr.ndim==0:
-                   rrr.reshape([1])
                if 'S' in rrr.dtype.str:
-                   rrr=np.array([rrr]).view('S1')
+                   rrr=np.array([rrr]).view('S1').flatten()
                elif 'U' in rrr.dtype.str:
-                   rrr=np.array([rrr]).view('U1')
+                   rrr=np.array([rrr]).view('U1').flatten()
                out.append(rrr)
+               nlengths.append(len(rrr))
            rec=out
-           lengths=np.array(lengths,dtype='<i8')
+           lengths=np.array(nlengths,dtype='<i8')
            rectypes=[rrr.dtype.str for rrr in rec]
            if len(set(rectypes))>1:
                msg="type mismatch in variable length data: %s"%rectypes
@@ -70,12 +70,12 @@ class Page(object):
            recsize=sum(lengths)*rec[0].dtype.itemsize
        else:
            rec=np.array(rec)
+           recsize=rec.nbytes
+           rectype=rec.dtype.str
            if rec.ndim==1:
                reclen=0
            else:
               reclen=rec.shape[1]
-           recsize=rec.nbytes
-           rectype=rec.dtype.str
        idx=np.array(idx)
        idxtype=idx.dtype.str
        self=cls(pagedir,pageid,idxtype,count,idx[0],idx[-1],
@@ -92,41 +92,46 @@ class Page(object):
           [ rrr.tofile(recfh) for rrr in rec]
           recfh.close()
        else:
-          rec.tofile(self.recpath)
-       sha=hashfile(sha,self.recpath)
-       if comp=='gzip':
-          os.system("gzip %s"%self.recpath)
-       self.checksum=sha.hexdigest()
+          if recsize>0:
+            rec.tofile(self.recpath)
+       if recsize>0:
+         sha=hashfile(sha,self.recpath)
+         if comp=='gzip':
+            os.system("gzip %s"%self.recpath)
+         self.checksum=sha.hexdigest()
        return self
     def get_all(self):
         return self.get_idx_all(),self.get_rec_all()
     def get_rec_all(self):
-        if self.comp=='gzip':
-            os.system("gunzip %s.gz"%self.recpath)
-        cc=self.count
-        reclen=self.reclen
-        if reclen==-1:
-            lengths=np.fromfile(self.lenpath,dtype='<i8',count=cc)
-            recfh=open(self.recpath)
-            rec=[np.fromfile(recfh,dtype=self.rectype,count=cc)
-                                                  for cc in lengths]
-            recfh.close()
-            if 'S' in self.rectype:
-                rec=[rrr.tostring() for rrr in rec]
-            elif 'U' in self.rectype:
-                rec=[rrr.tostring() for rrr in rec]
-        elif reclen==0:
-            rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
+        if self.recsize==0:
+            rec=np.array([[]]*self.count,dtype=self.rectype)
         else:
-            rec=np.fromfile(self.recpath,dtype=self.rectype,
-                    count=cc*reclen)
-            if len(rec)<cc*reclen:
-                msg="Error in Page %s: not enough records:%d!=%d*%d"
-                raise IOError(msg%(self.pageid,cc*reclen,cc,reclen))
-            rec=rec.reshape(cc,reclen)
-        if len(rec)!=self.count:
-            msg='Error: Record mismatch in Page %d: %d read vs %d'
-            raise IOError(msg%(self.pageid,len(rec),self.count))
+            if self.comp=='gzip':
+                os.system("gunzip %s.gz"%self.recpath)
+            cc=self.count
+            reclen=self.reclen
+            if reclen==-1:
+                lengths=np.fromfile(self.lenpath,dtype='<i8',count=cc)
+                recfh=open(self.recpath)
+                rec=[np.fromfile(recfh,dtype=self.rectype,count=cc)
+                                                      for cc in lengths]
+                recfh.close()
+                if 'S' in self.rectype:
+                    rec=[rrr.tostring() for rrr in rec]
+                elif 'U' in self.rectype:
+                    rec=[rrr.tostring() for rrr in rec]
+            elif reclen==0:
+                rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
+            else:
+                rec=np.fromfile(self.recpath,dtype=self.rectype,
+                        count=cc*reclen)
+                if len(rec)<cc*reclen:
+                    msg="Error in Page %s: not enough records:%d!=%d*%d"
+                    raise IOError(msg%(self.pageid,cc*reclen,cc,reclen))
+                rec=rec.reshape(cc,reclen)
+            if len(rec)!=self.count:
+                msg='Error: Record mismatch in Page %d: %d read vs %d'
+                raise IOError(msg%(self.pageid,len(rec),self.count))
         return rec
     def get_idx_all(self):
         cc=self.count

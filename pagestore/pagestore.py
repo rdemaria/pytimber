@@ -38,7 +38,7 @@ class PageStore(object):
     def __repr__(self):
         fmt="PageStore(%r,pagedir=%r,maxpagesize=%r)"
         return fmt%(self.dbname,self.pagedir,self.maxpagesize)
-    def __init__(self,dbname,pagedir=None,maxpagesize=None,
+    def __init__(self,dbname,pagedir,maxpagesize=None,
                       checksum=False,
                       keep_deleted_pages=False):
         self.dbname=dbname
@@ -252,7 +252,7 @@ class PageStore(object):
     def search(self,searchexp="%"):
        cur=self.db.cursor()
        sql="""SELECT DISTINCT name FROM pages WHERE name LIKE ?"""
-       res=list(cur.execute(sql,[searchexp]))
+       res=cur.execute(sql,[str(searchexp)]).fetchall()
        return [rr[0] for rr in res]
     def get_lim(self,variable,idxa=None,idxb=None):
        cur=self.db.cursor()
