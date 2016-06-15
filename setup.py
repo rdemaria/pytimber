@@ -43,9 +43,6 @@ setuptools.setup(
         'JPype1>=0.6.1',
         'cmmnbuild_dep_manager>=1.2.9'
     ],
-    dependency_links=[
-        'git+https://gitlab.cern.ch/bi/cmmnbuild-dep-manager.git#egg=cmmnbuild_dep_manager'
-    ],
     cmdclass={
         'install': install
     },
