@@ -1,10 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import ast
 import setuptools
 from setuptools.command.install import install as _install
 
-import pytimber
+
+def get_version_from_init():
+    init_file = os.path.join(
+        os.path.dirname(__file__), 'pytimber', '__init__.py'
+    )
+    with open(init_file, 'r') as file:
+        for line in file:
+            if line.startswith('__version__'):
+                return ast.literal_eval(line.split('=', 1)[1].strip())
 
 
 class install(_install):
@@ -14,11 +24,11 @@ class install(_install):
         mgr = cmmnbuild_dep_manager.Manager()
         mgr.install('pytimber')
         print('registered pytimber with cmmnbuild_dep_manager')
-        super().run(self)
+        super().run()
 
 setuptools.setup(
     name='pytimber',
-    version=pytimber.__version__,
+    version=get_version_from_init(),
     description='A Python wrapping of CALS API',
     author='Riccardo De Maria',
     author_email='riccardo.de.maria@cern.ch',
