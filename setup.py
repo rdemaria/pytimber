@@ -41,7 +41,6 @@ setuptools.setup(
         'cmmnbuild-dep-manager>=1.2.9'
     ],
     install_requires=[
-        'numpy',
         'JPype1>=0.6.1',
         'cmmnbuild-dep-manager>=1.2.9'
     ],
