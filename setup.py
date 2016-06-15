@@ -24,7 +24,7 @@ class install(_install):
         mgr = cmmnbuild_dep_manager.Manager()
         mgr.install('pytimber')
         print('registered pytimber with cmmnbuild_dep_manager')
-        super().run()
+        super(install, self).run()
 
 setuptools.setup(
     name='pytimber',
