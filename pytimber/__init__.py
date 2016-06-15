@@ -8,6 +8,6 @@ from . import timberdata
 
 __version__ = "2.2.0"
 
-cmmnbuild_deps = (
+cmmnbuild_deps = [
     "accsoft-cals-extr-client"
-)
+]

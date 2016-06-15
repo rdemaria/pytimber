@@ -38,12 +38,12 @@ setuptools.setup(
         'pytimber': 'pytimber'
     },
     setup_requires=[
-        'cmmnbuild-dep-manager'
+        'cmmnbuild-dep-manager>=1.2.9'
     ],
     install_requires=[
         'numpy',
-        'JPype1',
-        'cmmnbuild-dep-manager'
+        'JPype1>=0.6.1',
+        'cmmnbuild-dep-manager>=1.2.9'
     ],
     cmdclass={
         'install': install
