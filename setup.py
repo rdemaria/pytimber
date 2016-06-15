@@ -6,7 +6,6 @@ import ast
 import setuptools
 from setuptools.command.install import install as _install
 
-
 def get_version_from_init():
     init_file = os.path.join(
         os.path.dirname(__file__), 'pytimber', '__init__.py'
@@ -38,11 +37,14 @@ setuptools.setup(
         'pytimber': 'pytimber'
     },
     setup_requires=[
-        'cmmnbuild-dep-manager>=1.2.9'
+        'cmmnbuild_dep_manager>=1.2.9'
     ],
     install_requires=[
         'JPype1>=0.6.1',
-        'cmmnbuild-dep-manager>=1.2.9'
+        'cmmnbuild_dep_manager>=1.2.9'
+    ],
+    dependency_links=[
+        'git+https://gitlab.cern.ch/bi/cmmnbuild-dep-manager.git#egg=cmmnbuild_dep_manager'
     ],
     cmdclass={
         'install': install
