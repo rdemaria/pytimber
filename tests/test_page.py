@@ -1,28 +1,43 @@
 from pagestore import *
 from numpy import *
 
-pagedir='.'
-idx=arange(400)
-rec=zeros((400,4))
-p=Page.from_data(idx,rec,pagedir,0)
-assert all(p.get_rec()==rec)
-assert all(p.get_idx()==idx)
-p.delete()
+def mktest(idx,rec,comp=None):
+    idx=array(idx)
+    rec=array(rec)
+    p=Page.from_data(idx,rec,'.',0,comp=comp)
+    try:
+      nidx=p.get_idx_all()
+      nrec=p.get_rec_all()
+      assert all(nrec==rec)
+      assert all(nidx==idx)
+    except Exception as e:
+      print("Error")
+      print(idx,nidx)
+      print(rec,nrec)
+    finally:
+      p.delete()
+
+mktest([1],[''])
+mktest([1],['a'])
+mktest([1],[['a','b']])
+mktest([1],[['a','b','ab']])
+mktest([1,2],['a','b'])
+mktest([1,2],[['a'],['b']])
+mktest([1,2],[['a','b'],['c','d']])
+mktest([1,2],[['a','b'],['c','d','e']])
+mktest([1,2],[['a','bc'],['cd','d','eddd']])
+
+
+mktest(arange(40), zeros((40,4)))
 
 def makedata(nrec,lrec,lrecr):
   idx=arange(nrec*1.0)
   val=[random.rand(lrec+int(random.rand()*lrecr)) for i in idx]
   return idx,val
 
-idx,rec=makedata(300,8000,0)
-p=Page.from_data(idx,rec,pagedir,0)
-assert all(p.get_rec()==rec)
-assert all(p.get_idx()==idx)
-p.delete()
+idx,rec=makedata(30,80,0)
+mktest(idx,rec)
+mktest(idx,rec,comp='gzip')
 
-p=Page.from_data(idx,rec,pagedir,0,comp='gzip')
-assert all(p.get_rec()==rec)
-assert all(p.get_idx()==idx)
-p.delete()
 
 

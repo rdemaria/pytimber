@@ -15,3 +15,20 @@ mydb.store(data)
 t,v=mydb.get(name)[name]
 
 
+from numpy import *
+a=[[u'1',u'2'],[u'22'],[u'1',u'2',u'44']]
+data=map(array,a)
+
+
+fh=open('out','wb')
+
+lengths=map(len,a)
+
+
+
+
+
+
+
+
+

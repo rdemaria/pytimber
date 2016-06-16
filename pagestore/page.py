@@ -18,6 +18,11 @@ def hashfile(sha,fpath,BUF_SIZE = 65536):
         sha.update(data)
     return sha
 
+def split_string(sss):
+    sss=[a for a in sss.split('\x00') if len(a)>0]
+    return sss
+
+
 class Page(object):
     def __init__(self,pagedir,pageid,
                       idxtype,count,idxa,idxb,
@@ -54,10 +59,13 @@ class Page(object):
            nlengths=[]
            for rrr in rec:
                rrr=np.array(rrr)
+               # for string, save data in zero terminated strings
                if 'S' in rrr.dtype.str:
-                   rrr=np.array([rrr]).view('S1').flatten()
+                   nt=str(int(rrr.dtype.str[2:])+1)
+                   rrr=np.array([rrr],dtype='S'+nt).view('S1').flatten()
                elif 'U' in rrr.dtype.str:
-                   rrr=np.array([rrr]).view('U1').flatten()
+                   nt=str(int(rrr.dtype.str[2:])+1)
+                   rrr=np.array([rrr],dtype='U'+nt).view('U1').flatten()
                out.append(rrr)
                nlengths.append(len(rrr))
            rec=out
@@ -116,10 +124,8 @@ class Page(object):
                 rec=[np.fromfile(recfh,dtype=self.rectype,count=cc)
                                                       for cc in lengths]
                 recfh.close()
-                if 'S' in self.rectype:
-                    rec=[rrr.tostring() for rrr in rec]
-                elif 'U' in self.rectype:
-                    rec=[rrr.tostring() for rrr in rec]
+                if 'S' in self.rectype or 'U' in self.rectype:
+                    rec=[split_string(rrr.tostring()) for rrr in rec]
             elif reclen==0:
                 rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
             else:
