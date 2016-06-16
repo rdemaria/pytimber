@@ -13,8 +13,9 @@ try:
                            flattenoverlap,set_xaxis_date, \
                            set_xaxis_utctime, set_xlim_date, get_xlim_date
     from . import timberdata
-except ImportError:
+except ImportError as e:
     import logging
     logging.basicConfig()
     log = logging.getLogger(__name__)
-    log.warning("required dependencies are not installed")
+    log.warning("Required dependencies are not installed")
+    raise e
