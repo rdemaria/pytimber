@@ -125,14 +125,15 @@ class PageStore(object):
         if os.path.exists(self.pagedir):
           shutil.rmtree(self.pagedir)
         os.unlink(self.dbname)
-    def store_page(self,variable,idx,rec):
+    def store_page(self,variable,idx,rec,commit=True):
         #print("Store page %s"%variable)
         pageid=self.get_last_pageid()+1
         page=Page.from_data(idx,rec,self.pagedir,pageid)
         sql="""INSERT INTO pages VALUES
              (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
         self.db.execute(sql,[variable]+page._tolist()+[None])
-        self.db.commit()
+        if commit:
+          self.db.commit()
     def get_pages(self,variable,idxa=None,idxb=None):
         cur=self.db.cursor()
         idxa,idxb=self.get_lim(variable,idxa,idxb)
@@ -250,9 +251,9 @@ class PageStore(object):
            self.rebalance(variable,self.maxpagesize)
     def merge_page(self,variable,page,idx,rec):
        pidx,prec=page.get_all()
-       self.delete_page(page)
        nidx,nrec=merge(pidx,prec,idx,rec)
-       self.store_page(variable,nidx,nrec)
+       self.store_page(variable,nidx,nrec,commit=False)
+       self.delete_page(page)
     def search(self,searchexp="%"):
        cur=self.db.cursor()
        sql="""SELECT DISTINCT name FROM pages WHERE name LIKE ?"""
