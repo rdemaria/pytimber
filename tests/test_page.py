@@ -27,6 +27,16 @@ mktest([1,2],[['a','b'],['c','d']])
 mktest([1,2],[['a','b'],['c','d','e']])
 mktest([1,2],[['a','bc'],['cd','d','eddd']])
 
+mktest([1],[u''])
+mktest([1],[u'a'])
+mktest([1],[[u'a',u'b']])
+mktest([1],[[u'a',u'b',u'ab']])
+mktest([1,2],[u'a',u'b'])
+mktest([1,2],[[u'a'],[u'b']])
+mktest([1,2],[[u'a',u'b'],[u'c',u'd']])
+mktest([1,2],[[u'a',u'b'],[u'c',u'd',u'e']])
+mktest([1,2],[[u'a',u'bc'],[u'cd',u'd',u'eddd']])
+
 
 mktest(arange(40), zeros((40,4)))
 

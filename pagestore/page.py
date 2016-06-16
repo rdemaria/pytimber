@@ -3,6 +3,8 @@ import hashlib
 
 import numpy as np
 
+import sys
+
 def id_to_path(num,nchar=3):
     sss=str(num)[::-1]
     sss=[sss[i:i+nchar][::-1] for i in range(0,len(sss),nchar)][::-1]
@@ -18,10 +20,12 @@ def hashfile(sha,fpath,BUF_SIZE = 65536):
         sha.update(data)
     return sha
 
+def split_string_utf32(sss):
+  sss=[a for a in sss.decode('utf-32').split('\0') if len(a)>0]
+  return sss
 def split_string(sss):
-    sss=[a for a in sss.split('\x00') if len(a)>0]
-    return sss
-
+  sss=[a for a in sss.split('\0') if len(a)>0]
+  return sss
 
 class Page(object):
     def __init__(self,pagedir,pageid,
@@ -124,8 +128,10 @@ class Page(object):
                 rec=[np.fromfile(recfh,dtype=self.rectype,count=cc)
                                                       for cc in lengths]
                 recfh.close()
-                if 'S' in self.rectype or 'U' in self.rectype:
+                if 'S' in self.rectype:
                     rec=[split_string(rrr.tostring()) for rrr in rec]
+                elif 'U' in self.rectype:
+                    rec=[split_string_utf32(rrr.tostring()) for rrr in rec]
             elif reclen==0:
                 rec=np.fromfile(self.recpath,dtype=self.rectype,count=cc)
             else:
