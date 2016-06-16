@@ -61,19 +61,20 @@ def check_data(a,b):
 
 
 a=DictDB()
-b=PageStore('test.db','testdata',maxpagesize=100)
-b.delete()
-b=PageStore('test.db','testdata',maxpagesize=100)
-
-data=mkdata()
-a.store(data)
-check_data(data,a.get())
-b.store(data)
-check_data(data,b.get('%'))
-check_data(a.get(),b.get('%'))
-
-for n in range(10):
+try:
+  b=PageStore('test.db','testdata',maxpagesize=100,keep_deleted_pages=True)
   data=mkdata()
   a.store(data)
+  check_data(data,a.get())
   b.store(data)
+  check_data(data,b.get('%'))
   check_data(a.get(),b.get('%'))
+  for n in range(10):
+    data=mkdata()
+    a.store(data)
+    b.store(data)
+    check_data(a.get(),b.get('%'))
+except Exception as e:
+  raise e
+finally:
+  b.delete()
