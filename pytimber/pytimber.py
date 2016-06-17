@@ -41,6 +41,14 @@ import cmmnbuild_dep_manager
 from collections import namedtuple
 
 
+Stat = namedtuple(
+    'Stat',
+    ['MinTstamp', 'MaxTstamp', 'ValueCount',
+     'MinValue', 'MaxValue', 'AvgValue',
+     'StandardDeviationValue']
+)
+
+
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
                  source='all', loglevel=None):
@@ -272,13 +280,6 @@ class LoggingDB(object):
             return []
 
     def getStats(self, pattern_or_list, t1, t2, unixtime=True):
-        Stat = namedtuple(
-            'Stat',
-            ['MinTstamp', 'MaxTstamp', 'ValueCount',
-             'MinValue', 'MaxValue', 'AvgValue',
-             'StandardDeviationValue']
-        )
-
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
 
