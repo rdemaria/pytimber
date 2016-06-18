@@ -1,5 +1,9 @@
 # pytimber changelog
 
+## 07/2016 (T. Levens)
+
+  * Now requires cmmnbuild_dep_manager.
+
 ## 04/2016 (T. Levens)
 
   * Added functions to get LHC fill information.

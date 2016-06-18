@@ -12,18 +12,17 @@ Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
 [anaconda]: https://www.continuum.io/downloads
 
 ```sh
-pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
-pip install git+https://github.com/rdemaria/pytimber.git
+pip install git+https://github.com/rdemaria/pytimber.git --process-dependency-links
 ```
 
-[cmmnbuild-dep-manager][] provides automatic resolution of
-Java dependencies for CERN packages. It is required to use pytimber with other
-CERN libraries, such as [PyJapc][].
+This will also install [cmmnbuild-dep-manager][] to provide automatic
+resolution of Java dependencies for CERN packages. It is required to use
+pytimber with other CERN libraries, such as [PyJapc][].
 
 [cmmnbuild-dep-manager]: https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager
 [pyjapc]: https://gitlab.cern.ch/scripting-tools/pyjapc
 
-### Notes
+### Installation notes
 
   * For Windows, [this][jpype-win] pre-compiled version of JPype seems to work
     best.
