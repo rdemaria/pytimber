@@ -1,6 +1,6 @@
 # pytimber changelog
 
-## 07/2016 (T. Levens)
+## 06/2016 (T. Levens)
 
   * Now requires cmmnbuild_dep_manager.
 
