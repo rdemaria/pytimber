@@ -1,105 +1,89 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''
+PyTimber -- A Python wrapping of CALS API
 
-# Authors:
-#   R. De Maria
-#   T. Levens
-#   C. Hernalsteens
-#   M. Betz
+Copyright (c) CERN 2015-2016
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Authors:
+    R. De Maria     <riccardo.de.maria@cern.ch>
+    T. Levens       <tom.levens@cern.ch>
+    C. Hernalsteens <cedric.hernalsteens@cern.ch>
+    M. Betz         <michael.betz@cern.ch>
+'''
 
 import os
-import glob
 import time
 import datetime
 import six
 import logging
-from collections import namedtuple
-
 import jpype
 import numpy as np
-
-"""Latest version of the standalone jar is availale here:
-http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/dist/accsoft-cals-extr-client-nodep.jar
-"""
+import cmmnbuild_dep_manager
+from collections import namedtuple
 
 
+Stat = namedtuple(
+    'Stat',
+    ['MinTstamp', 'MaxTstamp', 'ValueCount',
+     'MinValue', 'MaxValue', 'AvgValue',
+     'StandardDeviationValue']
+)
 
-logging.basicConfig()
-log = logging.getLogger(__name__)
-
-try:
-    # Try to get a lit of .jars from cmmnbuild_dep_manager.
-    import cmmnbuild_dep_manager
-    mgr = cmmnbuild_dep_manager.Manager()
-    logging.getLogger(
-        'cmmnbuild_dep_manager.cmmnbuild_dep_manager'
-    ).setLevel(logging.WARNING)
-
-    # During first installation with cmmnbuild_dep_manager some necessary jars
-    # do not exist, so fall back to locally bundled .jar file in this case.
-    if not mgr.is_registered('pytimber'):
-        log.warning('pytimber is not registered with cmmnbuild_dep_manager '
-                    'so falling back to bundled jar. Things may not work as '
-                    'expected...')
-        raise ImportError
-
-    _jar = mgr.class_path()
-except ImportError:
-    # Could not import cmmnbuild_dep_manager -- it is probably not
-    # installed. Fall back to using the locally bundled .jar file.
-    _moddir = os.path.dirname(__file__)
-    _jar = os.path.join(_moddir, 'jars', 'accsoft-cals-extr-client-nodep.jar')
-
-if not jpype.isJVMStarted():
-    libjvm = os.environ.get('JAVA_JVM_LIB')
-    if libjvm is None:
-      libjvm = jpype.getDefaultJVMPath()
-    jpype.startJVM(libjvm, '-Djava.class.path={0}'.format(_jar))
-else:
-    log.warning('JVM is already started')
-
-# Definitions of Java packages
-cern = jpype.JPackage('cern')
-org = jpype.JPackage('org')
-java = jpype.JPackage('java')
-ServiceBuilder = cern.accsoft.cals.extr.client.service.ServiceBuilder
-DataLocationPreferences = \
-        cern.accsoft.cals.extr.domain.core.datasource.DataLocationPreferences
-VariableDataType = \
-        cern.accsoft.cals.extr.domain.core.constants.VariableDataType
-Timestamp = java.sql.Timestamp
-null = org.apache.log4j.varia.NullAppender()
-org.apache.log4j.BasicConfigurator.configure(null)
-BeamModeValue = \
-    cern.accsoft.cals.extr.domain.core.constants.BeamModeValue
-
-source_dict = {
-    'mdb': DataLocationPreferences.MDB_PRO,
-    'ldb': DataLocationPreferences.LDB_PRO,
-    'all': DataLocationPreferences.MDB_AND_LDB_PRO
-}
-
-
-def test():
-    print('OK')
-
-
-Stat=namedtuple('Stat',
-        ['MinTstamp', 'MaxTstamp','ValueCount',
-         'MinValue', 'MaxValue', 'AvgValue','StandardDeviationValue'])
 
 class LoggingDB(object):
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
-                 source='all', silent=False, loglevel=None):
-        loc = source_dict[source]
-        self._builder = ServiceBuilder.getInstance(appid, clientid, loc)
-        self._md = self._builder.createMetaService()
-        self._ts = self._builder.createTimeseriesService()
-        self._FillService = FillService = self._builder.createLHCFillService()
-        self.tree = Hierarchy('root', None, None, self._md)
+                 source='all', loglevel=None):
+        # Configure logging
+        logging.basicConfig()
+        self._log = logging.getLogger(__name__)
         if loglevel is not None:
-            log.setLevel(loglevel)
+            self._log.setLevel(loglevel)
+
+        # Start JVM
+        mgr = cmmnbuild_dep_manager.Manager()
+        mgr.log.setLevel(logging.WARNING)
+        mgr.start_jpype_jvm()
+
+        # log4j config
+        null = jpype.JPackage('org').apache.log4j.varia.NullAppender()
+        jpype.JPackage('org').apache.log4j.BasicConfigurator.configure(null)
+
+        # Data source preferences
+        DataLocPrefs = (jpype.JPackage('cern').accsoft.cals.extr.domain
+                        .core.datasource.DataLocationPreferences)
+        loc = {'mdb': DataLocPrefs.MDB_PRO,
+               'ldb': DataLocPrefs.LDB_PRO,
+               'all': DataLocPrefs.MDB_AND_LDB_PRO}[source]
+
+        ServiceBuilder = (jpype.JPackage('cern').accsoft.cals.extr.client
+                          .service.ServiceBuilder)
+        builder = ServiceBuilder.getInstance(appid, clientid, loc)
+        self._md = builder.createMetaService()
+        self._ts = builder.createTimeseriesService()
+        self._FillService = FillService = builder.createLHCFillService()
+        self.tree = Hierarchy('root', None, None, self._md)
 
     def toTimestamp(self, t):
+        Timestamp = jpype.java.sql.Timestamp
         if isinstance(t, six.string_types):
             return Timestamp.valueOf(t)
         elif isinstance(t, datetime.datetime):
@@ -125,28 +109,33 @@ class LoggingDB(object):
                 return datetime.datetime.fromtimestamp(t)
 
     def toStringList(self, myArray):
-        myList = java.util.ArrayList()
+        myList = jpype.java.util.ArrayList()
         for s in myArray:
             myList.add(s)
         return myList
 
     def search(self, pattern):
         """Search for parameter names. Wildcard is '%'."""
+        VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
+                            .core.constants.VariableDataType)
         types = VariableDataType.ALL
         v = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
         return v.toString()[1:-1].split(', ')
 
     def getFundamentals(self, t1, t2, fundamental):
-        log.info('Querying fundamentals (pattern: {0}):'.format(fundamental))
+        self._log.info(
+            'Querying fundamentals (pattern: {0}):'.format(fundamental)
+        )
         fundamentals = self._md.getFundamentalsInTimeWindowWithNameLikePattern(
-                        t1, t2, fundamental)
+            t1, t2, fundamental
+        )
         if fundamentals is None:
-            log.info('No fundamental found in time window')
+            self._log.info('No fundamental found in time window')
         else:
             logfuns = []
             for f in fundamentals:
                 logfuns.append(f)
-            log.info('List of fundamentals found: {0}'.format(
+            self._log.info('List of fundamentals found: {0}'.format(
                 ', '.join(logfuns)))
         return fundamentals
 
@@ -154,13 +143,17 @@ class LoggingDB(object):
         """Get a list of variables based on a list of strings or a pattern.
         Wildcard for the pattern is '%'.
         """
+        VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
+                            .core.constants.VariableDataType)
         if isinstance(pattern_or_list, six.string_types):
             types = VariableDataType.ALL
             variables = self._md.getVariablesOfDataTypeWithNameLikePattern(
-                    pattern_or_list, types)
+                pattern_or_list, types
+            )
         elif isinstance(pattern_or_list, (list, tuple)):
             variables = self._md.getVariablesWithNameInListofStrings(
-                    java.util.Arrays.asList(pattern_or_list))
+                jpype.java.util.Arrays.asList(pattern_or_list)
+            )
         else:
             variables = None
         return variables
@@ -171,19 +164,20 @@ class LoggingDB(object):
         for tt in dataset:
             ts = self.fromTimestamp(tt.getStamp(), unixtime)
             if datatype == 'MATRIXNUMERIC':
-                val = np.array(tt.getMatrixDoubleValues(),dtype=float)
+                val = np.array(tt.getMatrixDoubleValues(), dtype=float)
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues(),dtype=float)
+                val = np.array(tt.getDoubleValues(), dtype=float)
             elif datatype == 'VECTORSTRING':
-                val = np.array(tt.getStringValues(),dtype='U')
+                val = np.array(tt.getStringValues(), dtype='U')
             elif datatype == 'NUMERIC':
                 val = tt.getDoubleValue()
             elif datatype == 'FUNDAMENTAL':
                 val = 1
             elif datatype == 'TEXTUAL':
-                val = unicode(tt.getVarcharValue())
+                val = six.u(tt.getVarcharValue())
             else:
-                log.warning('Unsupported datatype, returning the java object')
+                self._log.warning('Unsupported datatype, returning the '
+                                  'java object')
                 val = tt
             datas.append(val)
             tss.append(ts)
@@ -217,13 +211,13 @@ class LoggingDB(object):
             master_variable = variables.getVariable(master)
 
         if master_variable is None:
-            log.warning('Master variable not found.')
+            self._log.warning('Master variable not found.')
             return {}
 
         master_name = master_variable.toString()
 
         if len(variables) == 0:
-            log.warning('No variables found.')
+            self._log.warning('No variables found.')
             return {}
         else:
             logvars = []
@@ -233,17 +227,21 @@ class LoggingDB(object):
                 else:
                     logvars.append(v)
 
-            log.info('List of variables to be queried: {0}'.format(
-                ', '.join(logvars)))
+            self._log.info('List of variables to be queried: {0}'.format(
+                ', '.join(logvars)
+            ))
 
         # Acquire master dataset
         if fundamental is not None:
             master_ds = self._ts.getDataInTimeWindowFilteredByFundamentals(
-                    master_variable, ts1, ts2, fundamentals)
+                master_variable, ts1, ts2, fundamentals
+            )
         else:
-            master_ds = self._ts.getDataInTimeWindow(master_variable, ts1, ts2)
+            master_ds = self._ts.getDataInTimeWindow(
+                master_variable, ts1, ts2
+            )
 
-        log.info('Retrieved {0} values for {1} (master)'.format(
+        self._log.info('Retrieved {0} values for {1} (master)'.format(
             master_ds.size(), master_name))
 
         # Prepare master dataset for output
@@ -260,11 +258,13 @@ class LoggingDB(object):
             jvar = variables.getVariable(v)
             start_time = time.time()
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
-            log.info('Retrieved {0} values for {1}'.format(
-                res.size(), jvar.getVariableName()))
-            log.info('{0} seconds for aqn'.format(time.time()-start_time))
+            self._log.info('Retrieved {0} values for {1}'.format(
+                res.size(), jvar.getVariableName()
+            ))
+            self._log.info('{0} seconds for aqn'.format(time.time()-start_time))
             out[v] = self.processDataset(
-                       res, res.getVariableDataType().toString(), unixtime)[1]
+                res, res.getVariableDataType().toString(), unixtime
+            )[1]
         return out
 
     def searchFundamental(self, fundamental, t1, t2=None):
@@ -278,7 +278,8 @@ class LoggingDB(object):
             return list(fundamentals.getVariableNames())
         else:
             return []
-    def getStats(self, pattern_or_list, t1, t2,unixtime=True):
+
+    def getStats(self, pattern_or_list, t1, t2, unixtime=True):
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
 
@@ -292,24 +293,32 @@ class LoggingDB(object):
             for v in variables:
                 logvars.append(v)
             log.info('List of variables to be queried: {0}'.format(
-                ', '.join(logvars)))
+                ', '.join(logvars)
+            ))
+
         # Acquire
-        data=self._ts.                                                       getVariableStatisticsOverMultipleVariablesInTimeWindow(
-                variables,ts1,ts2)
+        data = self._ts.getVariableStatisticsOverMultipleVariablesInTimeWindow(
+            variables, ts1, ts2
+        )
+
         out = {}
         for stat in data.getStatisticsList():
-            count=stat.getValueCount()
-            if count>0:
-              s=Stat(
-                   self.fromTimestamp(stat.getMinTstamp(),unixtime),
-                   self.fromTimestamp(stat.getMaxTstamp(),unixtime),
-                   int(count),
-                   stat.getMinValue().doubleValue(),
-                   stat.getMaxValue().doubleValue(),
-                   stat.getAvgValue().doubleValue(),
-                   stat.getStandardDeviationValue().doubleValue())
-              out[stat.getVariableName()]=s
+            count = stat.getValueCount()
+            if count > 0:
+                s = Stat(
+                    self.fromTimestamp(stat.getMinTstamp(), unixtime),
+                    self.fromTimestamp(stat.getMaxTstamp(), unixtime),
+                    int(count),
+                    stat.getMinValue().doubleValue(),
+                    stat.getMaxValue().doubleValue(),
+                    stat.getAvgValue().doubleValue(),
+                    stat.getStandardDeviationValue().doubleValue()
+                )
+
+                out[stat.getVariableName()] = s
+
         return out
+
 #    def getSize(self, pattern_or_list, t1, t2):
 #        ts1 = self.toTimestamp(t1)
 #        ts2 = self.toTimestamp(t2)
@@ -329,8 +338,6 @@ class LoggingDB(object):
 #        for v in variables:
 #            return self._ts.getJVMHeapSizeEstimationForDataInTimeWindow(v,ts1,ts2,None,None)
 
-
-
     def get(self, pattern_or_list, t1, t2=None,
             fundamental=None, unixtime=True):
         """Query the database for a list of variables or for variables whose
@@ -345,26 +352,26 @@ class LoggingDB(object):
         be explicitely provided.
         """
         ts1 = self.toTimestamp(t1)
-        if t2 not in ['last','next',None]:
-          ts2 = self.toTimestamp(t2)
+        if t2 not in ['last', 'next', None]:
+            ts2 = self.toTimestamp(t2)
         out = {}
 
         # Build variable list
         variables = self.getVariablesList(pattern_or_list)
         if len(variables) == 0:
-            log.warning('No variables found.')
+            self._log.warning('No variables found.')
             return {}
         else:
             logvars = []
             for v in variables:
                 logvars.append(v)
-            log.info('List of variables to be queried: {0}'.format(
+            self._log.info('List of variables to be queried: {0}'.format(
                 ', '.join(logvars)))
 
         # Fundamentals
         if fundamental is not None and ts2 is None:
-            log.warning('Unsupported: if filtering by fundamentals'
-                        'you must provide a correct time window')
+            self._log.warning('Unsupported: if filtering by fundamentals '
+                              'you must provide a correct time window')
             return {}
         if fundamental is not None:
             fundamentals = self.getFundamentals(ts1, ts2, fundamental)
@@ -374,33 +381,41 @@ class LoggingDB(object):
         # Acquire
         for v in variables:
             jvar = variables.getVariable(v)
-            if t2 is None or t2=='last':
-                res = \
-                  [self._ts.getLastDataPriorToTimestampWithinDefaultInterval(
-                    jvar, ts1)]
+            if t2 is None or t2 == 'last':
+                res = [
+                    self._ts.getLastDataPriorToTimestampWithinDefaultInterval(
+                        jvar, ts1
+                    )
+                ]
                 datatype = res[0].getVariableDataType().toString()
-                log.info('Retrieved {0} values for {1}'.format(
-                           1, jvar.getVariableName()))
-            elif t2=='next':
-                res = \
-                  [self._ts.getNextDataAfterTimestampWithinDefaultInterval(
-                    jvar, ts1)]
+                self._log.info('Retrieved {0} values for {1}'.format(
+                    1, jvar.getVariableName()
+                ))
+            elif t2 == 'next':
+                res = [
+                    self._ts.getNextDataAfterTimestampWithinDefaultInterval(
+                        jvar, ts1
+                    )
+                ]
                 if res[0] is None:
-                  res=[]
-                  datatype=None
+                    res = []
+                    datatype = None
                 else:
-                  datatype = res[0].getVariableDataType().toString()
-                  log.info('Retrieved {0} values for {1}'.format(
-                           1, jvar.getVariableName()))
+                    datatype = res[0].getVariableDataType().toString()
+                    self._log.info('Retrieved {0} values for {1}'.format(
+                        1, jvar.getVariableName()
+                    ))
             else:
                 if fundamental is not None:
                     res = self._ts.getDataInTimeWindowFilteredByFundamentals(
-                            jvar, ts1, ts2, fundamentals)
+                        jvar, ts1, ts2, fundamentals
+                    )
                 else:
                     res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
-                log.info('Retrieved {0} values for {1}'.format(
-                    res.size(), jvar.getVariableName()))
+                self._log.info('Retrieved {0} values for {1}'.format(
+                    res.size(), jvar.getVariableName()
+                ))
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
@@ -439,6 +454,9 @@ class LoggingDB(object):
         """
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
+
+        BeamModeValue = (jpype.JPackage('cern').accsoft.cals.extr.domain
+                         .core.constants.BeamModeValue)
 
         if beam_modes is None:
             fills = self._FillService.getLHCFillsAndBeamModesInTimeWindow(
@@ -526,9 +544,12 @@ class Hierarchy(object):
             return '<{0}: {1}>'.format(name, desc)
 
     def get_vars(self):
+        VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
+                            .core.constants.VariableDataType)
         if self.obj is not None:
             vvv = self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(
-                    self.obj, VariableDataType.ALL)
+                self.obj, VariableDataType.ALL
+            )
             return vvv.toString()[1:-1].split(', ')
         else:
             return []
