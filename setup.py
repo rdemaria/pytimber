@@ -16,5 +16,3 @@ setuptools.setup(
     package_dir={'pagestore': 'pagestore'},
     install_requires=['numpy'],
 )
-
-
