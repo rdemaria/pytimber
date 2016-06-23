@@ -23,6 +23,7 @@ def hashfile(sha,fpath,BUF_SIZE = 65536):
 def split_string_utf32(sss):
   sss=[a for a in sss.decode('utf-32').split('\0') if len(a)>0]
   return sss
+
 def split_string(sss):
   sss=[a for a in sss.split('\0') if len(a)>0]
   return sss
