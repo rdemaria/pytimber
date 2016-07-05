@@ -1,4 +1,4 @@
-import os,sys,shutil
+import os,sys,shutil,tempfile
 
 import sqlite3
 import numpy as np
@@ -40,18 +40,26 @@ class PageStore(object):
         return fmt%(self.dbname,self.pagedir,self.maxpagesize)
     def __init__(self,dbname,pagedir,maxpagesize=None,
                       checksum=False,
-                      keep_deleted_pages=False):
-        self.dbname=dbname
+                      keep_deleted_pages=False,
+                      readonly=False):
         try:
             if dbname.startswith('file:'):
+               if readonly:
+                  dbname+='?mode=ro'
                self.db=sqlite3.connect(dbname,
                        isolation_level="IMMEDIATE",uri=True)
             else:
+               if readonly:
+                 tmp=tempfile.mktemp()
+                 shutil.copy2(dbname,tmp)
+                 dbname=tmp
                self.db=sqlite3.connect(dbname,
                        isolation_level="IMMEDIATE")
-        except sqlite3.Error:
+        except sqlite3.Error as e:
+          print(e.msg)
           print('Error creating database %s'%dbname)
           sys.exit(1)
+        self.dbname=dbname
         self.create_db()
         self.set_pagedir(pagedir)
         self.set_var('maxpagesize',maxpagesize,2**24)
