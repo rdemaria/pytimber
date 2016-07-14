@@ -71,7 +71,7 @@ setuptools.setup(
         'cmmnbuild_dep_manager>=1.2.9'
     ],
     dependency_links=[
-        cmmnbuild_url + 'repository/archive.zip?ref=master#egg=cmmnbuild_dep_manager-' + cmmnbuild_version()
+        cmmnbuild_url + 'repository/archive.zip?ref={0}#egg=cmmnbuild_dep_manager-{0}'.format(cmmnbuild_version())
     ],
     cmdclass={
         'install': install
