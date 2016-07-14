@@ -156,7 +156,7 @@ class DataQuery(object):
         self.t2+=after
         for name in self.names:
           idx,val=self.data[name]
-          nidx,nval=dq.data[name]
+          nidx,nval=dq[name]
           ridx=np.concatenate([idx,nidx],axis=0)
           rval=np.concatenate([val,nval],axis=0)
           self.data[name]=ridx,rval
@@ -175,7 +175,7 @@ class DataQuery(object):
         self.t1-=before
         for name in self.names:
           idx,val=self.data[name]
-          nidx,nval=dq.data[name]
+          nidx,nval=dq[name]
           ridx=np.concatenate([nidx,idx],axis=0)
           rval=np.concatenate([nval,val],axis=0)
           self.data[name]=ridx,rval
