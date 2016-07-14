@@ -67,6 +67,14 @@ def subdict(d,names):
 
 #from objdebug import ObjDebug as object
 class DataQuery(object):
+  subplotchoices={
+    1:(1,1),2:(2,1),3:(3,1),
+    4:(2,2),5:(2,3),6:(2,3),
+    7:(3,3),8:(3,3),9:(3,3)}
+  figchoices={
+    1:(8,6),2:(8,6),3:(8,6),
+    4:(10,10),5:(12,10),6:(12,10),
+    7:(12,10),8:(12,10),9:(12,10)}
   def __init__(self,source,names,t1,t2,data=None,**options):
     self.source=source
     self.names=names
@@ -289,6 +297,7 @@ class DataQuery(object):
         pl.xlabel("time [sec]")
       pl.legend(loc=0)
       pl.grid(True)
+    return self
   def plot_2d_sub(self,vscale='auto',rel_time=False,date_axes=True,xlabel=None,ylabel=None,title=None,timezone='local'):
     w,h    =self.figchoices[len(self.names)]
     row,col=self.subplotchoices[len(self.names)]
@@ -332,14 +341,8 @@ class DataQuery(object):
       if xlabel != None: sb.set_xlabel(xlabel)
       if ylabel != None: sb.set_ylabel(ylabel)
       sb.grid(True)
-  subplotchoices={
-    1:(1,1),2:(2,1),3:(3,1),
-    4:(2,2),5:(2,3),6:(2,3),
-    7:(3,3),8:(3,3),9:(3,3)}
-  figchoices={
-    1:(8,6),2:(8,6),3:(8,6),
-    4:(10,10),5:(12,10),6:(12,10),
-    7:(12,10),8:(12,10),9:(12,10)}
+    return self
+
   def plot_specgramflat(self,NFFT=1024,Fs=1,noverlap=0,fmt='%H:%M:%S',
                        realtime=False):
     """plot a spectogram of the data, where NFFT, Fs and noverlap are 
@@ -357,6 +360,7 @@ class DataQuery(object):
       else:
         im.set_extent([t[0],t[-1],0,0.5])
       set_xaxis_date()
+    return self
   def plot_specgramflat_simple(self,name,NFFT=1024,Fs=1,noverlap=0,
       fmt='%H:%M:%S', realtime=False):
     t,val=self.data[name]
@@ -369,7 +373,7 @@ class DataQuery(object):
     else:
       im.set_extent([t[0],t[-1],0,0.5])
     set_xaxis_date()
-
+    return self
   def plot_specgramfft_simple(self,name,NFFT=None,Fs=1,fmt='%H:%M:%S',
                        realtime=False,timezone='local',frange=None,vmax=None):
     """plot a spectogram of existing FFT data, where
@@ -400,6 +404,7 @@ class DataQuery(object):
     else:
       set_xaxis_date()
       pl.xlabel('local time')
+    return self
 
 
 
