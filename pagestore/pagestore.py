@@ -177,7 +177,7 @@ class PageStore(object):
           idx=concatenate(idx)
           rec=concatenate(rec)
         else:
-          idx=[];rec=[]
+          idx=np.array([]);rec=np.array([])
         return idx,rec
     def get_idx(self,variable,idxa=None,idxb=None):
         idxa,idxb=self.get_lim(variable,idxa,idxb)
