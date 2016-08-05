@@ -174,7 +174,7 @@ class LoggingDB(object):
             elif datatype == 'FUNDAMENTAL':
                 val = 1
             elif datatype == 'TEXTUAL':
-                val = six.u(tt.getVarcharValue())
+                val = tt.getVarcharValue()
             else:
                 self._log.warning('Unsupported datatype, returning the '
                                   'java object')
@@ -387,10 +387,14 @@ class LoggingDB(object):
                         jvar, ts1
                     )
                 ]
-                datatype = res[0].getVariableDataType().toString()
-                self._log.info('Retrieved {0} values for {1}'.format(
-                    1, jvar.getVariableName()
-                ))
+                if res[0] is None:
+                    res = []
+                    datatype = None
+                else:
+                    datatype = res[0].getVariableDataType().toString()
+                    self._log.info('Retrieved {0} values for {1}'.format(
+                       1, jvar.getVariableName()
+                    ))
             elif t2 == 'next':
                 res = [
                     self._ts.getNextDataAfterTimestampWithinDefaultInterval(
