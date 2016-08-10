@@ -211,7 +211,7 @@ class PageStore(object):
                       rectype,reclen,recsize,comp,checksum
                FROM pages WHERE pageid=?"""
         page=cur.execute(sql,[pageid]).fetchone()
-        return Page(self.pagedir,page)
+        return Page(self.pagedir,*page)
     def delete_page(self,page):
         cur=self.db.cursor()
         if self.keep_deleted_pages:
