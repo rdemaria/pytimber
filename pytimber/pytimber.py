@@ -60,6 +60,8 @@ class LoggingDB(object):
 
         # Start JVM
         mgr = cmmnbuild_dep_manager.Manager()
+        if not mgr.is_registered('pytimber'):
+            mgr.install('pytimber')
         mgr.log.setLevel(logging.WARNING)
         mgr.start_jpype_jvm()
 
