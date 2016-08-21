@@ -43,11 +43,20 @@ def cmmnbuild_version():
 # Custom install function
 class install(_install):
     '''Install and perform the jar resolution'''
+    user_options = _install.user_options + [
+        ('no-jars', None, 'do not register with cmmnbuild_dep_manager')
+    ]
+
+    def initialize_options(self):
+        self.no_jars = False
+        _install.initialize_options(self)
+
     def run(self):
-        import cmmnbuild_dep_manager
-        mgr = cmmnbuild_dep_manager.Manager()
-        mgr.install('pytimber')
-        print('registered pytimber with cmmnbuild_dep_manager')
+        if not self.no_jars:
+            import cmmnbuild_dep_manager
+            mgr = cmmnbuild_dep_manager.Manager()
+            mgr.install('pytimber')
+            print('registered pytimber with cmmnbuild_dep_manager')
         _install.run(self)
 
 
