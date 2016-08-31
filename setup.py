@@ -73,11 +73,11 @@ setuptools.setup(
         'pytimber': 'pytimber'
     },
     setup_requires=[
-        'cmmnbuild_dep_manager>=1.3.1'
+        'cmmnbuild_dep_manager>=1.3.2'
     ],
     install_requires=[
         'JPype1>=0.6.1',
-        'cmmnbuild_dep_manager>=1.3.1'
+        'cmmnbuild_dep_manager>=1.3.2'
     ],
     dependency_links=[
         cmmnbuild_url + 'repository/archive.zip?ref=master#egg=cmmnbuild_dep_manager-' + cmmnbuild_version()
