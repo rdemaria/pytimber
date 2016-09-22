@@ -6,8 +6,12 @@ from .dataquery import (DataQuery, parsedate, dumpdate,
                         set_xaxis_utctime, set_xlim_date, get_xlim_date)
 from . import timberdata
 
-__version__ = "2.2.3"
+__version__ = "2.2.4"
 
 cmmnbuild_deps = [
-    "accsoft-cals-extr-client"
+    "accsoft-cals-extr-client",
+    "accsoft-cals-extr-domain",
+    "slf4j-log4j12",
+    "slf4j-api",
+    "log4j"
 ]
