@@ -288,13 +288,13 @@ class LoggingDB(object):
         # Build variable list
         variables = self.getVariablesList(pattern_or_list)
         if len(variables) == 0:
-            log.warning('No variables found.')
+            self._log.warning('No variables found.')
             return {}
         else:
             logvars = []
             for v in variables:
                 logvars.append(v)
-            log.info('List of variables to be queried: {0}'.format(
+            self._log.info('List of variables to be queried: {0}'.format(
                 ', '.join(logvars)
             ))
 
