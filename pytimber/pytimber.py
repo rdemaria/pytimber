@@ -294,7 +294,7 @@ class LoggingDB(object):
             logvars = []
             for v in variables:
                 logvars.append(v)
-            self._log.info('List of variables to be queried: {0}'.format(
+                self._log.info('List of variables to be queried: {0}'.format(
                 ', '.join(logvars)
             ))
 
