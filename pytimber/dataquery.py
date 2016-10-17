@@ -1,9 +1,12 @@
 import time
 
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as pl
-import matplotlib.gridspec as gridspec
+try:
+  import matplotlib
+  import matplotlib.pyplot as pl
+  import matplotlib.gridspec as gridspec
+except ImportError:
+  print("Warning: matplotlib import error")
 
 from .localdate import parsedate,dumpdate,dumpdateutc
 
