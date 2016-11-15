@@ -5,9 +5,8 @@ try:
   import matplotlib
   import matplotlib.pyplot as pl
   import matplotlib.gridspec as gridspec
-except ImportError as e:
-  print("Matplotlib import error")
-  print(e)
+except ImportError:
+  print("Warning: matplotlib import error")
 
 from .localdate import parsedate,dumpdate,dumpdateutc
 
