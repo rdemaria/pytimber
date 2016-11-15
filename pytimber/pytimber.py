@@ -168,7 +168,7 @@ class LoggingDB(object):
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues(), dtype=float)
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues(), dtype=float)
+                val = np.array(tt.getDoubleValues()[:], dtype=float)
             elif datatype == 'VECTORSTRING':
                 val = np.array(tt.getStringValues(), dtype='U')
             elif datatype == 'NUMERIC':
