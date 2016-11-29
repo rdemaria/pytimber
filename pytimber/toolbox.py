@@ -17,8 +17,8 @@ def betarel(EGeV,m0=mp):
   return np.sqrt(1-1/g**2)
 
 def emitnorm(eps,EGeV,m0=mp):
-  """returns normalized emittance in [mum].
-  input: eps [mum], E [GeV], m0 [MeV]
+  """returns normalized emittance in [um].
+  input: eps [um], E [GeV], m0 [MeV]
   """
   gamma= gammarel(EGeV,m0)
   beta = betarel(EGeV,m0)
