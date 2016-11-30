@@ -59,8 +59,9 @@ def _get_timber_data(beam,t1,t2,db=None):
   # check that all timestamps are the same for bsrt_sig_var
   for k in bsrt_sig_var:
     if np.any(bsrt_sig[bsrt_sig_var[0]][0] != bsrt_sig[k][0]):
-      print('ERROR: time stamps for %s and %s differ!'
-        %(bsrt_sig_var[0], bsrt_sig_var[k]))
+      raise ValueError('Time stamps for %s and %s differ!'
+        %(bsrt_sig_var[0], bsrt_sig_var[k]) + 'The data can not be' +
+        ' combined')
       return
   # -- BSRT callibration factors and beam energy:
   #    LSF_H,LSF_V,BETA_H,BETA_V,ENERGY
@@ -81,8 +82,9 @@ def _get_timber_data(beam,t1,t2,db=None):
          bsrt_lsf[beta_v_var][0].size == 0 or
          bsrt_lsf[energy_var][0].size == 0):
     if (np.abs(t1_lsf-t1) > 30*24*60*60):
-      print(('ERROR: last logging time for ' + ', %s'*5 
+      raise ValueError(('Last logging time for ' + ', %s'*5 
       + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
+      return
     else:
       t1_lsf = t1_lsf-24*60*60
       bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
@@ -322,7 +324,7 @@ class BSRT(object):
     # -- some basic checks
     # check that the data has been extracted
     if self.emit is None:
-      print("""ERROR: first extract the emittance data using 
+      raise StandardError("""First extract the emittance data using 
       BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 
       < t_end.""")
       return
@@ -368,11 +370,11 @@ class BSRT(object):
           epst2_fit = data['emit%s'%plane][-1]
           epst1_fit = data['emit%s'%plane][0]
           if epst2_fit < 0:
-            print("""ERROR: invalid value of BSRT emittance (eps < 0) 
+            raise ValueError("""Invalid value of BSRT emittance (eps < 0) 
             for time t2=%s'%pytimber.parsedate(data['time'][-1])""")
             return
           if epst1_fit < 0:
-            print ("""ERROR: invalid value of BSRT emittance (eps < 0)
+            raise ValueError("""Invalid value of BSRT emittance (eps < 0)
             for time t1=%s'%pytimber.parsedate(data['time'][0])""")
             return
           # initial values for fit parameters
