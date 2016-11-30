@@ -37,6 +37,13 @@ def _get_timber_data(beam,t1,t2,db=None):
                       %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
                       LHC.STATS:ENERGY
   """
+  # -- some checks
+  if t2 < t1:
+    raise ValueError('End time smaller than start time, t2 = ' + 
+    '%s > %s = t1'%(t2,t1))
+  if beam not in ['B1','B2']:
+    raise ValueError("beam = %s must be either 'B1' or 'B2'"%beam)
+  # --- get data
   # timber variable names are stored in *_var variables
   # bsrt_sig and bsrt_lsf = BSRT data from timber
   # -- data extraction beam sizes + gates: 
@@ -269,15 +276,8 @@ class BSRT(object):
                tau*    = growth time tauh,tauv [s]
                sigtau* = error of growth time tauh,tauv [s]
     """
-    # -- set start/end time to full time range if t1,t2 not defined
-    if t1 is None:
-      t1 = self.t_start
-      if verbose:
-        print('... using start time %s'%(dumpdate(t1)))
-    if t2 is None:
-      t2 = self.t_end
-      if verbose:
-        print('... using end time %s'%(dumpdate(t2)))
+    # -- set times
+    t1,t2 = self._set_times(t1,t2,verbose)
     # -- check if values exist
     try:
       # values exist
@@ -317,34 +317,14 @@ class BSRT(object):
             tau*    = growth time tauh,tauv [s]
             sigtau* = error of growth time tauh,tauv [s]
     """
-    # -- set start/end time to full time range if t1,t2 not defined
-    if t1 is None:
-      t1 = self.t_start
-      if verbose:
-        print('... using start time %s'%(dumpdate(t1)))
-    if t2 is None:
-      t2 = self.t_end
-      if verbose:
-        print('... using end time %s'%(dumpdate(t2)))
+    # -- set times
+    t1,t2 = self._set_times(t1,t2,verbose)
     # -- some basic checks
     # check that the data has been extracted
     if self.emit is None:
       print("""ERROR: first extract the emittance data using 
       BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 
       < t_end.""")
-      return
-    # check timestamp
-    if t1 < self.t_start:
-      print('ERROR: start time t1 = ' + '%s < %s'%(t1,self.t_start) + 
-      ' lies outside of data range!')
-      return
-    if t2 > self.t_end:
-      print('ERROR: end time t2 = ' + '%s > %s'%(t1,self.t_end) + 
-      ' lies outside of data range!')
-      return
-    if t2 < t1:
-      print('ERROR: end time smaller than start time, t2 = ' + 
-      '%s > %s = t1'%(t2,t1))
       return
     # initialize self.emitfit if needed
     if self.emitfit is None:
@@ -437,6 +417,16 @@ class BSRT(object):
       t2 = self.t_end
       if verbose:
         print('... using end time %s'%(dumpdate(t2)))
+    # check timestamp
+    if t1 < self.t_start:
+      raise ValueError('Start time t1 = ' + '%s < %s'%(t1,self.t_start) + 
+      ' lies outside of data range!')
+    if t2 > self.t_end:
+      raise ValueError('End time t2 = ' + '%s > %s'%(t1,self.t_end) + 
+      ' lies outside of data range!')
+    if t2 < t1:
+      raise ValueError('End time smaller than start time, t2 = ' + 
+      '%s > %s = t1'%(t2,t1))
     return t1,t2
   def plot(self,plane='h',t1=None,t2=None,slots=None,avg=10,fit=True,
            color=None,label=None,verbose=False):
