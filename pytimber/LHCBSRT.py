@@ -284,7 +284,7 @@ class BSRT(object):
     try:
       # values exist
       return self.emitfit[slot][(t1,t2)]
-    except (IndexError,TypeError):
+    except (KeyError,IndexError,TypeError):
       # values don't exist -> try to fit
       self.fit(t1=t1,t2=t2)
       try:
