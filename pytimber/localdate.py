@@ -50,11 +50,22 @@ def parsedate(t):
   except ValueError:
     return parsedate_myl(t)
 
-def dumpdate(t,fmt='%Y-%m-%d %H:%M:%S.SSS'):
-  """converts unix time to locale time"""
-  ti=int(t)
-  tf=t-ti
-  s=time.strftime(fmt,time.localtime(t))
+def dumpdate(t,fmt='%Y-%m-%d %H:%M:%S.SSS',zone=myzones['cern']):
+  """
+  converts unix time [float] to time in time zone *zone* [string].
+  If zone = None local time is used.
+  """
+  ti = int(t)
+  tf = t-ti
+  if zone is None:
+    s = time.strftime(fmt,time.localtime(t))
+  else:
+    utc = pytz.timezone('UTC')
+    utc_dt = datetime.utcfromtimestamp(t)
+    utc_dt = utc_dt.replace(tzinfo = utc)
+    tz = pytz.timezone(zone)
+    tz_dt = utc_dt.astimezone(tz)
+    s = tz_dt.strftime(fmt)
   if 'SSS' in s:
     s=s.replace('SSS','%03d'%(tf*1000))
   return s
@@ -63,14 +74,10 @@ def dumpdateutc(t,fmt='%Y-%m-%d %H:%M:%S.SSS'):
   """converts unix time [float] to utc time [string]"""
   ti=int(t)
   tf=t-ti
-  geneve = pytz.timezone('Europe/Berlin')
-  utc=pytz.utc
-  gen_dt=geneve.localize(datetime.datetime.fromtimestamp(t),is_dst=True)#take daylight saving time into account
-  utc_dt=gen_dt.astimezone(utc)
+  utc_dt = datetime.utcfromtimestamp(t)
   s=utc_dt.strftime(fmt)
   if 'SSS' in s:
-#    s=s.replace('SSS','%03d'%(tf*1000))
-    s=s.replace('.SSS','')
+    s=s.replace('SSS','%03d'%(tf*1000))
   return s
 
 
