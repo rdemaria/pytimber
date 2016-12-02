@@ -118,11 +118,11 @@ class BSRT(object):
   class to analyze BSRT data
   Example:
   --------
-    To extract the data from timber:
+  To extract the data from timber:
 
-      t1=pytimber.parsedate("2016-08-24 00:58:00.000")
-      t2=pytimber.parsedate("2016-08-24 00:59:00.000")
-      bsrt=pytimber.BSRT.fromdb(t1,t2,beam='B1')
+    t1=pytimber.parsedate("2016-08-24 00:58:00.000")
+    t2=pytimber.parsedate("2016-08-24 00:59:00.000")
+    bsrt=pytimber.BSRT.fromdb(t1,t2,beam='B1')
 
   Attributes:
   -----------
