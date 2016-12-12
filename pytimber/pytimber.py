@@ -168,7 +168,7 @@ class LoggingDB(object):
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues(), dtype=float)
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues(), dtype=float)
+                val = np.array(tt.getDoubleValues()[:], dtype=float)
             elif datatype == 'VECTORSTRING':
                 val = np.array(tt.getStringValues(), dtype='U')
             elif datatype == 'NUMERIC':
@@ -288,13 +288,13 @@ class LoggingDB(object):
         # Build variable list
         variables = self.getVariablesList(pattern_or_list)
         if len(variables) == 0:
-            log.warning('No variables found.')
+            self._log.warning('No variables found.')
             return {}
         else:
             logvars = []
             for v in variables:
                 logvars.append(v)
-            log.info('List of variables to be queried: {0}'.format(
+                self._log.info('List of variables to be queried: {0}'.format(
                 ', '.join(logvars)
             ))
 
