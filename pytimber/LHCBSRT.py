@@ -8,9 +8,10 @@ except ImportError:
   print("""No module found: numpy, matplotlib and scipy modules should 
     be present to run pytimbertools""")
 
-import toolbox
 import pytimber
-from dataquery import set_xaxis_date
+import pytimber.toolbox
+
+from .dataquery import set_xaxis_date
 from .localdate import parsedate,dumpdate
 
 def _get_timber_data(beam,t1,t2,db=None):
