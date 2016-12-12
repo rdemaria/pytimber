@@ -9,7 +9,7 @@ except ImportError:
     be present to run pytimbertools""")
 
 import pytimber
-import pytimber.toolbox
+from .toolbox import emitnorm, exp_fit, movingaverage
 
 from .dataquery import set_xaxis_date
 from .localdate import parsedate,dumpdate
@@ -225,8 +225,8 @@ class BSRT(object):
         emitv_aux  = np.mean((bsrt_aux['sigv']**2
                              -bsrt_aux['lsfv']**2)/bsrt_aux['betv'])
         # normalized emittance
-        emith = toolbox.emitnorm(emith_aux, energy_aux)
-        emitv = toolbox.emitnorm(emitv_aux, energy_aux)
+        emith = emitnorm(emith_aux, energy_aux)
+        emitv = emitnorm(emitv_aux, energy_aux)
         bsrt_emit.append((k,emith,emitv))
       # sort after the time
       emit_dict[j] = np.sort(np.array(bsrt_emit,
@@ -383,7 +383,7 @@ class BSRT(object):
           tau_init = t2_fit/(np.log(epst2_fit)-np.log(epst1_fit))
           if verbose:
             print('... fitting emittance %s for slot %s '%(plane,slot))
-          popt,pcov = curve_fit(toolbox.exp_fit,data['time'],
+          popt,pcov = curve_fit(exp_fit,data['time'],
                         data['emit%s'%plane],p0=[a_init,tau_init])
           psig = [ np.sqrt(pcov[i,i]) for i in range(len(popt)) ]
           fit_data += [popt[0],psig[0],popt[1],psig[1]]
@@ -468,7 +468,7 @@ class BSRT(object):
       else:
         epsavg={} # use a dictionary instead of a structured array
         for k in eps.dtype.fields:
-          epsavg[k] = toolbox.movingaverage(eps[k],avg)
+          epsavg[k] = movingaverage(eps[k],avg)
         pl.plot(epsavg['time'],epsavg['emit%s'%plane],'.',
                 color=c,label=label)
     # plot fit with a black dashed line
@@ -507,7 +507,7 @@ class BSRT(object):
                (self.emit[slot]['time']<=t2) )
       ts = self.emit[slot][mask]['time']
       fitparam = self.get_fit(slot = slot, t1=t1,t2=t2)
-      pl.plot(ts,toolbox.exp_fit(ts-ts[0],fitparam['a%s'%plane],
+      pl.plot(ts,exp_fit(ts-ts[0],fitparam['a%s'%plane],
               fitparam['tau%s'%plane]),linestyle=ls,color=c,label=label)
     set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu m]$'%plane)
