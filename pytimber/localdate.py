@@ -51,7 +51,7 @@ def parsedate(t):
     return parsedate_myl(t)
 
 def dumpdate(t,fmt='%Y-%m-%d %H:%M:%S.SSS'):
-  """converts unix time to locale time"""
+  """converts unix time [float] to locale time [string]"""
   ti=int(t)
   tf=t-ti
   s=time.strftime(fmt,time.localtime(t))
