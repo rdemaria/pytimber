@@ -18,6 +18,8 @@ myfmt={'myf': '%Y-%m-%d--%H-%M-%S--%z',
        'cernlogdb' : '%Y%m%d%H%M%SCET',
        }
 
+# predefined time zones
+utc = pytz.timezone('UTC')
 
 def parsedate_myl(s):
   """Read a string in the '2010-06-10 00:00:00.123 TZ?' format and return
@@ -50,27 +52,51 @@ def parsedate(t):
   except ValueError:
     return parsedate_myl(t)
 
-def dumpdate(t,fmt='%Y-%m-%d %H:%M:%S.SSS'):
-  """converts unix time [float] to locale time [string]"""
-  ti=int(t)
-  tf=t-ti
-  s=time.strftime(fmt,time.localtime(t))
+def dumpdate(t=None,fmt='%Y-%m-%d %H:%M:%S.SSS',zone='cern'):
+  """
+  converts unix time [float] to time in time zone *zone* [string].
+
+  Paramters:
+  ----------
+  t : unix time [s], if t = None the time now is used
+  fmt : = format string for output
+  zone : time zone, either predefined (bnl,cern,fnal,lbl and z for 
+         utc time) or datetime timezones (e.g. 'Europe/Zurich' for 
+         cern).
+         If zone = None local time is used
+  """
+  if t is None:
+    t=time.time()
+  ti = int(t)
+  tf = t-ti
+  if zone is None:
+    s = time.strftime(fmt,time.localtime(t))
+  else:
+    utc_dt = datetime.utcfromtimestamp(t)
+    utc_dt = utc_dt.replace(tzinfo = utc)
+    tz = pytz.timezone(myzones.get(zone,zone))
+    tz_dt = utc_dt.astimezone(tz)
+    s = tz_dt.strftime(fmt)
   if 'SSS' in s:
     s=s.replace('SSS','%03d'%(tf*1000))
   return s
 
-def dumpdateutc(t,fmt='%Y-%m-%d %H:%M:%S.SSS'):
-  """converts unix time [float] to utc time [string]"""
+def dumpdateutc(t=None,fmt='%Y-%m-%d %H:%M:%S.SSS'):
+  """
+  converts unix time [float] to utc time [string]
+  Parameters:
+  -----------
+  t : unix time [s], if t = None the time now is used
+  fmt : = format string for output
+  """
+  if t is None:
+    t=time.time()
   ti=int(t)
   tf=t-ti
-  geneve = pytz.timezone('Europe/Berlin')
-  utc=pytz.utc
-  gen_dt=geneve.localize(datetime.datetime.fromtimestamp(t),is_dst=True)#take daylight saving time into account
-  utc_dt=gen_dt.astimezone(utc)
+  utc_dt = datetime.utcfromtimestamp(t)
   s=utc_dt.strftime(fmt)
   if 'SSS' in s:
-#    s=s.replace('SSS','%03d'%(tf*1000))
-    s=s.replace('.SSS','')
+    s=s.replace('SSS','%03d'%(tf*1000))
   return s
 
 
