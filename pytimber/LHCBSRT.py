@@ -453,10 +453,12 @@ class BSRT(object):
     # set time
     t1,t2 = self._set_times(t1,t2,verbose)
     # plot data
-    colors=['b','r','g','m','orange','pink','cyan','indigo','lime']
-    colors.reverse()
+    colors=[]
     for slot in slots:
-      if color==None: c=colors.pop()
+      if len(colors) == 0:
+        colors = ['lime', 'indigo', 'cyan', 'pink', 'orange', 'm', 'g', 'r', 'b']
+      if color==None:
+        c=colors.pop()
       else: c=color
       mask = ( (self.emit[slot]['time']>=t1) & 
                (self.emit[slot]['time']<=t2) )
@@ -478,6 +480,7 @@ class BSRT(object):
     set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu m]$'%plane)
     pl.grid(b=True)
+    return self
   def plot_fit(self,plane='h',t1=None,t2=None,slots=None,color=None,
                linestyle=None,label=None,verbose=False):
     """
@@ -496,9 +499,10 @@ class BSRT(object):
     slots = self._set_slots(slots)
     # set time
     t1,t2 = self._set_times(t1,t2,verbose)
-    colors=['b','r','g','m','orange','pink','cyan','indigo','lime']
-    colors.reverse()
+    colors=[]
     for slot in slots:
+      if len(colors) == 0:
+        colors=['lime', 'indigo', 'cyan', 'pink', 'orange', 'm', 'g', 'r', 'b']
       if color==None: c=colors.pop()
       else: c=color
       if linestyle==None: ls = '-'
@@ -512,3 +516,4 @@ class BSRT(object):
     set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu m]$'%plane)
     pl.grid(b=True)
+    return self
