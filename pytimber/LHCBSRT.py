@@ -343,7 +343,7 @@ class BSRT(object):
     for slot in self.emit.keys():
       # case 1: fit data available + force = False
       try:
-        if force == False and self.emitfit[slot][(t1,t2)].size > 0:
+        if (force is False) and (self.emitfit[slot][(t1,t2)].size > 0):
           if verbose:
             print('... fit data already exists for slot %s '%(slot) + 
             'and force = False -> skip fit')
@@ -401,12 +401,13 @@ class BSRT(object):
     set slot numbers, handles the case of slots = None and only one 
     slot.
     """
-    if slots == None: slots=self.emit.keys()
+    if slots is None:
+      slots=list(self.emit.keys())
     try:
       len(slots)
     except TypeError:
       slots=[slots]
-    return slots
+    return np.sort(slots,axis=None)
   def _set_times(self,t1,t2,verbose):
     """
     set start/end time, handles the case of t1 = None and/or t2 = None.
@@ -453,16 +454,18 @@ class BSRT(object):
     # set time
     t1,t2 = self._set_times(t1,t2,verbose)
     # plot data
-    colors=['b','r','g','m','orange','pink','cyan','indigo','lime']
-    colors.reverse()
+    colors=[]
     for slot in slots:
-      if color==None: c=colors.pop()
+      if len(colors) == 0:
+        colors = ['lime', 'indigo', 'cyan', 'pink', 'orange', 'm', 'g', 'r', 'b']
+      if color is None:
+        c=colors.pop()
       else: c=color
       mask = ( (self.emit[slot]['time']>=t1) & 
                (self.emit[slot]['time']<=t2) )
       eps = self.emit[slot][mask]
       # raw data
-      if avg == None:
+      if avg is None:
         pl.plot(eps['time'],eps['emit%s'%plane],'.',color=c,label=label)
       # averaged data
       else:
@@ -478,6 +481,7 @@ class BSRT(object):
     set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu m]$'%plane)
     pl.grid(b=True)
+    return self
   def plot_fit(self,plane='h',t1=None,t2=None,slots=None,color=None,
                linestyle=None,label=None,verbose=False):
     """
@@ -496,12 +500,13 @@ class BSRT(object):
     slots = self._set_slots(slots)
     # set time
     t1,t2 = self._set_times(t1,t2,verbose)
-    colors=['b','r','g','m','orange','pink','cyan','indigo','lime']
-    colors.reverse()
+    colors=[]
     for slot in slots:
-      if color==None: c=colors.pop()
+      if len(colors) == 0:
+        colors=['lime', 'indigo', 'cyan', 'pink', 'orange', 'm', 'g', 'r', 'b']
+      if color is None: c=colors.pop()
       else: c=color
-      if linestyle==None: ls = '-'
+      if linestyle is None: ls = '-'
       else: ls = linestyle
       mask = ( (self.emit[slot]['time']>=t1) & 
                (self.emit[slot]['time']<=t2) )
@@ -512,3 +517,4 @@ class BSRT(object):
     set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu m]$'%plane)
     pl.grid(b=True)
+    return self

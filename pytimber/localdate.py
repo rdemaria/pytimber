@@ -38,7 +38,11 @@ def parsedate_myl(s):
     stime=stimes[0]
     ssec=int(float('0.'+stimes[1])*1e6)
   t=time.strptime('%s %s'%(sdate,stime),'%Y-%m-%d %H:%M:%S')
-  stz=gettz(myzones.get(stz))
+  try:
+    stz=gettz(myzones.get(stz))
+  # catch case if stz is not a string
+  except TypeError:
+    stz=gettz(None)
   dt=datetime(t[0],t[1],t[2],t[3],t[4],t[5],ssec,stz)
   epoch=time.mktime(dt.timetuple())+dt.microsecond / 1000000.0
   return epoch
