@@ -8,7 +8,7 @@ from .LHCBSRT import BSRT
 
 from . import timberdata
 
-__version__ = "2.2.7"
+__version__ = "2.2.8"
 
 cmmnbuild_deps = [
     "accsoft-cals-extr-client",
