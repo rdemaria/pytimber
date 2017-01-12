@@ -35,9 +35,14 @@ import time
 import datetime
 import six
 import logging
-import jpype
+try:
+  import jpype
+  import cmmnbuild_dep_manager
+except ImportError:
+  print("""ERROR: module jpype and cmmnbuild_dep_manager not found!
+        Exporting data from the logging database will not be
+        available!""")
 import numpy as np
-import cmmnbuild_dep_manager
 from collections import namedtuple
 
 
