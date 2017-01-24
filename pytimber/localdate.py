@@ -44,7 +44,7 @@ def parsedate_myl(s,zone='cern'):
   # mktime is only valid for localtime -> convert to local timezone
   ltz = gettz()
   dt_local = dt_stz.astimezone(ltz)
-  epoch=time.mktime(dt_local.timetuple())+dt_local.microsecond / 1000000.0
+  epoch=time.mktime(dt_local.timetuple())+ssec*1.e-6
   return epoch
 
 def parsedate(t,zone='cern'):
