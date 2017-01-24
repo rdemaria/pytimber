@@ -55,7 +55,10 @@ Stat = namedtuple(
 
 
 class LoggingDB(object):
-    _jpype=jpype
+    try:
+      _jpype=jpype
+    except NameError:
+      print('ERROR: jpype is note defined!')
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
                  source='all', loglevel=None):
         # Configure logging
