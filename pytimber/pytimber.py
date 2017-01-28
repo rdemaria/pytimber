@@ -68,10 +68,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager()
-        if not mgr.is_registered('pytimber'):
-            mgr.install('pytimber')
-        mgr.log.setLevel(logging.WARNING)
+        mgr = cmmnbuild_dep_manager.Manager('pytimber', logging.WARNING)
         mgr.start_jpype_jvm()
 
         # log4j config
