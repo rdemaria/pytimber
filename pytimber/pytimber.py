@@ -543,18 +543,18 @@ class Hierarchy(object):
         self.varsrc = varsrc
         if src is not None:
             self.src = src
-        for vvv in self.get_vars():
+        for vvv in self._get_vars():
             if len(vvv) > 0:
-                setattr(self, self.cleanName(vvv), vvv)
+                setattr(self, self._cleanName(vvv), vvv)
 
     def _get_childs(self):
         if self.obj is None:
             objs = self.src.getHierachies(1)
         else:
             objs = self.src.getChildHierarchies(self.obj)
-        return dict([(self.cleanName(hh.hierarchyName), hh) for hh in objs])
+        return dict([(self._cleanName(hh.hierarchyName), hh) for hh in objs])
 
-    def cleanName(self, s):
+    def _cleanName(self, s):
         if s[0].isdigit():
             s = '_'+s
         out = []
@@ -576,7 +576,7 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
-        v = sorted([self.cleanName(i) for i in self.get_vars() if len(i) > 0])
+        v = sorted([self._cleanName(i) for i in self._get_vars() if len(i) > 0])
         return sorted(self._dict.keys()) + v
 
     def __repr__(self):
@@ -587,7 +587,7 @@ class Hierarchy(object):
             desc = self.obj.getDescription()
             return '<{0}: {1}>'.format(name, desc)
 
-    def get_vars(self):
+    def _get_vars(self):
         VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
                             .core.constants.VariableDataType)
         if self.obj is not None:
