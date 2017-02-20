@@ -35,9 +35,14 @@ import time
 import datetime
 import six
 import logging
-import jpype
+try:
+  import jpype
+  import cmmnbuild_dep_manager
+except ImportError:
+  print("""ERROR: module jpype and cmmnbuild_dep_manager not found!
+        Exporting data from the logging database will not be
+        available!""")
 import numpy as np
-import cmmnbuild_dep_manager
 from collections import namedtuple
 
 
@@ -50,7 +55,10 @@ Stat = namedtuple(
 
 
 class LoggingDB(object):
-    _jpype=jpype
+    try:
+      _jpype=jpype
+    except NameError:
+      print('ERROR: jpype is note defined!')
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
                  source='all', loglevel=None):
         # Configure logging
@@ -60,10 +68,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager()
-        if not mgr.is_registered('pytimber'):
-            mgr.install('pytimber')
-        mgr.log.setLevel(logging.WARNING)
+        mgr = cmmnbuild_dep_manager.Manager('pytimber', logging.WARNING)
         mgr.start_jpype_jvm()
 
         # log4j config

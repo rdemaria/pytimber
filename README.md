@@ -12,7 +12,7 @@ Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
 [anaconda]: https://www.continuum.io/downloads
 
 ```sh
-pip install git+https://github.com/rdemaria/pytimber.git --process-dependency-links
+pip install git+https://github.com/rdemaria/pytimber.git
 ```
 
 This will also install [cmmnbuild-dep-manager][] to provide automatic

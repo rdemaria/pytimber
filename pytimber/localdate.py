@@ -21,40 +21,40 @@ myfmt={'myf': '%Y-%m-%d--%H-%M-%S--%z',
 # predefined time zones
 utc = pytz.timezone('UTC')
 
-def parsedate_myl(s):
-  """Read a string in the '2010-06-10 00:00:00.123 TZ?' format and return
-  the unix time."""
+def parsedate_myl(s,zone='cern'):
+  """Read a string in the '2010-06-10 00:00:00.123' format and return
+  the unix time for the time zone *zone*."""
   stime='00:00:00'
   ssec=0
-  stz=gettz()
   parts=s.split(' ')
   sdate=parts[0]
   if len(parts)>1:
     stime=parts[1]
-  if len(parts)==3:
-    stz=parts[2]
   stimes=stime.split('.')
   if len(stimes)==2:
     stime=stimes[0]
     ssec=int(float('0.'+stimes[1])*1e6)
-  t=time.strptime('%s %s'%(sdate,stime),'%Y-%m-%d %H:%M:%S')
   try:
-    stz=gettz(myzones.get(stz))
-  # catch case if stz is not a string
+    stz=gettz(myzones.get(zone,zone))
+  # catch case if stz is not defined
   except TypeError:
-    stz=gettz(None)
-  dt=datetime(t[0],t[1],t[2],t[3],t[4],t[5],ssec,stz)
-  epoch=time.mktime(dt.timetuple())+dt.microsecond / 1000000.0
+    stz=gettz(myzones.get('cern','cern'))
+  dt_stz = datetime.strptime('%s %s'%(sdate,stime),'%Y-%m-%d %H:%M:%S')
+  dt_stz = dt_stz.replace(tzinfo=stz)
+  # mktime is only valid for localtime -> convert to local timezone
+  ltz = gettz()
+  dt_local = dt_stz.astimezone(ltz)
+  epoch=time.mktime(dt_local.timetuple())+ssec*1.e-6
   return epoch
 
-def parsedate(t):
+def parsedate(t,zone='cern'):
   try:
     if type(t) is complex:
       t=time.time()-t.imag
     float(t)
     return t
   except ValueError:
-    return parsedate_myl(t)
+    return parsedate_myl(t,zone='cern')
 
 def dumpdate(t=None,fmt='%Y-%m-%d %H:%M:%S.SSS',zone='cern'):
   """
