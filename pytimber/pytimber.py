@@ -526,6 +526,8 @@ class LoggingDB(object):
             metadata=(self._md.getVectorElements(variable)
                                  .getVectornumericElements())
             ts=[tt.fastTime/1000+tt.getNanos()/1e9 for tt in  metadata]
+#            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
+#                    for a in metadata.values()]
             vv=[[aa.value for aa in a.iterator()] for a in metadata.values()]
             out[variable.getVariableName()]=ts,vv
         return out
