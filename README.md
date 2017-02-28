@@ -65,7 +65,7 @@ Explore variable hierarchies:
 ```python
 ldb.tree
 print(dir(ldb.tree))
-print(ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars())
+print(ldb.tree.LHC.Collimators.BPM.bpmColl._get_vars())
 ```
 
 Get data for a particular LHC fill:
