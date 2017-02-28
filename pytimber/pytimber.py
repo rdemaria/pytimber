@@ -578,6 +578,8 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
+        if jpype.isThreadAttachedToJVM()==0:
+            jpype.attachThreadToJVM()
         v = sorted([self._cleanName(i) for i in self._get_vars() if len(i) > 0])
         return sorted(self._dict.keys()) + v
 
