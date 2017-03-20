@@ -35,9 +35,14 @@ import time
 import datetime
 import six
 import logging
-import jpype
+try:
+  import jpype
+  import cmmnbuild_dep_manager
+except ImportError:
+  print("""ERROR: module jpype and cmmnbuild_dep_manager not found!
+        Exporting data from the logging database will not be
+        available!""")
 import numpy as np
-import cmmnbuild_dep_manager
 from collections import namedtuple
 
 
@@ -50,6 +55,10 @@ Stat = namedtuple(
 
 
 class LoggingDB(object):
+    try:
+      _jpype=jpype
+    except NameError:
+      print('ERROR: jpype is note defined!')
     def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
                  source='all', loglevel=None):
         # Configure logging
@@ -59,10 +68,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager()
-        if not mgr.is_registered('pytimber'):
-            mgr.install('pytimber')
-        mgr.log.setLevel(logging.WARNING)
+        mgr = cmmnbuild_dep_manager.Manager('pytimber', logging.WARNING)
         mgr.start_jpype_jvm()
 
         # log4j config
@@ -79,6 +85,7 @@ class LoggingDB(object):
         ServiceBuilder = (jpype.JPackage('cern').accsoft.cals.extr.client
                           .service.ServiceBuilder)
         builder = ServiceBuilder.getInstance(appid, clientid, loc)
+        self._builder=builder
         self._md = builder.createMetaService()
         self._ts = builder.createTimeseriesService()
         self._FillService = FillService = builder.createLHCFillService()
@@ -92,6 +99,8 @@ class LoggingDB(object):
             return Timestamp.valueOf(t.strftime('%Y-%m-%d %H:%M:%S.%f'))
         elif t is None:
             return None
+        elif isinstance(t,Timestamp):
+            return t
         else:
             tt = datetime.datetime.fromtimestamp(t)
             ts = Timestamp.valueOf(tt.strftime('%Y-%m-%d %H:%M:%S.%f'))
@@ -168,7 +177,7 @@ class LoggingDB(object):
             if datatype == 'MATRIXNUMERIC':
                 val = np.array(tt.getMatrixDoubleValues(), dtype=float)
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues(), dtype=float)
+                val = np.array(tt.getDoubleValues()[:], dtype=float)
             elif datatype == 'VECTORSTRING':
                 val = np.array(tt.getStringValues(), dtype='U')
             elif datatype == 'NUMERIC':
@@ -497,6 +506,37 @@ class LoggingDB(object):
             for fill in fills.getFillNumbers()
         ]
 
+    def getIntervalsByLHCModes(self, t1, t2, mode1, mode2,unixtime=True, ):
+        """Returns a list of the fill numbers and interval between t1 and
+        t2 between the starting time of first beam mode in mode1 and the
+        ending time of the first beam mode .  """
+        ts1 = self.toTimestamp(t1)
+        ts2 = self.toTimestamp(t2)
+        fills=self.getLHCFillsByTime(ts1,ts2,[mode1,mode2])
+        out=[]
+        for fill in fills:
+            fn=[fill['fillNumber']]
+            for bm in fill['beamModes']:
+                if len(fn)==1 and bm['mode']==mode1:
+                    fn.append(bm['startTime'])
+                elif len(fn)==2 and bm['mode']==mode2:
+                    fn.append(bm['startTime'])
+            out.append(fn)
+        return out
+    def getMetaData(self,pattern_or_list):
+        """Get All MetaData for a variable defined by a pattern_or_list"""
+        out={}
+        variables = self.getVariablesList(pattern_or_list).getVariables()
+        for variable in variables:
+            metadata=(self._md.getVectorElements(variable)
+                                 .getVectornumericElements())
+            ts=[tt.fastTime/1000+tt.getNanos()/1e9 for tt in  metadata]
+#            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
+#                    for a in metadata.values()]
+            vv=[[aa.value for aa in a.iterator()] for a in metadata.values()]
+            out[variable.getVariableName()]=ts,vv
+        return out
+
 
 class Hierarchy(object):
     def __init__(self, name, obj, src, varsrc):
@@ -505,18 +545,18 @@ class Hierarchy(object):
         self.varsrc = varsrc
         if src is not None:
             self.src = src
-        for vvv in self.get_vars():
+        for vvv in self._get_vars():
             if len(vvv) > 0:
-                setattr(self, self.cleanName(vvv), vvv)
+                setattr(self, self._cleanName(vvv), vvv)
 
     def _get_childs(self):
         if self.obj is None:
             objs = self.src.getHierachies(1)
         else:
             objs = self.src.getChildHierarchies(self.obj)
-        return dict([(self.cleanName(hh.hierarchyName), hh) for hh in objs])
+        return dict([(self._cleanName(hh.hierarchyName), hh) for hh in objs])
 
-    def cleanName(self, s):
+    def _cleanName(self, s):
         if s[0].isdigit():
             s = '_'+s
         out = []
@@ -538,7 +578,9 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
-        v = sorted([self.cleanName(i) for i in self.get_vars() if len(i) > 0])
+        if jpype.isThreadAttachedToJVM()==0:
+            jpype.attachThreadToJVM()
+        v = sorted([self._cleanName(i) for i in self._get_vars() if len(i) > 0])
         return sorted(self._dict.keys()) + v
 
     def __repr__(self):
@@ -549,7 +591,7 @@ class Hierarchy(object):
             desc = self.obj.getDescription()
             return '<{0}: {1}>'.format(name, desc)
 
-    def get_vars(self):
+    def _get_vars(self):
         VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
                             .core.constants.VariableDataType)
         if self.obj is not None:

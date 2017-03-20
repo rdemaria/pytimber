@@ -14,10 +14,6 @@ else:
     from urllib.request import urlopen
 
 
-# Repository URL for cmmnbuild_dep_manager
-cmmnbuild_url = 'https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager/'
-
-
 # Version number helper functions
 def parse_init(file):
     '''Get __version__ code from file'''
@@ -31,13 +27,6 @@ def pytimber_version():
     init = os.path.join(os.path.dirname(__file__), 'pytimber', '__init__.py')
     with open(init, 'r') as file:
         return parse_init(file)
-
-
-def cmmnbuild_version():
-    '''Get cmmnbuild_dep_manager version from remote __init__.py'''
-    init = cmmnbuild_url + 'raw/master/cmmnbuild_dep_manager/__init__.py'
-    file = urlopen(init)
-    return parse_init(file.read().decode('UTF-8').split('\n'))
 
 
 # Custom install function
@@ -72,15 +61,9 @@ setuptools.setup(
     package_dir={
         'pytimber': 'pytimber'
     },
-    setup_requires=[
-        'cmmnbuild_dep_manager>=1.3.2'
-    ],
     install_requires=[
         'JPype1>=0.6.1',
-        'cmmnbuild_dep_manager>=1.3.2'
-    ],
-    dependency_links=[
-        cmmnbuild_url + 'repository/archive.zip?ref=master#egg=cmmnbuild_dep_manager-' + cmmnbuild_version()
+        'cmmnbuild-dep-manager>=2.0.0'
     ],
     cmdclass={
         'install': install

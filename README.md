@@ -12,7 +12,7 @@ Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
 [anaconda]: https://www.continuum.io/downloads
 
 ```sh
-pip install git+https://github.com/rdemaria/pytimber.git --process-dependency-links
+pip install git+https://github.com/rdemaria/pytimber.git
 ```
 
 This will also install [cmmnbuild-dep-manager][] to provide automatic
@@ -65,7 +65,7 @@ Explore variable hierarchies:
 ```python
 ldb.tree
 print(dir(ldb.tree))
-print(ldb.tree.LHC.Collimators.BPM.bpmColl.get_vars())
+print(ldb.tree.LHC.Collimators.BPM.bpmColl._get_vars())
 ```
 
 Get data for a particular LHC fill:
