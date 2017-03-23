@@ -93,11 +93,21 @@ By default all times are returned as Unix timestamps. If you pass
 
 ## Usage with PageStore
 
-pytimber can be combined with PageStore for local data storage. Usage example:
+pytimber can be combined with [PageStore][] for local data storage.
+
+[pagestore]: https://github.com/rdemaria/pagestore
+
+Installation (assuming pytimber is already installed):
+
+```sh
+pip install git+https://github.com/rdemaria/pagestore.git
+```
+
+Usage example:
 
 ```python
 import pytimber
-from pytimber import pagestore
+import pagestore
 
 ldb = pytimber.LoggingDB()
 mydb = pagestore.PageStore('mydata.db', './datadb')
