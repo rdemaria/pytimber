@@ -10,7 +10,7 @@ from . import timberdata
 
 __version__ = "2.2.11"
 
-cmmnbuild_deps = [
+__cmmnbuild_deps__ = [
     "accsoft-cals-extr-client",
     "accsoft-cals-extr-domain",
     "slf4j-log4j12",

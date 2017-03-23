@@ -63,7 +63,7 @@ setuptools.setup(
     },
     install_requires=[
         'JPype1>=0.6.1',
-        'cmmnbuild-dep-manager>=2.0.0'
+        'cmmnbuild-dep-manager>=2.1.0'
     ],
     cmdclass={
         'install': install
