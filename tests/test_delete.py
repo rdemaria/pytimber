@@ -1,6 +1,6 @@
 import time
 
-from pagestore import *
+from pytimber.pagestore import *
 from numpy import *
 
 from numpy.random import *

@@ -1,5 +1,5 @@
 from numpy import *
-from pagestore import *
+from pytimber.pagestore import *
 
 db=PageStore('test.db','testdata')
 
