@@ -41,6 +41,14 @@ class install(_install):
         _install.initialize_options(self)
 
     def run(self):
+        try:
+            import pagestore
+            import pip
+            print('WARNING: removing standalone pagestore package')
+            pip.main(['uninstall', 'pagestore', '-y'])
+        except:
+            pass
+
         if not self.no_jars:
             import cmmnbuild_dep_manager
             mgr = cmmnbuild_dep_manager.Manager()
@@ -58,9 +66,6 @@ setuptools.setup(
     author_email='riccardo.de.maria@cern.ch',
     url='https://github.com/rdemaria/pytimber',
     packages=['pytimber'],
-    package_dir={
-        'pytimber': 'pytimber'
-    },
     install_requires=[
         'JPype1>=0.6.1',
         'cmmnbuild-dep-manager>=2.0.0'
