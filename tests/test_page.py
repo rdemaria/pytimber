@@ -1,4 +1,4 @@
-from pagestore import *
+from pytimber.pagestore import *
 from numpy import *
 
 def mktest(idx,rec,comp=None):
