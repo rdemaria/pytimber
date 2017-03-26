@@ -601,3 +601,6 @@ class Hierarchy(object):
             return vvv.toString()[1:-1].split(', ')
         else:
             return []
+
+    def get_vars(self):
+        return self._get_vars()
