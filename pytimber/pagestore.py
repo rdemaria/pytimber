@@ -5,6 +5,17 @@ import numpy as np
 
 from .page import Page
 
+
+
+try:
+    isinstance("", basestring)
+    def isstr(s):
+        return isinstance(s, basestring)
+except NameError:
+    def isstr(s):
+        return isinstance(s, str)
+
+
 def merge(idx0,rec0,idx1,rec1):
     sel={};val=[rec0,rec1]
     for ii,iv in enumerate(idx0):
@@ -154,7 +165,7 @@ class PageStore(object):
         return pages
     def get(self,variables,idxa=None,idxb=None):
         data={}
-        if isinstance(variables,str):
+        if isstr(variables):
             varlist=self.search(variables)
         elif isinstance(variables, (list, tuple)):
             varlist=variables
