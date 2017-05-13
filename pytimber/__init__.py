@@ -8,7 +8,9 @@ from .LHCBSRT import BSRT
 
 from . import timberdata
 
-__version__ = "2.3.0"
+from .pagestore import PageStore
+
+__version__ = "2.3.1"
 
 __cmmnbuild_deps__ = [
     "accsoft-cals-extr-client",
