@@ -170,18 +170,42 @@ class LoggingDB(object):
         return variables
 
     def processDataset(self, dataset, datatype, unixtime):
+        spi = (jpype.JPackage('cern').accsoft.cals.extr.domain.core
+               .timeseriesdata.spi)
+
         datas = []
         tss = []
         for tt in dataset:
             ts = self.fromTimestamp(tt.getStamp(), unixtime)
             if datatype == 'MATRIXNUMERIC':
-                val = np.array(tt.getMatrixDoubleValues(), dtype=float)
+                if isinstance(tt, spi.MatrixNumericDoubleData):
+                    val = np.array(tt.getMatrixDoubleValues(), dtype=float)
+                elif isinstance(tt, spi.MatrixNumericLongData):
+                    val = np.array(tt.getMatrixLongValues(), dtype=int)
+                else:
+                    self._log.warning('Unsupported datatype, returning the '
+                                      'java object')
+                    val = tt
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues()[:], dtype=float)
+                if isinstance(tt, spi.VectorNumericDoubleData):
+                    val = np.array(tt.getDoubleValues()[:], dtype=float)
+                elif isinstance(tt, spi.VectorNumericLongData):
+                    val = np.array(tt.getLongValues()[:], dtype=int)
+                else:
+                    self._log.warning('Unsupported datatype, returning the '
+                                      'java object')
+                    val = tt
             elif datatype == 'VECTORSTRING':
                 val = np.array(tt.getStringValues(), dtype='U')
             elif datatype == 'NUMERIC':
-                val = tt.getDoubleValue()
+                if isinstance(tt, spi.NumericDoubleData):
+                    val = tt.getDoubleValue()
+                elif isinstance(tt, spi.NumericLongData):
+                    val = tt.getLongValue()
+                else:
+                    self._log.warning('Unsupported datatype, returning the '
+                                      'java object')
+                    val = tt
             elif datatype == 'FUNDAMENTAL':
                 val = 1
             elif datatype == 'TEXTUAL':
