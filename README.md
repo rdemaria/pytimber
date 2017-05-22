@@ -12,6 +12,12 @@ Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
 [anaconda]: https://www.continuum.io/downloads
 
 ```sh
+pip install pytimber
+```
+
+or for the most updated version
+
+```sh
 pip install git+https://github.com/rdemaria/pytimber.git
 ```
 
