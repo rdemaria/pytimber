@@ -102,8 +102,7 @@ class LoggingDB(object):
         elif isinstance(t,Timestamp):
             return t
         else:
-            tt = datetime.datetime.fromtimestamp(t)
-            ts = Timestamp.valueOf(tt.strftime('%Y-%m-%d %H:%M:%S.%f'))
+            ts = Timestamp.from_(jpype.java.util.Date(long(t*1000)).toInstant())
             sec = int(t)
             nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
