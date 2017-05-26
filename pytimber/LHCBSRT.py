@@ -396,6 +396,11 @@ class BSRT(object):
         print(('ERROR: no data found for slot %s! ')%(slot) + 
         'Check the data in timber using BSRT.get_timber_data()!')
     return self
+  def get_slots(self):
+    """
+    return list of non-empty slots
+    """
+    return list(self.emit.keys())
   def _set_slots(self,slots):
     """
     set slot numbers, handles the case of slots = None and only one 
