@@ -59,7 +59,7 @@ class LoggingDB(object):
       _jpype=jpype
     except NameError:
       print('ERROR: jpype is note defined!')
-    def __init__(self, appid='PYTIMBER', clientid='PYTIMBER',
+    def __init__(self, appid='LHC_MD_ABP_ANALYSIS', clientid='BEAM PHYSICS',
                  source='all', loglevel=None):
         # Configure logging
         logging.basicConfig()
