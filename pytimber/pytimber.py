@@ -54,6 +54,10 @@ Stat = namedtuple(
 )
 
 
+if six.PY3:
+    long = int
+
+
 class LoggingDB(object):
     try:
       _jpype=jpype
@@ -102,7 +106,7 @@ class LoggingDB(object):
         elif isinstance(t,Timestamp):
             return t
         else:
-            ts = Timestamp.from_(jpype.java.util.Date(long(t*1000)).toInstant())
+            ts = Timestamp(long(t*1000))
             sec = int(t)
             nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
