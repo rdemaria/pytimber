@@ -506,9 +506,10 @@ class LoggingDB(object):
               res = self._ts.getDataInFixedIntervals(jvar, ts1, ts2, timescaling)
             except jpype.JavaException as e:
               print(e.message())
-              print('''timescaleAlgorithm should be one of:{},
-timescaleInterval one of:{},
-scaleSize an integer'''.format(['MAX','MIN','AVG','COUNT','SUM','REPEAT','INTERPOLATE']
+              print('''
+                   timescaleAlgorithm should be one of:{},
+                   timescaleInterval one of:{},
+                   scaleSize an integer'''.format(['MAX','MIN','AVG','COUNT','SUM','REPEAT','INTERPOLATE']
                        ,['SECOND', 'MINUTE','HOUR', 'DAY','WEEK','MONTH','YEAR'])) 
               return
             datatype = res.getVariableDataType().toString()
