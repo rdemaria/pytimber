@@ -102,7 +102,9 @@ INFO:pytimber.pytimber:Retrieved 1 values for LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DAT
 {u'LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H': (array([  1.43151120e+09]), array([[ 12093142.,   4001816., -12664398., ...,   6070394.,  -2901636.,
          -9446216.]]))}
 ------------------------------------------------------------------------
-[u'ADE', u'ATLAS', u'CMS', u'CNGS', u'CRYO', u'CTF3', u'CV', u'Detector_cooling', u'EAST_HALL', u'ENS', u'Fundamental_Data', u'GCS', u'HIE', u'HiRadMat', u'ISOLDE', u'LEIR', u'LHC', u'LHC_HWC', u'LIFTS', u'LINAC2', u'LINAC3', u'LINAC4', u'LN4TS', u'MCS', u'NA62', u'PS', u'PSB', u'PSEN', u'QPS', u'SM18', u'SPS', u'SPS-EA', u'SURVEY', u'SYSTEM', u'SYSTEM_TEST', u'TEST', u'TI2', u'TI8', u'TIM_by_LOCATION', u'TIM_by_SYSTEM', u'TT10', u'TT2', u'TT20', u'TT40', u'TT60', u'VAC', u'VAC_NTOF', u'WIC', u'nTOF', u'vac_ntof']
+{u'MSC01.ZT8.107:COUNTS': (array([  1.43168400e+09,   1.43168760e+09,   1.43169120e+09]), array([ 1174144.,  1172213.,  1152831.]))}
+------------------------------------------------------------------------
+[u'AF[u'ADE', u'ATLAS', u'CMS', u'CNGS', u'CRYO', u'CTF3', u'CV', u'Detector_cooling', u'EAST_HALL', u'ENS', u'Fundamental_Data', u'GCS', u'HIE', u'HiRadMat', u'ISOLDE', u'LEIR', u'LHC', u'LHC_HWC', u'LIFTS', u'LINAC2', u'LINAC3', u'LINAC4', u'LN4TS', u'MCS', u'NA62', u'PS', u'PSB', u'PSEN', u'QPS', u'SM18', u'SPS', u'SPS-EA', u'SURVEY', u'SYSTEM', u'SYSTEM_TEST', u'TEST', u'TI2', u'TI8', u'TIM_by_LOCATION', u'TIM_by_SYSTEM', u'TT10', u'TT2', u'TT20', u'TT40', u'TT60', u'VAC', u'VAC_NTOF', u'WIC', u'nTOF', u'vac_ntof']
 ------------------------------------------------------------------------
 [u'LHC.BPTDH.A4L1.B1:ABSOLUTEPOS', u'LHC.BPTDH.A4L1.B1:ACQUISITIONSTATUS', u'LHC.BPTDH.A4L1.B1:BPMAPERTURE', u'LHC.BPTDH.A4L1.B1:CALIBABSOLUTEPOS', u'LHC.BPTDH.A4L1.B1:CALIBCORRECTEDPOS', u'LHC.BPTDH.A4L1.B1:CALIBLINEARPOS', u'LHC.BPTDH.A4L1.B1:CALIBRAWVALV1', u'LHC.BPTDH.A4L1.B1:CALIBRAWVALV2', u'LHC.BPTDH.A4L1.B1:CORRECTEDPOS', u'LHC.BPTDH.A4L1.B1:HORABSOLUTEPOS']
 ------------------------------------------------------------------------
