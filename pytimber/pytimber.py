@@ -471,7 +471,7 @@ class LoggingDB(object):
         return out
 
     def getScaled(self, pattern_or_list, t1, t2,unixtime=True,
-            timescaleAlgorithm='SUM', scaleSize='MINUTE', timescaleInterval='1'):
+            scaleAlgorithm='SUM', scaleSize='MINUTE', scaleInterval='1'):
         """Query the database for a list of variables or for variables whose
         name matches a pattern (string) in a time window from t1 to t2.
 
@@ -484,7 +484,7 @@ class LoggingDB(object):
         """
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
-        timescaling=self.toTimescale([timescaleInterval,scaleSize,timescaleAlgorithm])
+        timescaling=self.toTimescale([scaleInterval,scaleSize,scaleAlgorithm])
 
         out = {}
         # Build variable list
