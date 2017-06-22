@@ -28,6 +28,7 @@ Authors:
     T. Levens       <tom.levens@cern.ch>
     C. Hernalsteens <cedric.hernalsteens@cern.ch>
     M. Betz         <michael.betz@cern.ch>
+    R. Castellotti  <riccardo.castellotti@cern.ch>
 '''
 
 import os
