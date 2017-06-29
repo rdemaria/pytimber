@@ -137,14 +137,25 @@ class LoggingDB(object):
       except Exception as e:
         self._log.warning('exception in timescale:{}'.format(e))
 
-    def search(self, pattern):
-        """Search for parameter names. Wildcard is '%'."""
+    def getVariables(self,pattern):
+        """Get Variable from pattern. Wildcard is '%'."""
         VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
                             .core.constants.VariableDataType)
         types = VariableDataType.ALL
-        v = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
-        return v.toString()[1:-1].split(', ')
+        v=self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
+        return list(v.getVariables())
+    def search(self, pattern):
+        """Search for parameter names. Wildcard is '%'."""
+        return [vv.getVariableName() for vv in self.getVariables(pattern)]
 
+    def getDescription(self,pattern):
+        """Get Variable Description from pattern. Wildcard is '%'."""
+        return dict([(vv.getVariableName(),vv.getDescription())
+                                         for vv in self.getVariables(pattern)])
+    def getUnit(self,pattern):
+        """Get Variable Unit from pattern. Wildcard is '%'."""
+        return dict([(vv.getVariableName(),vv.getUnit())
+                                         for vv in self.getVariables(pattern)])
     def getFundamentals(self, t1, t2, fundamental):
         self._log.info(
             'Querying fundamentals (pattern: {0}):'.format(fundamental)

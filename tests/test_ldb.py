@@ -60,3 +60,9 @@ print('------------------------------------------------------------------------'
 print(dir(ldb.tree.LHC.Collimators.BPM.bpmColl)[:10])
 
 print('------------------------------------------------------------------------')
+
+print(ldb.getUnit('%:LUMI_TOT_INST'))
+print(ldb.getDescription('%:LUMI_TOT_INST'))
+
+
+
