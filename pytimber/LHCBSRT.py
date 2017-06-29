@@ -396,6 +396,11 @@ class BSRT(object):
         print(('ERROR: no data found for slot %s! ')%(slot) + 
         'Check the data in timber using BSRT.get_timber_data()!')
     return self
+  def get_slots(self):
+    """
+    return list of non-empty slots
+    """
+    return list(self.emit.keys())
   def _set_slots(self,slots):
     """
     set slot numbers, handles the case of slots = None and only one 
@@ -479,8 +484,10 @@ class BSRT(object):
       self.plot_fit(plane=plane,t1=t1,t2=t2,slots=slots,
                     linestyle='--',color='k',verbose=verbose)
     set_xaxis_date()
-    pl.ylabel(r'$\epsilon_{N,%s} \ [\mu m]$'%plane)
+    pl.ylabel(r'$\epsilon_{N,%s} \ [\mu\mathrm{ m}]$'%plane.upper())
     pl.grid(b=True)
+    if label is not None:
+      pl.legend(loc='best',fontsize=12)
     return self
   def plot_fit(self,plane='h',t1=None,t2=None,slots=None,color=None,
                linestyle=None,label=None,verbose=False):
