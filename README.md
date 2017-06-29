@@ -12,7 +12,13 @@ Install a Python distribution (e.g. [Anaconda][]) and a recent Java version
 [anaconda]: https://www.continuum.io/downloads
 
 ```sh
-pip install git+https://github.com/rdemaria/pytimber.git --process-dependency-links
+pip install pytimber
+```
+
+or for the most updated version
+
+```sh
+pip install git+https://github.com/rdemaria/pytimber.git
 ```
 
 This will also install [cmmnbuild-dep-manager][] to provide automatic
@@ -93,21 +99,11 @@ By default all times are returned as Unix timestamps. If you pass
 
 ## Usage with PageStore
 
-pytimber can be combined with [PageStore][] for local data storage.
-
-[pagestore]: https://github.com/rdemaria/pagestore
-
-Installation (assuming pytimber is already installed):
-
-```sh
-pip install git+https://github.com/rdemaria/pagestore.git
-```
-
-Usage example:
+pytimber can be combined with PageStore for local data storage. Usage example:
 
 ```python
 import pytimber
-import pagestore
+from pytimber import pagestore
 
 ldb = pytimber.LoggingDB()
 mydb = pagestore.PageStore('mydata.db', './datadb')

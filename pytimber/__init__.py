@@ -8,9 +8,11 @@ from .LHCBSRT import BSRT
 
 from . import timberdata
 
-__version__ = "2.2.8"
+from .pagestore import PageStore
 
-cmmnbuild_deps = [
+__version__ = "2.4.0"
+
+__cmmnbuild_deps__ = [
     "accsoft-cals-extr-client",
     "accsoft-cals-extr-domain",
     "slf4j-log4j12",

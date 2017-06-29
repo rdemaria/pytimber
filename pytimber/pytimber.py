@@ -28,6 +28,7 @@ Authors:
     T. Levens       <tom.levens@cern.ch>
     C. Hernalsteens <cedric.hernalsteens@cern.ch>
     M. Betz         <michael.betz@cern.ch>
+    R. Castellotti  <riccardo.castellotti@cern.ch>
 '''
 
 import os
@@ -54,6 +55,10 @@ Stat = namedtuple(
 )
 
 
+if six.PY3:
+    long = int
+
+
 class LoggingDB(object):
     try:
       _jpype=jpype
@@ -68,10 +73,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager()
-        if not mgr.is_registered('pytimber'):
-            mgr.install('pytimber')
-        mgr.log.setLevel(logging.WARNING)
+        mgr = cmmnbuild_dep_manager.Manager('pytimber', logging.WARNING)
         mgr.start_jpype_jvm()
 
         # log4j config
@@ -105,8 +107,7 @@ class LoggingDB(object):
         elif isinstance(t,Timestamp):
             return t
         else:
-            tt = datetime.datetime.fromtimestamp(t)
-            ts = Timestamp.valueOf(tt.strftime('%Y-%m-%d %H:%M:%S.%f'))
+            ts = Timestamp(long(t*1000))
             sec = int(t)
             nanos = int((t-sec)*1e9)
             ts.setNanos(nanos)
@@ -127,6 +128,14 @@ class LoggingDB(object):
         for s in myArray:
             myList.add(s)
         return myList
+
+    def toTimescale(self, timescale_list):
+      Timescale = jpype.JPackage('cern').accsoft.cals.extr.domain.core.constants.TimescalingProperties
+      try:
+        timescale_str='_'.join(timescale_list)
+        return Timescale.valueOf(timescale_str)
+      except Exception as e:
+        self._log.warning('exception in timescale:{}'.format(e))
 
     def search(self, pattern):
         """Search for parameter names. Wildcard is '%'."""
@@ -173,18 +182,42 @@ class LoggingDB(object):
         return variables
 
     def processDataset(self, dataset, datatype, unixtime):
+        spi = (jpype.JPackage('cern').accsoft.cals.extr.domain.core
+               .timeseriesdata.spi)
+
         datas = []
         tss = []
         for tt in dataset:
             ts = self.fromTimestamp(tt.getStamp(), unixtime)
             if datatype == 'MATRIXNUMERIC':
-                val = np.array(tt.getMatrixDoubleValues(), dtype=float)
+                if isinstance(tt, spi.MatrixNumericDoubleData):
+                    val = np.array(tt.getMatrixDoubleValues(), dtype=float)
+                elif isinstance(tt, spi.MatrixNumericLongData):
+                    val = np.array(tt.getMatrixLongValues(), dtype=int)
+                else:
+                    self._log.warning('Unsupported datatype, returning the '
+                                      'java object')
+                    val = tt
             elif datatype == 'VECTORNUMERIC':
-                val = np.array(tt.getDoubleValues()[:], dtype=float)
+                if isinstance(tt, spi.VectorNumericDoubleData):
+                    val = np.array(tt.getDoubleValues()[:], dtype=float)
+                elif isinstance(tt, spi.VectorNumericLongData):
+                    val = np.array(tt.getLongValues()[:], dtype=int)
+                else:
+                    self._log.warning('Unsupported datatype, returning the '
+                                      'java object')
+                    val = tt
             elif datatype == 'VECTORSTRING':
                 val = np.array(tt.getStringValues(), dtype='U')
             elif datatype == 'NUMERIC':
-                val = tt.getDoubleValue()
+                if isinstance(tt, spi.NumericDoubleData):
+                    val = tt.getDoubleValue()
+                elif isinstance(tt, spi.NumericLongData):
+                    val = tt.getLongValue()
+                else:
+                    self._log.warning('Unsupported datatype, returning the '
+                                      'java object')
+                    val = tt
             elif datatype == 'FUNDAMENTAL':
                 val = 1
             elif datatype == 'TEXTUAL':
@@ -365,6 +398,7 @@ class LoggingDB(object):
         If a fundamental pattern is provided, the end of the time window as to
         be explicitely provided.
         """
+
         ts1 = self.toTimestamp(t1)
         if t2 not in ['last', 'next', None]:
             ts2 = self.toTimestamp(t2)
@@ -434,6 +468,55 @@ class LoggingDB(object):
                 self._log.info('Retrieved {0} values for {1}'.format(
                     res.size(), jvar.getVariableName()
                 ))
+            out[v] = self.processDataset(res, datatype, unixtime)
+        return out
+
+    def getScaled(self, pattern_or_list, t1, t2,unixtime=True,
+            scaleAlgorithm='SUM', scaleSize='MINUTE', scaleInterval='1'):
+        """Query the database for a list of variables or for variables whose
+        name matches a pattern (string) in a time window from t1 to t2.
+
+        If no pattern if given for the fundamental all the data are returned.
+
+        If a fundamental pattern is provided, the end of the time window as to
+        be explicitely provided.
+
+        Applies the scaling with supplied timescaleAlgorithm, scaleSize, timescaleInterval
+        """
+        ts1 = self.toTimestamp(t1)
+        ts2 = self.toTimestamp(t2)
+        timescaling=self.toTimescale([scaleInterval,scaleSize,scaleAlgorithm])
+
+        out = {}
+        # Build variable list
+        variables = self.getVariablesList(pattern_or_list)
+        if len(variables) == 0:
+            self._log.warning('No variables found.')
+            return {}
+        else:
+            logvars = []
+            for v in variables:
+                logvars.append(v)
+            self._log.info('List of variables to be queried: {0}'.format(
+                ', '.join(logvars)))
+
+        # Acquire
+        for v in variables:
+            jvar = variables.getVariable(v)
+            try:
+              res = self._ts.getDataInFixedIntervals(jvar, ts1, ts2, timescaling)
+            except jpype.JavaException as e:
+              print(e.message())
+              print('''
+                   timescaleAlgorithm should be one of:{},
+                   timescaleInterval one of:{},
+                   scaleSize an integer'''.format(['MAX','MIN','AVG','COUNT','SUM','REPEAT','INTERPOLATE']
+                       ,['SECOND', 'MINUTE','HOUR', 'DAY','WEEK','MONTH','YEAR'])) 
+              return
+            datatype = res.getVariableDataType().toString()
+            self._log.info('Retrieved {0} values for {1}'.format(
+                res.size(), jvar.getVariableName()
+            ))
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
@@ -534,6 +617,8 @@ class LoggingDB(object):
             metadata=(self._md.getVectorElements(variable)
                                  .getVectornumericElements())
             ts=[tt.fastTime/1000+tt.getNanos()/1e9 for tt in  metadata]
+#            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
+#                    for a in metadata.values()]
             vv=[[aa.value for aa in a.iterator()] for a in metadata.values()]
             out[variable.getVariableName()]=ts,vv
         return out
@@ -546,18 +631,18 @@ class Hierarchy(object):
         self.varsrc = varsrc
         if src is not None:
             self.src = src
-        for vvv in self.get_vars():
+        for vvv in self._get_vars():
             if len(vvv) > 0:
-                setattr(self, self.cleanName(vvv), vvv)
+                setattr(self, self._cleanName(vvv), vvv)
 
     def _get_childs(self):
         if self.obj is None:
             objs = self.src.getHierachies(1)
         else:
             objs = self.src.getChildHierarchies(self.obj)
-        return dict([(self.cleanName(hh.hierarchyName), hh) for hh in objs])
+        return dict([(self._cleanName(hh.hierarchyName), hh) for hh in objs])
 
-    def cleanName(self, s):
+    def _cleanName(self, s):
         if s[0].isdigit():
             s = '_'+s
         out = []
@@ -579,7 +664,9 @@ class Hierarchy(object):
             return Hierarchy(k, self._dict[k], self.src, self.varsrc)
 
     def __dir__(self):
-        v = sorted([self.cleanName(i) for i in self.get_vars() if len(i) > 0])
+        if jpype.isThreadAttachedToJVM()==0:
+            jpype.attachThreadToJVM()
+        v = sorted([self._cleanName(i) for i in self._get_vars() if len(i) > 0])
         return sorted(self._dict.keys()) + v
 
     def __repr__(self):
@@ -590,7 +677,7 @@ class Hierarchy(object):
             desc = self.obj.getDescription()
             return '<{0}: {1}>'.format(name, desc)
 
-    def get_vars(self):
+    def _get_vars(self):
         VariableDataType = (jpype.JPackage('cern').accsoft.cals.extr.domain
                             .core.constants.VariableDataType)
         if self.obj is not None:
@@ -600,3 +687,6 @@ class Hierarchy(object):
             return vvv.toString()[1:-1].split(', ')
         else:
             return []
+
+    def get_vars(self):
+        return self._get_vars()
