@@ -483,7 +483,8 @@ class BSRT(object):
     if fit:
       self.plot_fit(plane=plane,t1=t1,t2=t2,slots=slots,
                     linestyle='--',color='k',verbose=verbose)
-    set_xaxis_date()
+    else:
+      set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu\mathrm{ m}]$'%plane.upper())
     pl.grid(b=True)
     if label is not None:
