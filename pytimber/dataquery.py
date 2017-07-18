@@ -34,7 +34,7 @@ def flattenoverlap(v,test=100,start=0):
 
 class rdmDateFormatter(matplotlib.ticker.Formatter):
   def __call__(self,x,pos=None):
-    return dumpdate(x,fmt='%Y-%m-%d\n%H:%M:%S.SSS')
+    return dumpdate(x,fmt='%Y-%m-%d\n%H:%M:%S')
 
 def set_xaxis_date(ax=None,bins=6):
   if ax is None:
