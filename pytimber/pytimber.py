@@ -487,7 +487,7 @@ class LoggingDB(object):
         return out
 
     def getScaled(self, pattern_or_list, t1, t2,unixtime=True,
-            scaleAlgorithm='SUM', scaleSize='MINUTE', scaleInterval='1'):
+            scaleAlgorithm='SUM', scaleInterval='MINUTE', scaleSize='1'):
         """Query the database for a list of variables or for variables whose
         name matches a pattern (string) in a time window from t1 to t2.
 
@@ -496,11 +496,11 @@ class LoggingDB(object):
         If a fundamental pattern is provided, the end of the time window as to
         be explicitely provided.
 
-        Applies the scaling with supplied timescaleAlgorithm, scaleSize, timescaleInterval
+        Applies the scaling with supplied scaleAlgorithm, scaleSize, scaleInterval
         """
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
-        timescaling=self.toTimescale([scaleInterval,scaleSize,scaleAlgorithm])
+        timescaling=self.toTimescale([scaleSize,scaleInterval,scaleAlgorithm])
 
         out = {}
         # Build variable list
@@ -523,8 +523,8 @@ class LoggingDB(object):
             except jpype.JavaException as e:
               print(e.message())
               print('''
-                   timescaleAlgorithm should be one of:{},
-                   timescaleInterval one of:{},
+                   scaleAlgorithm should be one of:{},
+                   scaleInterval one of:{},
                    scaleSize an integer'''.format(['MAX','MIN','AVG','COUNT','SUM','REPEAT','INTERPOLATE']
                        ,['SECOND', 'MINUTE','HOUR', 'DAY','WEEK','MONTH','YEAR'])) 
               return
