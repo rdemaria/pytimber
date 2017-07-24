@@ -60,6 +60,9 @@ if six.PY3:
     long = int
 
 
+# Documentation CALS API
+# http://abwww.cern.ch/ap/dist/accsoft/cals/accsoft-cals-extr-client/PRO/build/docs/api/
+
 class LoggingDB(object):
     try:
       _jpype=jpype
