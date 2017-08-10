@@ -36,7 +36,7 @@ def _get_timber_data(beam,t1,t2,db=None):
              *_time = time stamps for rarely logged 
                       variables, explicitly timber variables
                       %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
-                      LHC.STATS:ENERGY
+                      LHC.BOFSU:OFC_ENERGY
   """
   # -- some checks
   if t2 < t1:
@@ -70,25 +70,33 @@ def _get_timber_data(beam,t1,t2,db=None):
                                        +'%LSF_%')
   [beta_h_var, beta_v_var] = db.search('%LHC%BSRT%'+beam.upper()
                                        +'%BETA%')
-  energy_var = u'LHC.STATS:ENERGY'
+  energy_var = u'LHC.BOFSU:OFC_ENERGY'
   bsrt_lsf_var = [lsf_h_var, lsf_v_var, beta_h_var, beta_v_var,
                   energy_var]
   t1_lsf = t1
   bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
   # only logged rarely, loop until array is not empty, print warning
   # if time window exceeds one month
-  while (bsrt_lsf[lsf_h_var][0].size  == 0 or
-         bsrt_lsf[lsf_v_var][0].size  == 0 or
-         bsrt_lsf[beta_h_var][0].size == 0 or
-         bsrt_lsf[beta_v_var][0].size == 0 or
-         bsrt_lsf[energy_var][0].size == 0):
-    if (np.abs(t1_lsf-t1) > 30*24*60*60):
-      raise ValueError(('Last logging time for ' + ', %s'*5 
-      + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
-      return
-    else:
-      t1_lsf = t1_lsf-24*60*60
-      bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
+  for var in bsrt_lsf_var:
+    while (bsrt_lsf[var][0].size  == 0):
+      if (np.abs(t1_lsf-t1) > 30*24*60*60):
+        raise ValueError(('Last logging time for ' + ', %s'*5 
+        + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
+        return
+      else:
+        t1_lsf = t1_lsf-24*60*60
+        bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
+    while (bsrt_lsf[var][0][0] > bsrt_sig[bsrt_sig_var[0]][0][0]):
+      if (np.abs(t1_lsf-t1) > 30*24*60*60):
+        raise ValueError(('Last logging time for ' + ', %s'*5 
+        + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
+        return
+      else:
+        t1_lsf = t1_lsf-24*60*60
+        bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
+  # check that time stamp of lsf,beta,energy is before first sigma
+  # timestamp
+    
   # -- create list containing all the data (bsrt_list), then save 
   # data in structured array bsrt_data
   # take timestamp from GATE_DELAY (same as for other variables)
@@ -149,12 +157,12 @@ class BSRT(object):
     u'LHC.BSRT.5R4.B1:FIT_SIGMA_V', u'LHC.BSRT.5R4.B1:GATE_DELAY',
     u'LHC.BSRT.5R4.B1:LSF_H', u'LHC.BSRT.5R4.B1:LSF_V', 
     u'LHC.BSRT.5R4.B1:BETA_H', u'LHC.BSRT.5R4.B1:BETA_V',
-    'LHC.STATS:ENERGY']
+    'LHC.BOFSU:OFC_ENERGY']
   timber_variables['B2']=[u'LHC.BSRT.5L4.B2:FIT_SIGMA_H', 
   u'LHC.BSRT.5L4.B2:FIT_SIGMA_V', u'LHC.BSRT.5L4.B2:GATE_DELAY',
   u'LHC.BSRT.5L4.B2:LSF_H', u'LHC.BSRT.5L4.B2:LSF_V', 
   u'LHC.BSRT.5L4.B2:BETA_H', u'LHC.BSRT.5L4.B2:BETA_V',
-  'LHC.STATS:ENERGY']
+  'LHC.BOFSU:OFC_ENERGY']
   def __init__(self,db=None,emit=None,emitfit=None,t_start=None,
                t_end=None):
     self.db = db
@@ -255,7 +263,7 @@ class BSRT(object):
                *_time = time stamps for rarely logged 
                         variables, explicitly timber variables
                         %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
-                        LHC.STATS:ENERGY
+                        LHC.BOFSU:OFC_ENERGY
     """
     return _get_timber_data(beam,t1,t2,db)
   def get_fit(self,slot,t1=None,t2=None,verbose=False):
