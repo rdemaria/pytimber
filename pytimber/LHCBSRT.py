@@ -180,7 +180,7 @@ class BSRT(object):
 
   Attributes:
   -----------
-  timber_variables : timber variables needed to calculate
+  timber_vars : timber variables needed to calculate
                     normalized emittance
   beam             : 'B1' for beam 1 or 'B2' for beam2
   t_start, t_end   : start/end time of extracted data
@@ -198,13 +198,13 @@ class BSRT(object):
         Values are added to *emitfit*. 
   get_fit : extract fit data for specific slot and times
   """
-  timber_variables = {}
-  timber_variables['B1'] = [u'LHC.BSRT.5R4.B1:FIT_SIGMA_H', 
+  timber_vars = {}
+  timber_vars['B1'] = [u'LHC.BSRT.5R4.B1:FIT_SIGMA_H', 
     u'LHC.BSRT.5R4.B1:FIT_SIGMA_V', u'LHC.BSRT.5R4.B1:GATE_DELAY',
     u'LHC.BSRT.5R4.B1:LSF_H', u'LHC.BSRT.5R4.B1:LSF_V', 
     u'LHC.BSRT.5R4.B1:BETA_H', u'LHC.BSRT.5R4.B1:BETA_V',
     'LHC.BOFSU:OFC_ENERGY']
-  timber_variables['B2']=[u'LHC.BSRT.5L4.B2:FIT_SIGMA_H', 
+  timber_vars['B2']=[u'LHC.BSRT.5L4.B2:FIT_SIGMA_H', 
   u'LHC.BSRT.5L4.B2:FIT_SIGMA_V', u'LHC.BSRT.5L4.B2:GATE_DELAY',
   u'LHC.BSRT.5L4.B2:LSF_H', u'LHC.BSRT.5L4.B2:LSF_V', 
   u'LHC.BSRT.5L4.B2:BETA_H', u'LHC.BSRT.5L4.B2:BETA_V',
