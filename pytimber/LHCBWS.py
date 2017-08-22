@@ -116,11 +116,41 @@ def _get_timber_data(beam,t1,t2,db=None):
   if t2 < t1:
     raise ValueError('End time smaller than start time, t2 = ' +
     '%s > %s = t1'%(t2,t1))
+  name = '%LHC%BWS%'+beam.upper()
+  # check for which wire we have data
+  data = db.get(db.search(name+'%NB_GATES%'),t1,t2)
   var_names = []
-  # extract variable names from database
-  for var in ['NB_GATES','BUNCH_SELECTION','PROF_POSITION_',
-             'PROF_DATA_','BETA','EMITTANCE_NORM']:
-    var_names.extend(db.search('%LHC%BWS%'+beam.upper()+'%'+var+'%'))
+  for plane in 'HV':
+    nm = name+plane.upper()
+    wire = ''
+    try:
+      if len(data[db.search(nm+'1%NB_GATES%')[0]][1]) !=0:
+        wire += '1'
+      if len(data[db.search(nm+'2%NB_GATES%')[0]][1]) !=0:
+        wire += '2'
+    except KeyError:
+      pass
+    if wire =='1' or wire == '2':
+      pass
+    elif wire == '':
+      raise ValueError("No data found for wire 1 or wire 2 as "+
+      "db.search('%s') is empty!"%(name+"%NB_GATES%"))
+    elif wire == '12':
+      raise ValueError("Both wires appear to be used! This class "+
+      " assumes that only one wire is used!" +
+      "db.search('%s') = %s!"%(name+"%NB_GATES%",
+      db.search(name+'%NB_GATES%')))
+    else:
+      raise ValueError("This completely failed! wire = %s "%wire +
+      "and db.search('%s') = %s!"%(name+"%NB_GATES%",
+      db.search(name+'%NB_GATES%')))
+    # extract variable names for wires from database
+    for var in ['NB_GATES','BUNCH_SELECTION','PROF_POSITION_',
+               'PROF_DATA_']:
+      nm = name+plane.upper()+wire
+      var_names.extend(db.search(nm+'%'+var+'%'))
+  for var in ['BETA','EMITTANCE_NORM']:
+    var_names.extend(db.search(name+'%'+var+'%'))
   var_names.extend(['LHC.BOFSU:OFC_ENERGY'])
   # check that variable names haven't changed
   var_check = _bws_timber_variables() # hardcoded names
@@ -182,16 +212,20 @@ def _timber_to_dict(beam,plane,direction,data,db):
   # dictionary of time,value
   tt,vv ={},{}
   name = '%LHC%BWS%'+beam.upper()+plane.upper() # make sure to have upper letters
+  # check which wire is used by checking the gates
+  if db.search(name+'1%NB_GATES%')[0] in data.keys():
+    wire = '1'
+  elif db.search(name+'2%NB_GATES%')[0] in data.keys():
+    wire = '2'
   for kt,kd in zip(keys_timber,keys_dic):
-    print kd
-    # db.search() gives correctly back which wire is used. Use it to
-    # assign the data to tt,vv etc.
+  # db.search() gives correctly back which wire is used. Use it to
+  # assign the data to tt,vv etc.
     if kd in ['gate','bunch']:
-      var_str = name+'%'+kt+'%'
+      var_str = name+wire+'%'+kt+'%'
     elif kd in ['beta','emit']:
       var_str = name+'%'+direction+'%'+kt+'%'
     else:
-      var_str = name+'%'+kt+'%'+direction+'%'
+      var_str = name+wire+'%'+kt+'%'+direction+'%'
     var_name = db.search(var_str) 
     # check that this really only returns one variable name
     if len(var_name) !=1:
