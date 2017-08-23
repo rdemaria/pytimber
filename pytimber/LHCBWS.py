@@ -9,7 +9,7 @@ except ImportError:
     be present to run pytimbertools""")
 
 import pytimber
-from .toolbox import emitnorm, exp_fit, movingaverage, gauss_pdf
+import toolbox as tb
 
 from .dataquery import set_xaxis_date
 from .localdate import parsedate,dumpdate
@@ -260,11 +260,12 @@ def _timber_to_dict(beam,plane,direction,data,db):
       dx = np.abs(pos[1:]-pos[0:-1])
       int_dist = (dx*amp[idx][:-1]).sum()
       amp_norm = amp[idx]/int_dist
-      p,pcov = curve_fit(f=gauss_pdf,xdata=pos,ydata=amp_norm,p0=[0,1,0,1000])
+      p,pcov = curve_fit(f=tb.gauss_pdf,xdata=pos,ydata=amp_norm,p0=[0,1,0,1000])
       sigma_gauss = p[3]
       sigma_gauss_err = np.sqrt(pcov[3,3])
-      emit_gauss = emitnorm(sigma_gauss**2/beta,egev)*1.e-6
-      emit_gauss_err = emitnorm(2*sigma_gauss*sigma_gauss_err/beta,egev)*1.e-6
+      emit_gauss = tb.emitnorm(sigma_gauss**2/beta,egev)*1.e-6
+      emit_gauss_err = tb.emitnorm(2*sigma_gauss*sigma_gauss_err/
+                                   beta,egev)*1.e-6
       dbws[sl].append((t,tbe,egev,pos,amp[idx],amp_norm,beta,emit[idx],
                        emit_gauss,emit_gauss_err,p,pcov))
   for k in dbws.keys():
@@ -379,7 +380,9 @@ class BWS(object):
   def update_beta_energy(self,t1=None,t2=None,beth=None,betv=None,
                          energy=None,verbose=False):
     """
-    update beta and energy within t1 and t2.
+    update beta and energy for emit_gauss and emit_gauss_err
+    within t1 and t2. emit = emittance as stored in timber is not
+    changed.
 
     Parameters:
     ----------
@@ -387,29 +390,25 @@ class BWS(object):
     betah,betav: hor./vert. beta function [m]
     energy: beam energy [GeV]
     """
-    db = self.db
     if t1 is None: t1 = self.t_start
     if t2 is None: t2 = self.t_end
-    timber_data = _get_timber_data(beam=self.beam,
-                                   t1=self.t_start,t2=self.t_end,db=db)
-    if energy is not None:
-      tt,vv = timber_data['LHC.BOFSU:OFC_ENERGY']
-      mask  = np.logical_and(tt>=t1,tt<=t2)
-      if verbose:
-       print 'energy: old=',vv[mask],'new=',energy
-      vv[mask] = energy
-      timber_data['LHC.BOFSU:OFC_ENERGY'] = tt,vv
     for plane,beta in zip('HV',[beth,betv]):
-      if beta is not None:
-        for io in 'IN','OUT':
-          var_name = db.search('%LHC%BWS%'+self.beam+plane+'%'+io+'%BETA%')
-          tt,vv = timber_data[var_name[0]]
-          mask  = np.logical_and(tt>=t1,tt<=t2)
-          if verbose:
-            print('beta%s: old='%(plane.lower()),vv[mask],' new=',beta)
-            vv[mask] = beta
-            timber_data[var_name] = tt,vv
-    for plane in 'HV':
       for io in 'IN','OUT':
-        self.data[plane][io] = _timber_to_dict(beam=self.beam,plane=plane,
-                                 direction=io,data=timber_data,db=self.db)
+        for sl in self.data[plane][io].keys():
+          data = self.data[plane][io][sl]
+          time = data['time']
+          mask = np.logical_and(time>=t1,time<=t2)
+          if energy is not None:
+            energy_old = data['egev'][mask]
+            data['egev'][mask] = energy
+            # get rel beta,gamma
+            b_old,g_old = tb.betarel(energy_old),tb.gammarel(energy_old) 
+            b,g         = tb.betarel(energy),tb.gammarel(energy)
+            for k in 'emit_gauss','emit_gauss_err':
+              data[k][mask] = (data[k][mask]*(b*g)/(b_old*g_old))
+          if beta is not None:
+            beta_old = data['beta'][mask]
+            data['beta'][mask] = beta
+            for k in 'emit_gauss','emit_gauss_err':
+              data[k][mask] = (data[k][mask]*(beta_old)/(beta))
+          self.data[plane][io][sl] = data
