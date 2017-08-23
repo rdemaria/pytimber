@@ -298,9 +298,10 @@ class BSRT(object):
 
     Parameters:
     ----------
-    t1,t2: start/end time
-    betah,betav: hor./vert. beta function
-    lsfh, lsfv: hor./vert. lsf factor
+    t1,t2: start/end time in unix time [s]
+    betah,betav: hor./vert. beta function [m]
+    lsfh, lsfv: hor./vert. lsf factor [mm]
+    energy: beam energy [GeV]
     """
     bsrt_array = _get_timber_data(beam=self.beam,
                                   t1=self.t_start,t2=self.t_end,
