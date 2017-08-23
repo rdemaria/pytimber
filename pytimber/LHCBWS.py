@@ -315,12 +315,6 @@ class BWS(object):
     self.data = data
     self.t_start = t_start
     self.t_end = t_end
-  def get_timber_data(self,t1,t2,db=None):
-    """
-    return timber data for BWS. See LHCBWS._get_timber_data(...)
-    for further documentation.
-    """
-    return _get_timber_data(beam=self.beam,t1=t1,t2=t2,db=db)
   @classmethod
   def fromdb(cls,t1,t2,beam='B1',db=None,verbose=False):
     """
@@ -376,3 +370,46 @@ class BWS(object):
                              direction=io,data=timber_data,db=db)
     return cls(db=db,timber_vars=timber_vars,data=data,t_start=t1,
                t_end=t2,beam=beam)
+  def get_timber_data(self,t1,t2,db=None):
+    """
+    return timber data for BWS. See LHCBWS._get_timber_data(...)
+    for further documentation.
+    """
+    return _get_timber_data(beam=self.beam,t1=t1,t2=t2,db=db)
+  def update_beta_energy(self,t1=None,t2=None,beth=None,betv=None,
+                         energy=None,verbose=False):
+    """
+    update beta and energy within t1 and t2.
+
+    Parameters:
+    ----------
+    t1,t2: start/end time in unix time [s]
+    betah,betav: hor./vert. beta function [m]
+    energy: beam energy [GeV]
+    """
+    db = self.db
+    if t1 is None: t1 = self.t_start
+    if t2 is None: t2 = self.t_end
+    timber_data = _get_timber_data(beam=self.beam,
+                                   t1=self.t_start,t2=self.t_end,db=db)
+    if energy is not None:
+      tt,vv = timber_data['LHC.BOFSU:OFC_ENERGY']
+      mask  = np.logical_and(tt>=t1,tt<=t2)
+      if verbose:
+       print 'energy: old=',vv[mask],'new=',energy
+      vv[mask] = energy
+      timber_data['LHC.BOFSU:OFC_ENERGY'] = tt,vv
+    for plane,beta in zip('HV',[beth,betv]):
+      if beta is not None:
+        for io in 'IN','OUT':
+          var_name = db.search('%LHC%BWS%'+self.beam+plane+'%'+io+'%BETA%')
+          tt,vv = timber_data[var_name[0]]
+          mask  = np.logical_and(tt>=t1,tt<=t2)
+          if verbose:
+            print('beta%s: old='%(plane.lower()),vv[mask],' new=',beta)
+            vv[mask] = beta
+            timber_data[var_name] = tt,vv
+    for plane in 'HV':
+      for io in 'IN','OUT':
+        self.data[plane][io] = _timber_to_dict(beam=self.beam,plane=plane,
+                                 direction=io,data=timber_data,db=self.db)
