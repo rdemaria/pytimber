@@ -533,6 +533,8 @@ class LoggingDB(object):
                 res.size(), jvar.getVariableName()
             ))
             out[v] = self.processDataset(res, datatype, unixtime)
+            if np.isnan(out[v][1]).any():
+                self._log.warning('Variable {} contains NaN values'.format(v))
         return out
 
     def getLHCFillData(self, fill_number=None, unixtime=True):
