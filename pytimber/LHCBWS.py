@@ -1,4 +1,5 @@
 import os
+from IPython.core.debugger import Tracer;
 
 try:
   import numpy as np
@@ -126,12 +127,12 @@ def _get_timber_data(beam,t1,t2,db=None):
     try:
       if len(data[db.search(nm+'1%NB_GATES%')[0]][1]) !=0:
         wire += '1'
+    except (KeyError,IndexError): pass
+    try:
       if len(data[db.search(nm+'2%NB_GATES%')[0]][1]) !=0:
         wire += '2'
-    except KeyError:
-      pass
-    if wire =='1' or wire == '2':
-      pass
+    except (KeyError,IndexError): pass
+    if wire =='1' or wire == '2': pass
     elif wire == '':
       raise ValueError("No data found for wire 1 or wire 2 as "+
       "db.search('%s') is empty!"%(name+"%NB_GATES%"))
@@ -145,7 +146,7 @@ def _get_timber_data(beam,t1,t2,db=None):
       "and db.search('%s') = %s!"%(name+"%NB_GATES%",
       db.search(name+'%NB_GATES%')))
     # extract variable names for wires from database
-    for var in ['NB_GATES','BUNCH_SELECTION','PROF_POSITION_',
+    for var in ['NB_GATES','GAIN','BUNCH_SELECTION','PROF_POSITION_',
                'PROF_DATA_']:
       nm = name+plane.upper()+wire
       var_names.extend(db.search(nm+'%'+var+'%'))
@@ -159,7 +160,7 @@ def _get_timber_data(beam,t1,t2,db=None):
     if var not in var_check[beam.upper()]:
       print('WARNING: variable name %s changed!'%var)
       flag_check = False
-  if flag_check == False:
+  if flag_check is False:
     print('Hardcoded variable names are: %s'%var_check)
   # get data
   data = db.get(var_names,t1,t2) 
@@ -206,21 +207,23 @@ def _timber_to_dict(beam,plane,direction,data,db):
   where 
   """
   keys_timber = ['NB_GATES','BUNCH_SELECTION','BETA','EMITTANCE_NORM',
-                 'PROF_POSITION','PROF_DATA']
+                 'PROF_POSITION','PROF_DATA','GAIN']
   keys_dic    = ['gate','bunch','beta','emit',
-                 'pos','amp']
+                 'pos','amp','gain']
   # dictionary of time,value
   tt,vv ={},{}
   name = '%LHC%BWS%'+beam.upper()+plane.upper() # make sure to have upper letters
   # check which wire is used by checking the gates
-  if db.search(name+'1%NB_GATES%')[0] in data.keys():
-    wire = '1'
-  elif db.search(name+'2%NB_GATES%')[0] in data.keys():
-    wire = '2'
+  try:
+    if db.search(name+'1%NB_GATES%')[0] in data.keys(): wire = '1'
+  except IndexError: pass
+  try:
+    if db.search(name+'2%NB_GATES%')[0] in data.keys(): wire = '2'
+  except IndexError: pass
   for kt,kd in zip(keys_timber,keys_dic):
   # db.search() gives correctly back which wire is used. Use it to
   # assign the data to tt,vv etc.
-    if kd in ['gate','bunch']:
+    if kd in ['gate','bunch','gain']:
       var_str = name+wire+'%'+kt+'%'
     elif kd in ['beta','emit']:
       var_str = name+'%'+direction+'%'+kt+'%'
@@ -232,6 +235,7 @@ def _timber_to_dict(beam,plane,direction,data,db):
       raise ValueError("Only one variable name should be returned "+
         "here!\n db.search('"+var_str+"')=%s"%(var_name))
     tt[kd],vv[kd] = data[var_name[0]] 
+    # convert binary format to float values
     if kd == 'bunch':
       vv[kd] = np.array([extract_bunch_selection(vv[kd][i]) 
                   for i in xrange(len(vv[kd]))])
@@ -239,12 +243,14 @@ def _timber_to_dict(beam,plane,direction,data,db):
   for t in tt['pos']:
     pos = vv['pos'][tt['pos'] == t][0] # position                             
     ngate = vv['gate'][tt['gate'] == t]
+    gain  = vv['gain'][tt['gain'] == t]
     amp = (vv['amp'][tt['amp'] == t][0]).reshape(int(ngate),len(pos))
     slots = vv['bunch'][tt['bunch'] == t].flatten()
     # beta and eps time stamps are different but have the same ordering
     tbe  = tt['beta'][tt['pos'] ==t]
     beta = vv['beta'][tt['beta'] == tbe]
     emit = vv['emit'][tt['emit'] == tbe].flatten()
+#    print 'MF',pos,ngate,gain,amp,slots,tbe,beta,emit
     # trouble with getting the energy
     igev = np.where(t-data['LHC.BOFSU:OFC_ENERGY'][0]>=0.)[0][-1]
     egev = data['LHC.BOFSU:OFC_ENERGY'][1][igev]
@@ -259,18 +265,27 @@ def _timber_to_dict(beam,plane,direction,data,db):
       amp[idx] = amp[idx]-np.min(amp[idx])
       dx = np.abs(pos[1:]-pos[0:-1])
       int_dist = (dx*amp[idx][:-1]).sum()
-      amp_norm = amp[idx]/int_dist
-      p,pcov = curve_fit(f=tb.gauss_pdf,xdata=pos,ydata=amp_norm,p0=[0,1,0,1000])
-      sigma_gauss = p[3]
-      sigma_gauss_err = np.sqrt(pcov[3,3])
-      emit_gauss = tb.emitnorm(sigma_gauss**2/beta,egev)*1.e-6
-      emit_gauss_err = tb.emitnorm(2*sigma_gauss*sigma_gauss_err/
-                                   beta,egev)*1.e-6
-      dbws[sl].append((t,tbe,egev,pos,amp[idx],amp_norm,beta,emit[idx],
+      # case where amplitude =0
+      if int_dist == 0:
+        amp_norm = amp[idx]
+        sigma_gauss,sigma_gauss_err,emit_gauss,emit_gauss_err=0,0,0,0
+        p = np.zeros(4)
+        pcov = np.zeros((4,4))
+      else:
+        amp_norm = amp[idx]/int_dist
+        p,pcov = curve_fit(f=tb.gauss_pdf,xdata=pos,ydata=amp_norm,
+                           p0=[0,1,0,1000])
+        sigma_gauss = p[3]
+        sigma_gauss_err = np.sqrt(pcov[3,3])
+        emit_gauss = tb.emitnorm(sigma_gauss**2/beta,egev)*1.e-6
+        emit_gauss_err = tb.emitnorm(2*sigma_gauss*sigma_gauss_err/
+                                     beta,egev)*1.e-6
+      Tracer()()
+      dbws[sl].append((t,tbe,gain,egev,pos,amp[idx],amp_norm,beta,emit[idx],
                        emit_gauss,emit_gauss_err,p,pcov))
   for k in dbws.keys():
     dbws[k]=np.array(dbws[k],dtype=[('time',float),
-               ('time_app',float),('egev',float),('pos',np.ndarray),
+               ('time_app',float),('gain',float),('egev',float),('pos',np.ndarray),
                ('amp',np.ndarray),('amp_norm',np.ndarray),
                ('beta',float),('emit',float),
                ('emit_gauss',float),('emit_gauss_err',float),
