@@ -10,7 +10,7 @@ from . import timberdata
 
 from .pagestore import PageStore
 
-__version__ = "2.5.0"
+__version__ = "2.5.1"
 
 __cmmnbuild_deps__ = [
     "accsoft-cals-extr-client",

@@ -609,22 +609,34 @@ class LoggingDB(object):
             for fill in fills.getFillNumbers()
         ]
 
-    def getIntervalsByLHCModes(self, t1, t2, mode1, mode2,unixtime=True, ):
+    def getIntervalsByLHCModes(self, t1, t2, mode1, mode2, unixtime=True,
+                               mode1time='startTime', mode2time='endTime',
+                               mode1idx=0, mode2idx=-1):
         """Returns a list of the fill numbers and interval between t1 and
-        t2 between the starting time of first beam mode in mode1 and the
-        ending time of the first beam mode .  """
+        t2 between the startTime of first beam mode in mode1 and the
+        endTime of the first beam mode.
+
+        The optional parameters 'mode[12]time' can take
+        'startTime' or 'endTime'
+
+        The otional parameter 'mode[12]idx' selects which mode in case of
+        multiple occurrence of mode
+
+        """
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
         fills=self.getLHCFillsByTime(ts1,ts2,[mode1,mode2])
         out=[]
         for fill in fills:
             fn=[fill['fillNumber']]
+            mode1=[]
+            mode2=[]
             for bm in fill['beamModes']:
-                if len(fn)==1 and bm['mode']==mode1:
-                    fn.append(bm['startTime'])
-                elif len(fn)==2 and bm['mode']==mode2:
-                    fn.append(bm['startTime'])
-            out.append(fn)
+                if bm['mode']==mode1:
+                   mode1.append(bm[mode1time])
+                if bm['mode']==mode2:
+                   mode2.append(bm[mode2time])
+            out.append([fn,mode1[mode1idx],mode2[mode2idx]])
         return out
     def getMetaData(self,pattern_or_list):
         """Get All MetaData for a variable defined by a pattern_or_list"""
