@@ -629,14 +629,15 @@ class LoggingDB(object):
         out=[]
         for fill in fills:
             fn=[fill['fillNumber']]
-            mode1=[]
-            mode2=[]
+            m1=[]
+            m2=[]
             for bm in fill['beamModes']:
                 if bm['mode']==mode1:
-                   mode1.append(bm[mode1time])
+                   m1.append(bm[mode1time])
                 if bm['mode']==mode2:
-                   mode2.append(bm[mode2time])
-            out.append([fn,mode1[mode1idx],mode2[mode2idx]])
+                   m2.append(bm[mode2time])
+            if len(m1)>0 and len(m2)>0:
+              out.append([fn,m1[mode1idx],m2[mode2idx]])
         return out
     def getMetaData(self,pattern_or_list):
         """Get All MetaData for a variable defined by a pattern_or_list"""
