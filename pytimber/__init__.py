@@ -10,11 +10,12 @@ from . import timberdata
 
 from .pagestore import PageStore
 
-__version__ = "2.5.1"
+__version__ = "2.5.2"
 
 __cmmnbuild_deps__ = [
     "accsoft-cals-extr-client",
     "accsoft-cals-extr-domain",
+    "lhc-commons-cals-utils",
     "slf4j-log4j12",
     "slf4j-api",
     "log4j"
