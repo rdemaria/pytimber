@@ -628,7 +628,7 @@ class LoggingDB(object):
         fills=self.getLHCFillsByTime(ts1,ts2,[mode1,mode2])
         out=[]
         for fill in fills:
-            fn=[fill['fillNumber']]
+            fn=fill['fillNumber']
             m1=[]
             m2=[]
             for bm in fill['beamModes']:
