@@ -32,6 +32,15 @@ pytimber with other CERN libraries, such as [PyJapc][].
 
   * For Windows, [this][jpype-win] pre-compiled version of JPype seems to work
     best.
+  * For CERN machines without internet access, you need to manually install the
+    dependencies and use the mirrors on the Scripting Tools GitLab group:
+
+    ```sh
+    pip install git+https://gitlab.cern.ch/scripting-tools/jpype.git
+    pip install git+https://gitlab.cern.ch/scripting-tools/cmmnbuild-dep-manager.git
+    pip install git+https://gitlab.cern.ch/scripting-tools/pytimber.git
+
+    ```
 
 [jpype-win]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#jpype
 
