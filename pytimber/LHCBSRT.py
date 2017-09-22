@@ -310,7 +310,7 @@ class BSRT(object):
     mask = np.logical_and(bsrt_array['time']>=t1,bsrt_array['time']<=t2)
     for k,v in zip(['beth','betv','lsfh','lsfv','energy'],[beth,betv,lsfh,lsfv,energy]):
       if verbose:
-       print k,'old=',bsrt_array[k][mask],'new=',v
+       print(k,'old=',bsrt_array[k][mask],'new=',v)
       if v is None:
         continue
       bsrt_array[k][mask] = v
