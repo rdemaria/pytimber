@@ -16,6 +16,7 @@ __version__ = "2.6.1"
 __cmmnbuild_deps__ = [
     "accsoft-cals-extr-client",
     "accsoft-cals-extr-domain",
+    "lhc-commons-cals-utils",
     "slf4j-log4j12",
     "slf4j-api",
     "log4j"
