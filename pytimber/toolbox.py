@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import norm
 
 mp      = 938.272046 #MeV/c^2
 
@@ -35,4 +36,25 @@ def movingaverage(data,navg):
   weights = np.repeat(1.0, navg)/navg
   dataavg = np.convolve(data, weights, 'valid')
   return dataavg
+
+def gauss_pdf(x,c,a,mu,sig):
+  """
+  probability distribution function for a normal or Gaussian
+  distribution:
+    gauss_pdf(x,mu,sig) = c+a*1/(sqrt(2*sig**2*np.pi))*
+                             exp(-((x-mu)**2/(2*sig**2)))
+  
+  Parameters:
+  -----------
+  c : constant offset to fit background of profiles
+  a : amplitude to compensate for *c*. a should be close to 1 if c is
+      small. a should be equal to 1 if c is zero.
+  mu : mean of Gaussian distribution
+  sig : sigma of Gaussian distribution
+  """
+  # norm.pdf(x) = exp(-x**2/2)/sqrt(2*pi)
+  # and y = (x - loc) / scale
+  # -> loc = mu, scale = sig
+  # gauss_fit(x,mu,sig) = norm.pdf(x,mu,sig)/sig
+  return c+a*norm.pdf(x,mu,sig)
 

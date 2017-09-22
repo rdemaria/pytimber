@@ -36,14 +36,12 @@ def _get_timber_data(beam,t1,t2,db=None):
              *_time = time stamps for rarely logged 
                       variables, explicitly timber variables
                       %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
-                      LHC.STATS:ENERGY
+                      LHC.BOFSU:OFC_ENERGY
   """
   # -- some checks
   if t2 < t1:
     raise ValueError('End time smaller than start time, t2 = ' + 
     '%s > %s = t1'%(t2,t1))
-  if beam not in ['B1','B2']:
-    raise ValueError("beam = %s must be either 'B1' or 'B2'"%beam)
   # --- get data
   # timber variable names are stored in *_var variables
   # bsrt_sig and bsrt_lsf = BSRT data from timber
@@ -70,25 +68,32 @@ def _get_timber_data(beam,t1,t2,db=None):
                                        +'%LSF_%')
   [beta_h_var, beta_v_var] = db.search('%LHC%BSRT%'+beam.upper()
                                        +'%BETA%')
-  energy_var = u'LHC.STATS:ENERGY'
+  energy_var = u'LHC.BOFSU:OFC_ENERGY'
   bsrt_lsf_var = [lsf_h_var, lsf_v_var, beta_h_var, beta_v_var,
                   energy_var]
   t1_lsf = t1
   bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
   # only logged rarely, loop until array is not empty, print warning
   # if time window exceeds one month
-  while (bsrt_lsf[lsf_h_var][0].size  == 0 or
-         bsrt_lsf[lsf_v_var][0].size  == 0 or
-         bsrt_lsf[beta_h_var][0].size == 0 or
-         bsrt_lsf[beta_v_var][0].size == 0 or
-         bsrt_lsf[energy_var][0].size == 0):
-    if (np.abs(t1_lsf-t1) > 30*24*60*60):
-      raise ValueError(('Last logging time for ' + ', %s'*5 
-      + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
-      return
-    else:
-      t1_lsf = t1_lsf-24*60*60
-      bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
+  # check that time stamp of lsf,beta,energy is before first sigma
+  # timestamp
+  for var in bsrt_lsf_var:
+    while (bsrt_lsf[var][0].size  == 0):
+      if (np.abs(t1_lsf-t1) > 30*24*60*60):
+        raise ValueError(('Last logging time for ' + ', %s'*5 
+        + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
+        return
+      else:
+        t1_lsf = t1_lsf-24*60*60
+        bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
+    while (bsrt_lsf[var][0][0] > bsrt_sig[bsrt_sig_var[0]][0][0]):
+      if (np.abs(t1_lsf-t1) > 30*24*60*60):
+        raise ValueError(('Last logging time for ' + ', %s'*5 
+        + ' exceeds 1 month! Check your data!!!')%tuple(bsrt_lsf_var))
+        return
+      else:
+        t1_lsf = t1_lsf-24*60*60
+        bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
   # -- create list containing all the data (bsrt_list), then save 
   # data in structured array bsrt_data
   # take timestamp from GATE_DELAY (same as for other variables)
@@ -113,6 +118,54 @@ def _get_timber_data(beam,t1,t2,db=None):
            ('energy',float)]
   bsrt_data = np.array(bsrt_list,dtype=ftype)
   return bsrt_data
+def _timber_to_emit(bsrt_array):
+  """
+  returns dictionary with emittance etc. as used in BSRT.fromdb
+
+  Parameters:
+  -----------
+  bsrt_array : data extracted from timber with _get_timber_data
+
+  Returns:
+  --------
+  emit_dict: dictionary with emittances
+            {slot: [time [s],emith [um],emitv[um],sigh[mm],sigv[mm],
+            lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
+  """
+  # create dictionary indexed with slot number
+  emit_dict = {}
+  # loop over slots
+  for j in set(bsrt_array['gate']):
+    # data for slot j
+    bsrt_slot = bsrt_array[bsrt_array['gate']==j]
+    bsrt_emit = []
+    # loop over all timestamps for slot j
+    for tt in set(bsrt_slot['time']):
+      # data for slot j and timestamp tt
+      bsrt_aux = bsrt_slot[bsrt_slot['time']==tt]
+      # gives back several values per timestamp -> take the mean value
+      # energy [GeV]
+      energy_aux = np.mean(bsrt_aux['energy'])
+      sigh,lsfh,beth=bsrt_aux['sigh'],bsrt_aux['lsfh'],bsrt_aux['beth']
+      sigv,lsfv,betv=bsrt_aux['sigv'],bsrt_aux['lsfv'],bsrt_aux['betv']
+      # geometric emittance [um]
+      emith_aux  = np.mean((sigh**2-lsfh**2)/beth)
+      emitv_aux  = np.mean((sigv**2-lsfv**2)/betv)
+      sigh,lsfh,beth = np.mean([sigh,lsfh,beth],axis=1)
+      sigv,lsfv,betv = np.mean([sigv,lsfv,betv],axis=1)
+      # normalized emittance
+      emith = emitnorm(emith_aux, energy_aux)
+      emitv = emitnorm(emitv_aux, energy_aux)
+      bsrt_emit.append((tt,emith,emitv,sigh,sigv,lsfh,lsfv,
+                        beth,betv,energy_aux))
+    # sort after the time
+    emit_dict[j] = np.sort(np.array(bsrt_emit,
+      dtype=[('time',float),('emith',float),('emitv',float),
+             ('sigh',float),('sigv',float),
+             ('lsfh',float),('lsfv',float),
+             ('beth',float),('betv',float),('energy',float)]),
+      axis=0)
+  return emit_dict
 
 class BSRT(object):
   """
@@ -127,8 +180,9 @@ class BSRT(object):
 
   Attributes:
   -----------
-  timber_variables : timber variables needed to calculate
+  timber_vars : timber variables needed to calculate
                     normalized emittance
+  beam             : 'B1' for beam 1 or 'B2' for beam2
   t_start, t_end   : start/end time of extracted data
   emit    : dictionary of normalized emittances
             {slot: [time[s], emith[um], emitv[um]]}
@@ -144,20 +198,21 @@ class BSRT(object):
         Values are added to *emitfit*. 
   get_fit : extract fit data for specific slot and times
   """
-  timber_variables = {}
-  timber_variables['B1'] = [u'LHC.BSRT.5R4.B1:FIT_SIGMA_H', 
+  timber_vars = {}
+  timber_vars['B1'] = [u'LHC.BSRT.5R4.B1:FIT_SIGMA_H', 
     u'LHC.BSRT.5R4.B1:FIT_SIGMA_V', u'LHC.BSRT.5R4.B1:GATE_DELAY',
     u'LHC.BSRT.5R4.B1:LSF_H', u'LHC.BSRT.5R4.B1:LSF_V', 
     u'LHC.BSRT.5R4.B1:BETA_H', u'LHC.BSRT.5R4.B1:BETA_V',
-    'LHC.STATS:ENERGY']
-  timber_variables['B2']=[u'LHC.BSRT.5L4.B2:FIT_SIGMA_H', 
+    'LHC.BOFSU:OFC_ENERGY']
+  timber_vars['B2']=[u'LHC.BSRT.5L4.B2:FIT_SIGMA_H', 
   u'LHC.BSRT.5L4.B2:FIT_SIGMA_V', u'LHC.BSRT.5L4.B2:GATE_DELAY',
   u'LHC.BSRT.5L4.B2:LSF_H', u'LHC.BSRT.5L4.B2:LSF_V', 
   u'LHC.BSRT.5L4.B2:BETA_H', u'LHC.BSRT.5L4.B2:BETA_V',
-  'LHC.STATS:ENERGY']
-  def __init__(self,db=None,emit=None,emitfit=None,t_start=None,
+  'LHC.BOFSU:OFC_ENERGY']
+  def __init__(self,db=None,beam=None,emit=None,emitfit=None,t_start=None,
                t_end=None):
     self.db = db
+    self.beam = beam
     self.emit = emit
     self.emitfit = emitfit
     self.t_start = t_start
@@ -189,8 +244,11 @@ class BSRT(object):
     -------
     class: BSRT class instance with dictionary of normalized emittances
            stored in self.emit. self.emit is sorted after slot number
-          {slot: [time [s],emith [um],emitv[um]]}
+          {slot: [time [s],emith [um],emitv[um],sigh[mm],sigv[mm],
+                  lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
     """
+    if beam not in ['B1','B2']:
+      raise ValueError("beam = %s must be either 'B1' or 'B2'"%beam)
     # if no database is given create dummy database to extract data
     if db is None:
       db = pytimber.LoggingDB()
@@ -199,40 +257,15 @@ class BSRT(object):
         'pytimber.LoggingDB()')
     if verbose:
       print('... extracting data from timber')
+    if verbose:
+      print('... calculating emittance for non-empty slots')
     # -- get timber data
     bsrt_array = _get_timber_data(beam=beam,t1=t1,t2=t2,db=db)
     # -- calculate emittances, store them in 
     #    dictionary self.emit = emit
-    if verbose:
-      print('... calculating emittance for non-empty slots')
-    # create dictionary indexed with slot number
-    emit_dict = {}
-    # loop over slots
-    for j in set(bsrt_array['gate']):
-      # data for slot j
-      bsrt_slot = bsrt_array[bsrt_array['gate']==j]
-      bsrt_emit = []
-      # loop over all timestamps for slot j
-      for k in set(bsrt_slot['time']):
-        # data for slot j and timestamp k
-        bsrt_aux = bsrt_slot[bsrt_slot['time']==k]
-        # gives back several values per timestamp -> take the mean value
-        # energy [GeV]
-        energy_aux = np.mean(bsrt_aux['energy'])
-        # geometric emittance [um]
-        emith_aux  = np.mean((bsrt_aux['sigh']**2
-                             -bsrt_aux['lsfh']**2)/bsrt_aux['beth'])
-        emitv_aux  = np.mean((bsrt_aux['sigv']**2
-                             -bsrt_aux['lsfv']**2)/bsrt_aux['betv'])
-        # normalized emittance
-        emith = emitnorm(emith_aux, energy_aux)
-        emitv = emitnorm(emitv_aux, energy_aux)
-        bsrt_emit.append((k,emith,emitv))
-      # sort after the time
-      emit_dict[j] = np.sort(np.array(bsrt_emit,
-        dtype=[('time',float),('emith',float),('emitv',float)]),
-        axis=0)
-    return cls(db=db,emit=emit_dict,emitfit=None,t_start=t1,t_end=t2)
+    emit_dict = _timber_to_emit(bsrt_array)
+    return cls(db=db,emit=emit_dict,emitfit=None,
+               t_start=t1,t_end=t2,beam=beam)
   def get_timber_data(self,beam,t1,t2,db=None):
     """
     retrieve data from timber needed for
@@ -255,9 +288,36 @@ class BSRT(object):
                *_time = time stamps for rarely logged 
                         variables, explicitly timber variables
                         %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
-                        LHC.STATS:ENERGY
+                        LHC.BOFSU:OFC_ENERGY
     """
-    return _get_timber_data(beam,t1,t2,db)
+    return _get_timber_data(beam=beam,t1=t1,t2=t2,db=db)
+  def update_beta_lsf_energy(self,t1,t2,beth=None,betv=None,
+                      lsfh=None,lsfv=None,energy=None,verbose=False):
+    """
+    update beta and lsf factor within t1 and t2.
+
+    Parameters:
+    ----------
+    t1,t2: start/end time in unix time [s]
+    betah,betav: hor./vert. beta function [m]
+    lsfh, lsfv: hor./vert. lsf factor [mm]
+    energy: beam energy [GeV]
+    """
+    bsrt_array = _get_timber_data(beam=self.beam,
+                                  t1=self.t_start,t2=self.t_end,
+                                  db=self.db)
+    # only change values between t1 and t2
+    mask = np.logical_and(bsrt_array['time']>=t1,bsrt_array['time']<=t2)
+    for k,v in zip(['beth','betv','lsfh','lsfv','energy'],[beth,betv,lsfh,lsfv,energy]):
+      if verbose:
+       print k,'old=',bsrt_array[k][mask],'new=',v
+      if v is None:
+        continue
+      bsrt_array[k][mask] = v
+    # -- calculate emittances, store them in                            
+    #    dictionary self.emit = emit                                    
+    self.emit = _timber_to_emit(bsrt_array)
+
   def get_fit(self,slot,t1=None,t2=None,verbose=False):
     """
     Function to access fit values for slot *slot* between t1 and t2.
@@ -483,7 +543,8 @@ class BSRT(object):
     if fit:
       self.plot_fit(plane=plane,t1=t1,t2=t2,slots=slots,
                     linestyle='--',color='k',verbose=verbose)
-    set_xaxis_date()
+    else:
+      set_xaxis_date()
     pl.ylabel(r'$\epsilon_{N,%s} \ [\mu\mathrm{ m}]$'%plane.upper())
     pl.grid(b=True)
     if label is not None:
