@@ -10,7 +10,8 @@ except ImportError:
     be present to run pytimbertools""")
 
 import pytimber
-import pytimber.toolbox as tb
+
+from . import toolbox as tb
 
 from .dataquery import set_xaxis_date
 from .localdate import parsedate,dumpdate
