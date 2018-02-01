@@ -114,6 +114,8 @@ def _get_timber_data(beam,t1,t2,db=None):
                       %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
                       LHC.BOFSU:OFC_ENERGY
   """
+  if db is None:
+    db = pytimber.LoggingDB() 
   # -- some checks
   if t2 < t1:
     raise ValueError('End time smaller than start time, t2 = ' +
@@ -387,12 +389,12 @@ class BWS(object):
                              direction=io,data=timber_data,db=db)
     return cls(db=db,timber_vars=timber_vars,data=data,t_start=t1,
                t_end=t2,beam=beam)
-  def get_timber_data(self,t1,t2,db=None):
+  def get_timber_data(self,t1,t2):
     """
     return timber data for BWS. See LHCBWS._get_timber_data(...)
     for further documentation.
     """
-    return _get_timber_data(beam=self.beam,t1=t1,t2=t2,db=db)
+    return _get_timber_data(beam=self.beam,t1=t1,t2=t2,db=self.db)
   def update_beta_energy(self,t1=None,t2=None,beth=None,betv=None,
                          energy=None,verbose=False):
     """
