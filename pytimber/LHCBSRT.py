@@ -134,6 +134,9 @@ def _timber_to_emit(bsrt_array):
   """
   # create dictionary indexed with slot number
   emit_dict = {}
+
+  t_unit_change = parsedate('2018-01-01 00:00:00')
+
   # loop over slots
   for j in set(bsrt_array['gate']):
     # data for slot j
@@ -149,7 +152,7 @@ def _timber_to_emit(bsrt_array):
       sigh,lsfh,beth=bsrt_aux['sigh'],bsrt_aux['lsfh'],bsrt_aux['beth']
       sigv,lsfv,betv=bsrt_aux['sigv'],bsrt_aux['lsfv'],bsrt_aux['betv']
       # geometric emittance
-      if tt > parsedate('2018-01-01 00:00:00'):
+      if tt > t_unit_change:
         # print('lsf/1000')
         # added /1000, Claudia's suggestion probably because emit values in um and lsf in mm
         emith_aux  = np.mean((sigh**2-(lsfh/1000.0)**2)/beth) 
