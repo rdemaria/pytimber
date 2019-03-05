@@ -126,8 +126,7 @@ class DataQuery(object):
     t1=parsedate(t1)
     t2=parsedate(t2)
     self.data=self.source.get(self.names,t1,t2,**self.options)
-    self.names=self.data.keys()
-    self.names.sort()
+    self.names=sorted(self.data.keys())
     self.t1=parsedate(t1)
     self.t2=parsedate(t2)
     return self

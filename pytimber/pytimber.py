@@ -30,6 +30,7 @@ Authors:
     M. Betz         <michael.betz@cern.ch>
     M. Fitterer     <mfittere@fnal.gov>
     R. Castellotti  <riccardo.castellotti@cern.ch>
+    L. Coyle        <loic.coyle@epfl.ch>
 '''
 
 import os

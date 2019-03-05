@@ -1,14 +1,19 @@
 # pytimber changelog
 
-## 06/2016 (T. Levens)
+
+### 2.7.0
+  * Fix PEP8 issues in LHCBSRT
+
+
+### 06/2016 (T. Levens)
 
   * Now requires cmmnbuild_dep_manager.
 
-## 04/2016 (T. Levens)
+### 04/2016 (T. Levens)
 
   * Added functions to get LHC fill information.
 
-## 01/2016 (T. Levens)
+### 01/2016 (T. Levens)
 
   * Updated repository structure
   * Added setup.py for setuptools/pip installation
@@ -17,7 +22,7 @@
   * By default, if this module is not installed then the bundled .jar file is
     used as before.
 
-## 12/2015 (C. Hernalsteens)
+### 12/2015 (C. Hernalsteens)
 
 Merged from my own package. The API should be identical, except for the new
 functionalities that should be transparent for existing use.
@@ -28,7 +33,7 @@ functionalities that should be transparent for existing use.
   * (minor) Support for MATRIXNUMERIC datatype
   * (minor) Split some functions into smaller pieces
 
-## 10/2015 (M. Betz)
+### 10/2015 (M. Betz)
 
 Documentation (=examples) in pyTimberExamples.ipynb
 
