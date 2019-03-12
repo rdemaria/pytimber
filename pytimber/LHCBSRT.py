@@ -1,4 +1,6 @@
-import os
+import pytimber
+
+import pandas as pd
 
 try:
     import numpy as np
@@ -8,9 +10,8 @@ except ImportError:
     print("""No module found: numpy, matplotlib and scipy modules should
     be present to run pytimbertools""")
 
-import pytimber
+from multiprocessing import Pool
 from .toolbox import emitnorm, exp_fit, movingaverage
-
 from .dataquery import set_xaxis_date
 from .localdate import parsedate, dumpdate
 
@@ -43,16 +44,25 @@ def _get_timber_data(beam, t1, t2, db=None):
     if t2 < t1:
         raise ValueError('End time smaller than start time, t2 = ' +
                          '%s > %s = t1' % (t2, t1))
-    # --- get data
-    # timber variable names are stored in *_var variables
-    # bsrt_sig and bsrt_lsf = BSRT data from timber
-    # -- data extraction beam sizes + gates:
-    #    FIT_SIGMA_H,FIT_SIGMA_V,GATE_DELAY
-    # save timber variable names
-    [fit_sig_h_var, fit_sig_v_var] = db.search('%LHC%BSRT%' + beam.upper() +
-                                               '%FIT_SIGMA_%')
-    [gate_delay_var] = db.search('%LHC%BSRT%' + beam.upper() +
-                                 '%GATE_DELAY%')
+
+    if beam.upper() == 'B1':
+        fit_sig_h_var = 'LHC.BSRT.5R4.B1:FIT_SIGMA_H'
+        fit_sig_v_var = 'LHC.BSRT.5R4.B1:FIT_SIGMA_V'
+        gate_delay_var = 'LHC.BSRT.5R4.B1:GATE_DELAY'
+        lsf_h_var = 'LHC.BSRT.5R4.B1:LSF_H'
+        lsf_v_var = 'LHC.BSRT.5R4.B1:LSF_V'
+        beta_h_var = 'LHC.BSRT.5R4.B1:BETA_H'
+        beta_v_var = 'LHC.BSRT.5R4.B1:BETA_V'
+    else:
+        fit_sig_h_var = 'LHC.BSRT.5L4.B2:FIT_SIGMA_H'
+        fit_sig_v_var = 'LHC.BSRT.5L4.B2:FIT_SIGMA_V'
+        gate_delay_var = 'LHC.BSRT.5L4.B2:GATE_DELAY'
+        lsf_h_var = 'LHC.BSRT.5L4.B2:LSF_H'
+        lsf_v_var = 'LHC.BSRT.5L4.B2:LSF_V'
+        beta_h_var = 'LHC.BSRT.5L4.B2:BETA_H'
+        beta_v_var = 'LHC.BSRT.5L4.B2:BETA_V'
+    energy_var = u'LHC.BOFSU:OFC_ENERGY'
+
     bsrt_sig_var = [fit_sig_h_var, fit_sig_v_var, gate_delay_var]
     # extract the data from timber
     bsrt_sig = db.get(bsrt_sig_var, t1, t2)
@@ -64,13 +74,6 @@ def _get_timber_data(beam, t1, t2, db=None):
                          'The data can not be combined')
             raise ValueError(error_str)
             return
-    # -- BSRT callibration factors and beam energy:
-    #    LSF_H,LSF_V,BETA_H,BETA_V,ENERGY
-    [lsf_h_var, lsf_v_var] = db.search('%LHC%BSRT%' + beam.upper() +
-                                       '%LSF_%')
-    [beta_h_var, beta_v_var] = db.search('%LHC%BSRT%' + beam.upper() +
-                                         '%BETA%')
-    energy_var = u'LHC.BOFSU:OFC_ENERGY'
     bsrt_lsf_var = [lsf_h_var, lsf_v_var, beta_h_var, beta_v_var,
                     energy_var]
     t1_lsf = t1
@@ -132,17 +135,21 @@ def _get_timber_data(beam, t1, t2, db=None):
              ('beth', float),
              ('betv', float),
              ('energy', float)]
-    bsrt_data = np.array(bsrt_list, dtype=ftype)
+    # bsrt_data = np.array(bsrt_list, dtype=ftype)
+    bsrt_data = pd.DataFrame(data=bsrt_list, columns=[i[0] for i in ftype])
     return bsrt_data
 
 
-def _timber_to_emit(bsrt_array):
+def _timber_to_emit(bsrt_array, use_dataframe=False):
     """
     returns dictionary with emittance etc. as used in BSRT.fromdb
 
     Parameters:
     -----------
     bsrt_array : data extracted from timber with _get_timber_data
+    use_dataframe: return a MultiIndex dataframe instead of the dict
+    and structured array format, the MultiIndex dataframe breaks
+    pytimber's plotting functions
 
     Returns:
     --------
@@ -150,60 +157,55 @@ def _timber_to_emit(bsrt_array):
               {slot: [time [s],emith [um],emitv[um],sigh[mm],sigv[mm],
               lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
     """
-    # create dictionary indexed with slot number
-    emit_dict = {}
 
     t_unit_change = parsedate('2018-01-01 00:00:00')
+    # Need to try with datafraem double groupby
+    mask = bsrt_array['time'] < t_unit_change
+    bsrt_prior = bsrt_array[mask]
+    bsrt_post = bsrt_array[~mask]
 
-    # loop over slots
-    for j in set(bsrt_array['gate']):
-        # data for slot j
-        bsrt_slot = bsrt_array[bsrt_array['gate'] == j]
-        bsrt_emit = []
-        # loop over all timestamps for slot j
-        for tt in set(bsrt_slot['time']):
-            # data for slot j and timestamp tt
-            bsrt_aux = bsrt_slot[bsrt_slot['time'] == tt]
-            # gives back several values per timestamp -> take the mean value
-            # energy [GeV]
-            energy_aux = np.mean(bsrt_aux['energy'])
-            sigh = bsrt_aux['sigh']
-            lsfh = bsrt_aux['lsfh']
-            beth = bsrt_aux['beth']
-            sigv = bsrt_aux['sigv']
-            lsfv = bsrt_aux['lsfv']
-            betv = bsrt_aux['betv']
-            # geometric emittance
-            if tt > t_unit_change:
-                # print('lsf/1000')
-                # added /1000, Claudia's suggestion probably
-                # because emit values in um and lsf in mm
-                emith_aux = np.mean((sigh**2 - (lsfh / 1000.0)**2) / beth)
-                emitv_aux = np.mean((sigv**2 - (lsfv / 1000.0)**2) / betv)
-            else:
-                # print('lsf')
-                emith_aux = np.mean((sigh**2 - lsfh**2) / beth)
-                emitv_aux = np.mean((sigv**2 - lsfv**2) / betv)
-            sigh, lsfh, beth = np.mean([sigh, lsfh, beth], axis=1)
-            sigv, lsfv, betv = np.mean([sigv, lsfv, betv], axis=1)
-            # normalized emittance
-            emith = emitnorm(emith_aux, energy_aux)
-            emitv = emitnorm(emitv_aux, energy_aux)
-            bsrt_emit.append((tt, emith, emitv, sigh, sigv, lsfh, lsfv,
-                              beth, betv, energy_aux))
-        # sort after the time
-        emit_dict[j] = np.sort(np.array(bsrt_emit,
-                                        dtype=[('time', float),
-                                               ('emith', float),
-                                               ('emitv', float),
-                                               ('sigh', float),
-                                               ('sigv', float),
-                                               ('lsfh', float),
-                                               ('lsfv', float),
-                                               ('beth', float),
-                                               ('betv', float),
-                                               ('energy', float)]), axis=0)
-    return emit_dict
+    unit_rescale = 1
+    bsrt_prior['emith'] = (bsrt_prior['sigh']**2 - (bsrt_prior['lsfh'] /
+        unit_rescale)**2) / bsrt_prior['beth']
+    bsrt_prior['emitv'] = (bsrt_prior['sigv']**2 - (bsrt_prior['lsfv'] /
+        unit_rescale)**2) / bsrt_prior['betv']
+    unit_rescale = 1000
+    bsrt_post['emith'] = (bsrt_post['sigh']**2 - (bsrt_post['lsfh'] /
+        unit_rescale)**2) / bsrt_post['beth']
+    bsrt_post['emitv'] = (bsrt_post['sigv']**2 - (bsrt_post['lsfv'] /
+         unit_rescale)**2) / bsrt_post['betv']
+    bsrt_array = pd.concat([bsrt_prior, bsrt_post], axis=0)
+    keep_cols = ['sigh', 'sigv',
+                 'lsfh', 'lsfv',
+                 'beth', 'betv',
+                 'emith', 'emitv',
+                 'energy']
+    bsrt_array = bsrt_array.groupby(['gate', 'time'])[keep_cols].mean()
+
+    def func(x):
+        return emitnorm(x[0], x[1])
+
+    bsrt_array['emith'] = bsrt_array[['emith',
+                                      'energy']].apply(func, axis=1)
+    bsrt_array['emitv'] = bsrt_array[['emitv',
+                                      'energy']].apply(func, axis=1)
+    if not use_dataframe:
+        # create dictionary indexed with slot number
+        # to a format similar to the original dictionary
+        emit_dict = {}
+        for slot, df in bsrt_array.groupby(level=0):
+            df = df.reset_index().drop('gate', axis=1)
+            ftype = [('time', float),
+                     ('sigh', float), ('sigv', float),
+                     ('lsfh', float), ('lsfv', float),
+                     ('beth', float), ('betv', float),
+                     ('emith', float), ('emitv', float),
+                     ('energy', float)]
+            df_list = [tuple(r[1]) for r in df.iterrows()]
+            emit_dict[slot] = np.array(df_list, dtype=ftype)
+        return emit_dict
+    else:
+        return bsrt_array
 
 
 class BSRT(object):
@@ -265,7 +267,8 @@ class BSRT(object):
         self.t_end = t_end
 
     @classmethod
-    def fromdb(cls, t1, t2, beam='B1', db=None, verbose=False):
+    def fromdb(cls, t1, t2, beam='B1', db=None, use_dataframe=False,
+               verbose=False):
         """
         retrieve data using timber and calculate normalized emittances
         from extracted values.
@@ -285,6 +288,9 @@ class BSRT(object):
         beam : either 'B1' or 'B2'
         t1,t2 : start and end time of extracted data
                in unix time
+        use_dataframe: use a MultiIndex dataframe instead of the dict
+            and structured array format, the MultiIndex dataframe breaks
+            pytimber's plotting functions
         verbose: verbose mode, default verbose = False
 
         Returns:
@@ -295,7 +301,7 @@ class BSRT(object):
                       lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
         """
         if beam not in ['B1', 'B2']:
-            raise ValueError("beam = %s must be either 'B1' or 'B2'" % beam)
+            raise ValueError("beam={} must be 'B1' or 'B2'".format(beam))
         # if no database is given create dummy database to extract data
         if db is None:
             db = pytimber.LoggingDB()
@@ -304,14 +310,17 @@ class BSRT(object):
                       'pytimber.LoggingDB()')
         if verbose:
             print('... extracting data from timber')
-        if verbose:
-            print('... calculating emittance for non-empty slots')
         # -- get timber data
         bsrt_array = _get_timber_data(beam=beam, t1=t1, t2=t2, db=db)
         # -- calculate emittances, store them in
         #    dictionary self.emit = emit
-        emit_dict = _timber_to_emit(bsrt_array)
-        return cls(db=db, emit=emit_dict, emitfit=None,
+        if verbose:
+            print('... calculating emittance for non-empty slots')
+        emit = _timber_to_emit(bsrt_array, use_dataframe=use_dataframe)
+        if use_dataframe and verbose:
+            print(("Using MultiIndex DataFrame, pytimber's plotting will "
+                   "be broken."))
+        return cls(db=db, emit=emit, emitfit=None,
                    t_start=t1, t_end=t2, beam=beam)
 
     def get_timber_data(self, beam, t1, t2, db=None):
@@ -458,7 +467,7 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
             # case 1: fit data available + force = False
             try:
                 if ((force is False) and
-                    (self.emitfit[slot][(t1, t2)].size > 0)):
+                        (self.emitfit[slot][(t1, t2)].size > 0)):
                     if verbose:
                         error_str = ('...fit data already exists for slot' +
                                      ' %s' % (slot) +
