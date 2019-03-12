@@ -146,7 +146,7 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
     bsrt_array : data extracted from timber with _get_timber_data
     use_dataframe: return a MultiIndex dataframe instead of the dict
     and structured array format, the MultiIndex dataframe breaks
-    pytimber's plotting functions
+    the fitting & plotting functions
 
     Returns:
     --------
@@ -188,7 +188,7 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
                                       'energy']].apply(func, axis=1)
     if not use_dataframe:
         # create dictionary indexed with slot number
-        # to a format similar to the original dictionary
+        # to get the original dictionary & structured array format
         emit_dict = {}
         for slot, df in bsrt_array.groupby(level=0):
             df = df.reset_index().drop('gate', axis=1)
@@ -285,9 +285,9 @@ class BSRT(object):
         beam : either 'B1' or 'B2'
         t1,t2 : start and end time of extracted data
                in unix time
-        use_dataframe: use a MultiIndex dataframe instead of the dict
-            and structured array format, the MultiIndex dataframe breaks
-            pytimber's plotting functions
+        use_dataframe: use a MultiIndex DataFrame instead of the dict
+            & structured array format, the MultiIndex DataFrame breaks
+            the fitting & plotting functions
         verbose: verbose mode, default verbose = False
 
         Returns:
@@ -315,8 +315,8 @@ class BSRT(object):
             print('... calculating emittance for non-empty slots')
         emit = _timber_to_emit(bsrt_array, use_dataframe=use_dataframe)
         if use_dataframe and verbose:
-            print(("Using MultiIndex DataFrame, pytimber's plotting will "
-                   "be broken."))
+            print(("Using MultiIndex DataFrame, the fitting & plotting "
+                   "functions will be broken."))
         return cls(db=db, emit=emit, emitfit=None,
                    t_start=t1, t_end=t2, beam=beam)
 
