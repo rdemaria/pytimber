@@ -1,16 +1,14 @@
 import pytimber
 
-import pandas as pd
-
 try:
+    import pandas as pd
     import numpy as np
     import matplotlib.pyplot as pl
     from scipy.optimize import curve_fit
 except ImportError:
-    print("""No module found: numpy, matplotlib and scipy modules should
+    print("""No module found: pandas, numpy, matplotlib and scipy modules should
     be present to run pytimbertools""")
 
-from multiprocessing import Pool
 from .toolbox import emitnorm, exp_fit, movingaverage
 from .dataquery import set_xaxis_date
 from .localdate import parsedate, dumpdate
@@ -53,7 +51,7 @@ def _get_timber_data(beam, t1, t2, db=None):
         lsf_v_var = 'LHC.BSRT.5R4.B1:LSF_V'
         beta_h_var = 'LHC.BSRT.5R4.B1:BETA_H'
         beta_v_var = 'LHC.BSRT.5R4.B1:BETA_V'
-    else:
+    elif beam.upper() == 'B2':
         fit_sig_h_var = 'LHC.BSRT.5L4.B2:FIT_SIGMA_H'
         fit_sig_v_var = 'LHC.BSRT.5L4.B2:FIT_SIGMA_V'
         gate_delay_var = 'LHC.BSRT.5L4.B2:GATE_DELAY'
@@ -121,22 +119,21 @@ def _get_timber_data(beam, t1, t2, db=None):
             bsrt_list.append(tuple([t, gate[i], sigh[i], sigv[i]] +
                                    [lsf_time[k] for k in bsrt_lsf_var] +
                                    [lsf_value[k] for k in bsrt_lsf_var]))
-    ftype = [('time', float),
-             ('gate', float),
-             ('sigh', float),
-             ('sigv', float),
-             ('lsfh_time', float),
-             ('lsfv_time', float),
-             ('beth_time', float),
-             ('betv_time', float),
-             ('energy_time', float),
-             ('lsfh', float),
-             ('lsfv', float),
-             ('beth', float),
-             ('betv', float),
-             ('energy', float)]
-    # bsrt_data = np.array(bsrt_list, dtype=ftype)
-    bsrt_data = pd.DataFrame(data=bsrt_list, columns=[i[0] for i in ftype])
+    cols = ['time',
+            'gate',
+            'sigh',
+            'sigv',
+            'lsfh_time',
+            'lsfv_time',
+            'beth_time',
+            'betv_time',
+            'energy_time',
+            'lsfh',
+            'lsfv',
+            'beth',
+            'betv',
+            'energy']
+    bsrt_data = pd.DataFrame(data=bsrt_list, columns=cols)
     return bsrt_data
 
 
