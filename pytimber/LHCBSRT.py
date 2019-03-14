@@ -59,6 +59,8 @@ def _get_timber_data(beam, t1, t2, db=None):
         lsf_v_var = 'LHC.BSRT.5L4.B2:LSF_V'
         beta_h_var = 'LHC.BSRT.5L4.B2:BETA_H'
         beta_v_var = 'LHC.BSRT.5L4.B2:BETA_V'
+    else:
+        raise ValueError("beam = {} must be either 'B1' or 'B2'")
     energy_var = u'LHC.BOFSU:OFC_ENERGY'
 
     bsrt_sig_var = [fit_sig_h_var, fit_sig_v_var, gate_delay_var]
@@ -102,7 +104,7 @@ def _get_timber_data(beam, t1, t2, db=None):
                 t1_lsf = t1_lsf - 24 * 60 * 60
                 bsrt_lsf = db.get(bsrt_lsf_var, t1_lsf, t2)
     # -- create list containing all the data (bsrt_list), then save
-    # data in structured array bsrt_data
+    # data in DataFrame bsrt_data
     # take timestamp from GATE_DELAY (same as for other variables)
     bsrt_list = []
     var = zip(bsrt_sig[gate_delay_var][0], bsrt_sig[gate_delay_var][1],
@@ -133,6 +135,7 @@ def _get_timber_data(beam, t1, t2, db=None):
             'beth',
             'betv',
             'energy']
+    # time could be converted to pd.Datetime
     bsrt_data = pd.DataFrame(data=bsrt_list, columns=cols)
     return bsrt_data
 
@@ -144,8 +147,8 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
     Parameters:
     -----------
     bsrt_array : data extracted from timber with _get_timber_data
-    use_dataframe: return a MultiIndex dataframe instead of the dict
-    and structured array format, the MultiIndex dataframe breaks
+    use_dataframe: return a MultiIndex DataFrame instead of the dict
+    and structured array format, the MultiIndex DataFrame breaks
     the fitting & plotting functions
 
     Returns:
