@@ -1,12 +1,9 @@
-# import os
-from IPython.core.debugger import Tracer
-
 try:
+    import pandas as pd
     import numpy as np
-    # import matplotlib.pyplot as pl
     from scipy.optimize import curve_fit
 except ImportError:
-    print("No module found: numpy, matplotlib and scipy"
+    print("No module found: pandas, numpy, matplotlib and scipy"
           "modules should be present to run pytimbertools")
 
 import pytimber
@@ -46,62 +43,66 @@ def extract_bunch_selection(bunch_selection_binary):
     return bunchSelection
 
 
-def _bws_timber_variables():
+def _get_timber_variables(beam, wire, io='all', plane='all'):
     """
-    returns dictionary with hardcoded timber variables.
+    variable names for a given beam, wire and direction in/out
 
     Parameter:
     ----------
-    var: list of variable names (string)
+    beam: either 'B1' or 'B2'
+    wire: either '1' or '2'
+    io: either 'all', 'IN', 'OUT'
+    plane: either 'all', 'H', 'V'
     """
-    timber_variables = {}
-    timber_variables['B1'] = [u'LHC.BWS.5R4.B1H2:NB_GATES',
-                              u'LHC.BWS.5R4.B1V2:NB_GATES',
-                              u'LHC.BWS.5R4.B1H2:BUNCH_SELECTION',
-                              u'LHC.BWS.5R4.B1V2:BUNCH_SELECTION',
-                              u'LHC.BWS.5R4.B1H.APP.IN:BETA',
-                              u'LHC.BWS.5R4.B1H.APP.OUT:BETA',
-                              u'LHC.BWS.5R4.B1V.APP.IN:BETA',
-                              u'LHC.BWS.5R4.B1V.APP.OUT:BETA',
-                              u'LHC.BWS.5R4.B1H.APP.IN:EMITTANCE_NORM',
-                              u'LHC.BWS.5R4.B1H.APP.OUT:EMITTANCE_NORM',
-                              u'LHC.BWS.5R4.B1V.APP.IN:EMITTANCE_NORM',
-                              u'LHC.BWS.5R4.B1V.APP.OUT:EMITTANCE_NORM',
-                              u'LHC.BWS.5R4.B1H2:PROF_POSITION_IN',
-                              u'LHC.BWS.5R4.B1H2:PROF_POSITION_OUT',
-                              u'LHC.BWS.5R4.B1V2:PROF_POSITION_IN',
-                              u'LHC.BWS.5R4.B1V2:PROF_POSITION_OUT',
-                              u'LHC.BWS.5R4.B1H2:PROF_DATA_IN',
-                              u'LHC.BWS.5R4.B1H2:PROF_DATA_OUT',
-                              u'LHC.BWS.5R4.B1V2:PROF_DATA_IN',
-                              u'LHC.BWS.5R4.B1V2:PROF_DATA_OUT',
-                              u'LHC.BWS.5R4.B1H2:GAIN',
-                              u'LHC.BWS.5R4.B1V2:GAIN',
-                              u'LHC.BOFSU:OFC_ENERGY']
-    timber_variables['B2'] = [u'LHC.BWS.5L4.B2H1:NB_GATES',
-                              u'LHC.BWS.5L4.B2V2:NB_GATES',
-                              u'LHC.BWS.5L4.B2H1:BUNCH_SELECTION',
-                              u'LHC.BWS.5L4.B2V2:BUNCH_SELECTION',
-                              u'LHC.BWS.5L4.B2H.APP.IN:BETA',
-                              u'LHC.BWS.5L4.B2H.APP.OUT:BETA',
-                              u'LHC.BWS.5L4.B2V.APP.IN:BETA',
-                              u'LHC.BWS.5L4.B2V.APP.OUT:BETA',
-                              u'LHC.BWS.5L4.B2H.APP.IN:EMITTANCE_NORM',
-                              u'LHC.BWS.5L4.B2H.APP.OUT:EMITTANCE_NORM',
-                              u'LHC.BWS.5L4.B2V.APP.IN:EMITTANCE_NORM',
-                              u'LHC.BWS.5L4.B2V.APP.OUT:EMITTANCE_NORM',
-                              u'LHC.BWS.5L4.B2H1:PROF_POSITION_IN',
-                              u'LHC.BWS.5L4.B2H1:PROF_POSITION_OUT',
-                              u'LHC.BWS.5L4.B2V2:PROF_POSITION_IN',
-                              u'LHC.BWS.5L4.B2V2:PROF_POSITION_OUT',
-                              u'LHC.BWS.5L4.B2H1:PROF_DATA_IN',
-                              u'LHC.BWS.5L4.B2H1:PROF_DATA_OUT',
-                              u'LHC.BWS.5L4.B2V2:PROF_DATA_IN',
-                              u'LHC.BWS.5L4.B2V2:PROF_DATA_OUT',
-                              u'LHC.BWS.5L4.B2H1:GAIN',
-                              u'LHC.BWS.5L4.B2V2:GAIN',
-                              u'LHC.BOFSU:OFC_ENERGY']
-    return timber_variables
+    beam = beam.upper()
+    assert(beam in ['B1', 'B2']), ("beam = {} "
+                                   "must be either 'B1' or 'B2'").format(beam)
+    if beam == 'B1':
+        rl = 'R'
+    elif beam == 'B2':
+        rl = 'L'
+    assert(wire in ['1', '2']), "wire = {} must be either 1 or 2".format(wire)
+    assert(io in ['all', 'IN', 'OUT']), ("io = {} must be either "
+                                         "'all', 'IN' or 'OUT'".format(wire))
+    assert(plane in ['all', 'H', 'V']), ("plane = {} must be either "
+                                         "'all', 'H' or 'V'".format(plane))
+
+    var_template = [u'LHC.BWS.5{rl}4.{b}H{w}:NB_GATES',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:NB_GATES',
+                    u'LHC.BWS.5{rl}4.{b}H{w}:BUNCH_SELECTION',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:BUNCH_SELECTION',
+                    u'LHC.BWS.5{rl}4.{b}H.APP.IN:BETA',
+                    u'LHC.BWS.5{rl}4.{b}V.APP.IN:BETA',
+                    u'LHC.BWS.5{rl}4.{b}H.APP.OUT:BETA',
+                    u'LHC.BWS.5{rl}4.{b}V.APP.OUT:BETA',
+                    u'LHC.BWS.5{rl}4.{b}H.APP.IN:EMITTANCE_NORM',
+                    u'LHC.BWS.5{rl}4.{b}V.APP.IN:EMITTANCE_NORM',
+                    u'LHC.BWS.5{rl}4.{b}H.APP.OUT:EMITTANCE_NORM',
+                    u'LHC.BWS.5{rl}4.{b}V.APP.OUT:EMITTANCE_NORM',
+                    u'LHC.BWS.5{rl}4.{b}H{w}:PROF_POSITION_IN',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:PROF_POSITION_IN',
+                    u'LHC.BWS.5{rl}4.{b}H{w}:PROF_POSITION_OUT',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:PROF_POSITION_OUT',
+                    u'LHC.BWS.5{rl}4.{b}H{w}:PROF_DATA_IN',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:PROF_DATA_IN',
+                    u'LHC.BWS.5{rl}4.{b}H{w}:PROF_DATA_OUT',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:PROF_DATA_OUT',
+                    u'LHC.BWS.5{rl}4.{b}H{w}:GAIN',
+                    u'LHC.BWS.5{rl}4.{b}V{w}:GAIN',
+                    u'LHC.BOFSU:OFC_ENERGY']
+
+    variables = [v.format(rl=rl.upper(),
+                          b=beam.upper(),
+                          w=wire) for v in var_template]
+    if io != 'all' and io in ['IN', 'OUT']:
+        not_io = list(set(['IN', 'OUT']) - set([io]))[0]
+        variables = [v for v in variables if ('.' + not_io not in v and
+                                              '_' + not_io not in v)]
+    if plane != 'all' and plane in ['H', 'V']:
+        not_plane = list(set(['H', 'V']) - set([plane]))[0]
+        not_str = '{b}{p}'.format(b=beam, p=not_plane)
+        variables = [v for v in variables if not_str not in v]
+    return variables
 
 
 def _get_timber_data(beam, t1, t2, db=None):
@@ -170,24 +171,7 @@ def _get_timber_data(beam, t1, t2, db=None):
                                      name + "%NB_GATES%",
                                      db.search(name + '%NB_GATES%'))
             raise ValueError(err_str)
-        # extract variable names for wires from database
-        for var in ['NB_GATES', 'GAIN', 'BUNCH_SELECTION', 'PROF_POSITION_',
-                    'PROF_DATA_']:
-            nm = name + plane.upper() + wire
-            var_names.extend(db.search(nm + '%' + var + '%'))
-    for var in ['BETA', 'EMITTANCE_NORM']:
-        var_names.extend(db.search(name + '%' + var + '%'))
-    var_names.extend(['LHC.BOFSU:OFC_ENERGY'])
-    # check that variable names haven't changed
-    var_check = _bws_timber_variables()  # hardcoded names
-    flag_check = True
-    for var in var_names:
-        if var not in var_check[beam.upper()]:
-            print('WARNING: variable name %s changed!' % var)
-            flag_check = False
-    if flag_check is False:
-        print('Hardcoded variable names are: %s' % var_check)
-    # get data
+    var_names = _get_timber_variables(beam, wire)
     data = db.get(var_names, t1, t2)
     # check that there is an energy value smaller than t1
     var_egev = 'LHC.BOFSU:OFC_ENERGY'
@@ -211,6 +195,19 @@ def _get_timber_data(beam, t1, t2, db=None):
         degev = db.get([var_egev], t1_new, t2)[var_egev]
     # update data
     data['LHC.BOFSU:OFC_ENERGY'] = degev
+    if beam == 'B1':
+        rl = 'R'
+    elif beam == 'B2':
+        rl = 'L'
+    bunch_vars = [u'LHC.BWS.5{rl}4.{b}H{w}:BUNCH_SELECTION',
+                  u'LHC.BWS.5{rl}4.{b}V{w}:BUNCH_SELECTION']
+    bunch_vars = [k.format(rl=rl, b=beam, w=wire) for k in bunch_vars]
+    for b_v in bunch_vars:
+        data[b_v] = list(data[b_v])
+        val = data[b_v][1]
+        # run the binary to bunch conversion
+        data[b_v][1] = np.array([extract_bunch_selection(vv) for vv in val])
+        data[b_v] = tuple(data[b_v])
     return data
 
 
@@ -229,12 +226,19 @@ def _timber_to_dict(beam, plane, direction, data, db):
 
     Returns:
     --------
-    dict: dictionary with structure
-      {slot: [time[s], time_app[s], emith[um], emitv[um]]}
-    where
+    [dict: dictionary with structure
+      {time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
+
+    mulitIndex DataTrame contaning the 1D data,
+    the indexing of the dataframe should be:
+               gain, egev, beta, meit, emit_gauss, emit_gauss_err
+    time slot
+      1   0
+          1
+      2   0
+          1
+    ]
     """
-    keys_timber = ['NB_GATES', 'BUNCH_SELECTION', 'BETA', 'EMITTANCE_NORM',
-                   'PROF_POSITION', 'PROF_DATA', 'GAIN']
     keys_dic = ['gate', 'bunch', 'beta', 'emit',
                 'pos', 'amp', 'gain']
     # dictionary of time,value
@@ -252,49 +256,32 @@ def _timber_to_dict(beam, plane, direction, data, db):
             wire = '2'
     except IndexError:
         pass
-    for kt, kd in zip(keys_timber, keys_dic):
-        # db.search() gives correctly back which wire is used. Use it to
-        # assign the data to tt,vv etc.
-        if kd in ['gate', 'bunch', 'gain']:
-            var_str = name + wire + '%' + kt + '%'
-        elif kd in ['beta', 'emit']:
-            var_str = name + '%' + direction + '%' + kt + '%'
-        else:
-            var_str = name + wire + '%' + kt + '%' + direction + '%'
-        var_name = db.search(var_str)
-        # check that this really only returns one variable name
-        if len(var_name) != 1:
-            err_str = ("Only one variable name should be returned "
-                       "here!\n db.search('" + var_str + "')={}")
-            err_str = err_str.format(var_name)
-            raise ValueError(err_str)
-        tt[kd], vv[kd] = data[var_name[0]]
-        # convert binary format to float values
-        if kd == 'bunch':
-            vv[kd] = np.array([extract_bunch_selection(vv[kd][i])
-                               for i in range(len(vv[kd]))])
-    dbws = {}
-    for t in tt['pos']:
-        pos = vv['pos'][tt['pos'] == t][0]  # position
-        ngate = vv['gate'][tt['gate'] == t]
-        gain = vv['gain'][tt['gain'] == t]
-        amp = (vv['amp'][tt['amp'] == t][0]).reshape(int(ngate), len(pos))
-        slots = vv['bunch'][tt['bunch'] == t].flatten()[0]
-        print(slots)
+    var_names = _get_timber_variables(beam, wire, io=direction, plane=plane)
+    for kt, kd in zip(var_names, keys_dic):
+        tt[kd] = data[kt][0]
+        vv[kd] = data[kt][1]
+    df_ws = []
+    dbws_nd = {}
+    for i, t in enumerate(tt['pos']):
+        pos = vv['pos'][i]  # position
+        ngate = vv['gate'][i]
+        gain = vv['gain'][i]
+        amp = vv['amp'][i].reshape(int(ngate), len(pos))
+        slots = vv['bunch'][i]
         # beta and eps time stamps are different but have the same ordering
-        tbe = tt['beta'][tt['pos'] == t]
-        beta = vv['beta'][tt['beta'] == tbe]
-        emit = vv['emit'][tt['emit'] == tbe].flatten()
+        # all of the timestamps of the %APP% variables have the same timings
+        tbe = tt['beta'][i]
+        beta = vv['beta'][i]
+        emit = vv['emit'][i]
+
 #    print 'MF',pos,ngate,gain,amp,slots,tbe,beta,emit
         # trouble with getting the energy
         igev = np.where(t - data['LHC.BOFSU:OFC_ENERGY'][0] >= 0.)[0][-1]
         egev = data['LHC.BOFSU:OFC_ENERGY'][1][igev]
+        if t not in dbws_nd.keys():
+            dbws_nd[t] = []
         for idx, sl in zip(np.arange(ngate), slots):
-            print(sl)  # 100
-            print(idx)
             idx = int(idx)
-            if sl not in dbws.keys():
-                dbws[sl] = []
             idx_max = np.argmax(np.abs(amp[idx]))
             # flip in case profile is mirrored on x-axis
             if amp[idx][idx_max] < 0:
@@ -303,7 +290,7 @@ def _timber_to_dict(beam, plane, direction, data, db):
             amp[idx] = amp[idx] - np.min(amp[idx])
             dx = np.abs(pos[1:] - pos[0:-1])
             int_dist = (dx * amp[idx][:-1]).sum()
-            # case where amplitude =0
+            # case where amplitude = 0
             if int_dist == 0:
                 amp_norm = amp[idx]
                 sigma_gauss = 0
@@ -314,33 +301,37 @@ def _timber_to_dict(beam, plane, direction, data, db):
                 pcov = np.zeros((4, 4))
             else:
                 amp_norm = amp[idx] / int_dist
-                p, pcov = curve_fit(f=tb.gauss_pdf, xdata=pos, ydata=amp_norm,
+                p, pcov = curve_fit(f=tb.gauss_pdf,
+                                    xdata=pos,
+                                    ydata=amp_norm,
                                     p0=[0, 1, 0, 1000])
                 sigma_gauss = p[3]
                 sigma_gauss_err = np.sqrt(pcov[3, 3])
                 emit_gauss = tb.emitnorm(sigma_gauss**2 / beta, egev) * 1.e-6
                 emit_gauss_err = tb.emitnorm(2 * sigma_gauss *
                                     sigma_gauss_err / beta, egev) * 1.e-6
-            # Tracer()()
-            dbws[sl].append((t, tbe, gain, egev,
-                             pos, amp[idx], amp_norm,
-                             beta, emit[idx],
-                             emit_gauss, emit_gauss_err, p, pcov))
-    for k in dbws.keys():
-        dbws[k] = np.array(dbws[k], dtype=[('time', float),
-                                           ('time_app', float),
-                                           ('gain', float),
-                                           ('egev', float),
+            row_nd = (sl, pos, amp[idx], amp_norm, p, pcov)
+            row_1d = (t, sl, tbe, gain, egev,
+                      beta, emit[idx],
+                      emit_gauss,
+                      emit_gauss_err)
+            df_ws.append(row_1d)
+            dbws_nd[t].append(row_nd)
+
+    cols_1d = ['time', 'slots', 'time_app', 'gain', 'egev', 'beta', 'emit',
+               'emit_gauss', 'emit_gauss_err']
+    bws_1d = pd.DataFrame(data=df_ws, columns=cols_1d).set_index(['time',
+                                                                 'slots'])
+    # the goal here is to output a nice pd.DataFrame of the 1D data
+    # and a horrible dictionnary --> array for the nD data
+    for k in dbws_nd.keys():
+        dbws_nd[k] = np.array(dbws_nd[k], dtype=[('slot', float),
                                            ('pos', np.ndarray),
                                            ('amp', np.ndarray),
                                            ('amp_norm', np.ndarray),
-                                           ('beta', float),
-                                           ('emit', float),
-                                           ('emit_gauss', float),
-                                           ('emit_gauss_err', float),
                                            ('p_gauss', np.ndarray),
                                            ('pcov_gauss', np.ndarray)])
-    return dbws
+    return dbws_nd, bws_1d
 
 
 class BWS(object):
@@ -413,8 +404,16 @@ class BWS(object):
                self.emit is sorted after slot number. 'in' and 'out' refer
                to the measurement of the wire moving inwards and outwards
                respectively.
-              {slot: [time [s],emith [um],emitv[um],sigh[mm],sigv[mm],
-                      lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
+              [{time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
+               mulitIndex DataTrame contaning the 1D data,
+               the indexing of the dataframe should be:
+                          gain, egev, beta, meit, emit_gauss, emit_gauss_err
+               time slot
+                 1   0
+                     1
+                 2   0
+                     1
+        ]
         """
         if beam not in ['B1', 'B2']:
             raise ValueError("beam = %s must be either 'B1' or 'B2'" % beam)
@@ -432,17 +431,22 @@ class BWS(object):
         # generate dictionary
         if verbose:
             print('... generating dictionary')
-        data = {}
+        data_1d = {}
+        data_nd = {}
         for plane in 'HV':
-            data[plane] = {}
+            data_1d[plane] = {}
+            data_nd[plane] = {}
             for io in 'IN', 'OUT':
-                data[plane][io] = _timber_to_dict(beam=beam,
-                                                  plane=plane,
-                                                  direction=io,
-                                                  data=timber_data,
-                                                  db=db)
-        return cls(db=db, timber_vars=timber_vars, data=data, t_start=t1,
-                   t_end=t2, beam=beam)
+                data = _timber_to_dict(beam=beam,
+                                       plane=plane,
+                                       direction=io,
+                                       data=timber_data,
+                                       db=db)
+                data_nd[plane][io] = data[0]
+                data_1d[plane][io] = data[1]
+
+        return cls(db=db, timber_vars=timber_vars, data=[data_1d, data_nd],
+                   t_start=t1, t_end=t2, beam=beam)
 
     def get_timber_data(self, t1, t2):
         """
