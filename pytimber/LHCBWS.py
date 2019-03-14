@@ -105,7 +105,7 @@ def _get_timber_variables(beam, wire, io='all', plane='all'):
     return variables
 
 
-def _get_timber_data(beam, t1, t2, db=None):
+def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
     """
     retrieve data from timber needed for
     BWS emittance calculation
@@ -115,6 +115,7 @@ def _get_timber_data(beam, t1, t2, db=None):
     db    : timber database
     beam  : either 'B1' or 'B2'
     t1,t2 : start and end time of extracted data in unix time
+    convert_gate: if True, converts the binary GATE to slots
 
     Returns:
     -------
@@ -195,19 +196,21 @@ def _get_timber_data(beam, t1, t2, db=None):
         degev = db.get([var_egev], t1_new, t2)[var_egev]
     # update data
     data['LHC.BOFSU:OFC_ENERGY'] = degev
-    if beam == 'B1':
-        rl = 'R'
-    elif beam == 'B2':
-        rl = 'L'
-    bunch_vars = [u'LHC.BWS.5{rl}4.{b}H{w}:BUNCH_SELECTION',
-                  u'LHC.BWS.5{rl}4.{b}V{w}:BUNCH_SELECTION']
-    bunch_vars = [k.format(rl=rl, b=beam, w=wire) for k in bunch_vars]
-    for b_v in bunch_vars:
-        data[b_v] = list(data[b_v])
-        val = data[b_v][1]
-        # run the binary to bunch conversion
-        data[b_v][1] = np.array([extract_bunch_selection(vv) for vv in val])
-        data[b_v] = tuple(data[b_v])
+    if convert_gate:
+        if beam == 'B1':
+            rl = 'R'
+        elif beam == 'B2':
+            rl = 'L'
+        bunch_vars = [u'LHC.BWS.5{rl}4.{b}H{w}:BUNCH_SELECTION',
+                      u'LHC.BWS.5{rl}4.{b}V{w}:BUNCH_SELECTION']
+        bunch_vars = [k.format(rl=rl, b=beam, w=wire) for k in bunch_vars]
+        for b_v in bunch_vars:
+            data[b_v] = list(data[b_v])
+            val = data[b_v][1]
+            # run the binary to bunch conversion
+            data[b_v][1] = np.array([extract_bunch_selection(vv) for
+                                    vv in val])
+            data[b_v] = tuple(data[b_v])
     return data
 
 
@@ -229,8 +232,8 @@ def _timber_to_dict(beam, plane, direction, data, db):
     [dict: dictionary with structure
       {time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
 
-    mulitIndex DataTrame contaning the 1D data,
-    the indexing of the dataframe should be:
+    mulitIndex DataFrame contaning the 1D data,
+    the indexing of the DataFrame is:
                gain, egev, beta, emit, emit_gauss, emit_gauss_err
     time slot
       1   0
@@ -361,8 +364,6 @@ class BWS(object):
     --------
     get_timber_data : returns raw data from pytimber
     fromdb : create BWS instance using the given pytimber database
-    fit_gauss : make a Gaussian fit of BWS profiles
-    get_fit : extract fit data for specific slot and times
     """
 
     def __init__(self, db=None, timber_vars=None, beam=None, data=None,
@@ -405,7 +406,7 @@ class BWS(object):
                to the measurement of the wire moving inwards and outwards
                respectively.
               [{time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
-               mulitIndex DataTrame contaning the 1D data,
+               mulitIndex DataFrame contaning the 1D data,
                the indexing of the dataframe should be:
                           gain, egev, beta, emit, emit_gauss, emit_gauss_err
                time slot
@@ -426,7 +427,8 @@ class BWS(object):
         # get data from timber
         if verbose:
             print('... extracting data from timber')
-        timber_data = _get_timber_data(beam=beam, t1=t1, t2=t2, db=db)
+        timber_data = _get_timber_data(beam=beam, t1=t1, t2=t2,
+                                       convert_gate=True, db=db)
         timber_vars = timber_data.keys()
         # generate dictionary
         if verbose:
@@ -448,12 +450,13 @@ class BWS(object):
         return cls(db=db, timber_vars=timber_vars, data=[data_1d, data_nd],
                    t_start=t1, t_end=t2, beam=beam)
 
-    def get_timber_data(self, t1, t2):
+    def get_timber_data(self, t1, t2, convert_gate=False):
         """
         return timber data for BWS. See LHCBWS._get_timber_data(...)
         for further documentation.
         """
-        return _get_timber_data(beam=self.beam, t1=t1, t2=t2, db=self.db)
+        return _get_timber_data(beam=self.beam, t1=t1, t2=t2, db=self.db,
+                                convert_gate=False)
 
     def update_beta_energy(self, t1=None, t2=None, beth=None, betv=None,
                            energy=None, verbose=False):
@@ -472,26 +475,38 @@ class BWS(object):
             t1 = self.t_start
         if t2 is None:
             t2 = self.t_end
+
+        def energy_func(x):
+            energy_old = x['egev']
+            b_old = tb.betarel(energy_old)
+            g_old = tb.gammarel(energy_old)
+            b = tb.betarel(energy)
+            g = tb.gammarel(energy)
+            emit_gauss = x['emit_gauss'] * (b * g) / (b_old * g_old)
+            emit_gauss_err = x['emit_gauss_err'] * (b * g) / (b_old * g_old)
+            return pd.Series([emit_gauss, emit_gauss_err])
+
+        def beta_func(x):
+            beta_old = x['beta']
+            emit_gauss = x['emit_gauss'] * (beta_old) / (beta)
+            emit_gauss_err = x['emit_gauss_err'] * (beta_old) / (beta)
+            return pd.Series([emit_gauss, emit_gauss_err])
+
         for plane, beta in zip('HV', [beth, betv]):
             for io in 'IN', 'OUT':
-                for sl in self.data[plane][io].keys():
-                    data = self.data[plane][io][sl]
-                    time = data['time']
-                    mask = np.logical_and(time >= t1, time <= t2)
-                    if energy is not None:
-                        energy_old = data['egev'][mask]
-                        data['egev'][mask] = energy
-                        # get rel beta,gamma
-                        b_old, g_old = tb.betarel(
-                            energy_old), tb.gammarel(energy_old)
-                        b, g = tb.betarel(energy), tb.gammarel(energy)
-                        for k in 'emit_gauss', 'emit_gauss_err':
-                            data[k][mask] = (data[k][mask] * (b * g) /
-                                             (b_old * g_old))
-                    if beta is not None:
-                        beta_old = data['beta'][mask]
-                        data['beta'][mask] = beta
-                        for k in 'emit_gauss', 'emit_gauss_err':
-                            data[k][mask] = (data[k][mask] * (beta_old) /
-                                             (beta))
-                    self.data[plane][io][sl] = data
+                data = self.data[0][plane][io].reset_index()
+                data_filt = data.loc[np.logical_and(data['time'] >= t1,
+                                                data['time'] <= t2)].copy()
+                if energy is not None:
+                    data_filt[['emit_gauss',
+                         'emit_gauss_err']] = data_filt.apply(energy_func,
+                                                              axis=1)
+                    data_filt['egev'] = energy
+                if beta is not None:
+                    data_filt[['emit_gauss',
+                               'emit_gauss_err']] = data_filt.apply(beta_func,
+                                                                    axis=1)
+                    data_filt['beta'] = beta
+                data.loc[np.logical_and(data['time'] >= t1,
+                                        data['time'] <= t2)] = data_filt
+                self.data[0][plane][io] = data.set_index(['time', 'slots'])
