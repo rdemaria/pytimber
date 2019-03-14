@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 try:
     import matplotlib
@@ -9,7 +7,7 @@ except ImportError as e:
     print("Matplotlib import error")
     print(e)
 
-from .localdate import parsedate, dumpdate, dumpdateutc
+from .localdate import parsedate, dumpdate
 
 
 def flattenoverlap(v, test=100, start=0):
@@ -116,8 +114,8 @@ class DataQuery(object):
             for i, name in enumerate(self.names):
                 s = int2keyword(i)
                 idx, val = self.data[name]
-                setattr(self, s+'0', idx)
-                setattr(self, s+'1', val)
+                setattr(self, s + '0', idx)
+                setattr(self, s + '1', val)
 
     def __repr__(self):
         out = []
@@ -316,7 +314,7 @@ class DataQuery(object):
         """plot data with date in local time"""
         for i, name in enumerate(self.names):
             t, v = self.data[name]
-            if rel_time::
+            if rel_time:
                 t = t - t[0]
             if vscale == 'auto':
                 vmax = np.max(abs(v))
@@ -389,9 +387,9 @@ class DataQuery(object):
                 sb.xlabel("time [sec]")
             sb.axes.get_yaxis().get_major_formatter().set_useOffset(False)
             pl.setp(pl.xticks()[1], rotation=45)
-            if xlabel != None:
+            if xlabel is not None:
                 sb.set_xlabel(xlabel)
-            if ylabel != None:
+            if ylabel is not None:
                 sb.set_ylabel(ylabel)
             sb.grid(True)
         return self
@@ -427,7 +425,10 @@ class DataQuery(object):
         im = pl.specgram(val, NFFT=NFFT, Fs=Fs, noverlap=noverlap)[-1]
         pl.title(name)
         if realtime:
-            im.set_extent([t[0], t[0] + len(val) / float(Fs), 0, float(Fs)  2])
+            im.set_extent([t[0],
+                          t[0] + len(val) / float(Fs),
+                          0,
+                          float(Fs) / 2])
         else:
             im.set_extent([t[0], t[-1], 0, 0.5])
         set_xaxis_date()
