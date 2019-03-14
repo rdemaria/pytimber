@@ -231,7 +231,7 @@ def _timber_to_dict(beam, plane, direction, data, db):
 
     mulitIndex DataTrame contaning the 1D data,
     the indexing of the dataframe should be:
-               gain, egev, beta, meit, emit_gauss, emit_gauss_err
+               gain, egev, beta, emit, emit_gauss, emit_gauss_err
     time slot
       1   0
           1
@@ -407,7 +407,7 @@ class BWS(object):
               [{time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
                mulitIndex DataTrame contaning the 1D data,
                the indexing of the dataframe should be:
-                          gain, egev, beta, meit, emit_gauss, emit_gauss_err
+                          gain, egev, beta, emit, emit_gauss, emit_gauss_err
                time slot
                  1   0
                      1
