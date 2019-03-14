@@ -285,55 +285,21 @@ def _timber_to_dict(beam, plane, direction, data, db):
             dbws_nd[t] = []
         for idx, sl in zip(np.arange(ngate), slots):
             idx = int(idx)
-            idx_max = np.argmax(np.abs(amp[idx]))
-            # flip in case profile is mirrored on x-axis
-            if amp[idx][idx_max] < 0:
-                amp[idx] = -amp[idx]
-            # put smallest value to 0
-            amp[idx] = amp[idx] - np.min(amp[idx])
-            dx = np.abs(pos[1:] - pos[0:-1])
-            int_dist = (dx * amp[idx][:-1]).sum()
-            # case where amplitude = 0
-            if int_dist == 0:
-                amp_norm = amp[idx]
-                sigma_gauss = 0
-                sigma_gauss_err = 0
-                emit_gauss = 0
-                emit_gauss_err = 0
-                p = np.zeros(4)
-                pcov = np.zeros((4, 4))
-            else:
-                amp_norm = amp[idx] / int_dist
-                p, pcov = curve_fit(f=tb.gauss_pdf,
-                                    xdata=pos,
-                                    ydata=amp_norm,
-                                    p0=[0, 1, 0, 1000])
-                sigma_gauss = p[3]
-                sigma_gauss_err = np.sqrt(pcov[3, 3])
-                emit_gauss = tb.emitnorm(sigma_gauss**2 / beta, egev) * 1.e-6
-                emit_gauss_err = tb.emitnorm(2 * sigma_gauss *
-                                    sigma_gauss_err / beta, egev) * 1.e-6
-            row_nd = (sl, pos, amp[idx], amp_norm, p, pcov)
+            row_nd = (sl, pos, amp[idx])
             row_1d = (t, sl, tbe, gain, egev,
-                      beta, emit[idx],
-                      emit_gauss,
-                      emit_gauss_err)
+                      beta, emit[idx])
             df_ws.append(row_1d)
             dbws_nd[t].append(row_nd)
 
-    cols_1d = ['time', 'slots', 'time_app', 'gain', 'egev', 'beta', 'emit',
-               'emit_gauss', 'emit_gauss_err']
+    cols_1d = ['time', 'slots', 'time_app', 'gain', 'egev', 'beta', 'emit']
     bws_1d = pd.DataFrame(data=df_ws, columns=cols_1d).set_index(['time',
                                                                  'slots'])
     # the goal here is to output a nice pd.DataFrame of the 1D data
     # and a horrible dictionnary --> array for the nD data
     for k in dbws_nd.keys():
-        dbws_nd[k] = np.array(dbws_nd[k], dtype=[('slot', float),
-                                           ('pos', np.ndarray),
-                                           ('amp', np.ndarray),
-                                           ('amp_norm', np.ndarray),
-                                           ('p_gauss', np.ndarray),
-                                           ('pcov_gauss', np.ndarray)])
+        dbws_nd[k] = np.array(dbws_nd[k], dtype=[('slots', float),
+                                                 ('pos', np.ndarray),
+                                                 ('amp', np.ndarray)])
     return dbws_nd, bws_1d
 
 
@@ -510,3 +476,98 @@ class BWS(object):
                 data.loc[np.logical_and(data['time'] >= t1,
                                         data['time'] <= t2)] = data_filt
                 self.data[0][plane][io] = data.set_index(['time', 'slots'])
+
+    def fit_gaussian(self):
+        '''
+        fits gaussian to the amp/pos data
+
+        Returns:
+        --------
+        data_fit_df: MulitIndex DataFrame containing the fitted 'emit_gauss'
+            and the 'emit_gauss_err'
+        data_fit_dic: a dict['time'] --> structured array
+            contains the fit params
+        '''
+        assert(self.data is not None), "No data, run from_db first"
+        data_fit_df = {}
+        data_fit_dic = {}
+        for plane in ['H', 'V']:
+            data_fit_df[plane] = {}
+            data_fit_dic[plane] = {}
+            for direction in ['IN', 'OUT']:
+                data_df = self.data[0][plane][direction]
+                data_dic = self.data[1][plane][direction]
+                df_fit, dic_fit = self._fit_gaussian(data_df, data_dic)
+                data_fit_df[plane][direction] = df_fit
+                data_fit_dic[plane][direction] = dic_fit
+        return data_fit_df, data_fit_dic
+
+    def _fit_gaussian(self, data_df, data_nd):
+        '''
+        Fits gaussian to the the provided data
+
+        Returns:
+        --------
+        data_fit_df: MulitIndex DataFrame containing the fitted 'emit_gauss'
+            and the 'emit_gauss_err'
+        data_fit_dic: a dict['time'] --> structured array
+            contains the fit params
+        '''
+        df_fit = []
+        dic_fit = {}
+        for t, arrays in data_nd.items():
+            if t not in dic_fit.keys():
+                dic_fit[t] = []
+            for idx, sl in enumerate(arrays['slots']):
+                amp = arrays['amp'][idx]
+                pos = arrays['pos'][idx]
+                beta = data_df.loc[(t, sl)]['beta']
+                egev = data_df.loc[(t, sl)]['egev']
+                idx_max = np.argmax(np.abs(amp))
+                # flip in case profile is mirrored on x-axis
+                if amp[idx_max] < 0:
+                    amp = -amp
+                # put smallest value to 0
+                amp = amp - np.min(amp)
+                dx = np.abs(np.diff(pos))
+                int_dist = (dx * amp[:-1]).sum()
+                # case where amplitude = 0
+                if int_dist == 0:
+                    amp_norm = amp
+                    sigma_gauss = 0
+                    sigma_gauss_err = 0
+                    emit_gauss = 0
+                    emit_gauss_err = 0
+                    p = np.zeros(4)
+                    pcov = np.zeros((4, 4))
+                else:
+                    amp_norm = amp / int_dist
+                    p, pcov = curve_fit(f=tb.gauss_pdf,
+                                        xdata=pos,
+                                        ydata=amp_norm,
+                                        p0=[0, 1, 0, 1000])
+                    sigma_gauss = p[3]
+                    sigma_gauss_err = np.sqrt(pcov[3, 3])
+                    emit_gauss = tb.emitnorm(sigma_gauss**2 /
+                                             beta, egev) * 1.e-6
+                    emit_gauss_err = tb.emitnorm(2 * sigma_gauss *
+                                        sigma_gauss_err / beta, egev) * 1.e-6
+
+                row_nd = (sl, amp_norm, p, pcov)
+                row_1d = (t, sl, emit_gauss, emit_gauss_err)
+                df_fit.append(row_1d)
+                dic_fit[t].append(row_nd)
+
+        cols = ['time',
+                'slots',
+                'emit_gauss',
+                'emit_gauss_err']
+        df_fit = pd.DataFrame(df_fit, columns=cols)
+        df_fit = df_fit.set_index(['time', 'slots'])
+        ftype = [('slots', float),
+                 ('amp_norm', np.ndarray),
+                 ('p_gauss', np.ndarray),
+                 ('pcov_gauss', np.ndarray)]
+        for k in dic_fit.keys():
+            dic_fit[k] = np.array(dic_fit[k], dtype=ftype)
+        return df_fit, dic_fit
