@@ -229,18 +229,17 @@ def _timber_to_dict(beam, plane, direction, data, db):
 
     Returns:
     --------
-    [dict: dictionary with structure
-      {time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
-
-    mulitIndex DataFrame contaning the 1D data,
-    the indexing of the DataFrame is:
+    mulitIndex DataFrame contaning the 1D data
+        the indexing of the DataFrame is:
                gain, egev, beta, emit, emit_gauss, emit_gauss_err
     time slot
       1   0
           1
       2   0
           1
-    ]
+
+    dict: dictionary with structure
+      {time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
     """
     keys_dic = ['gate', 'bunch', 'beta', 'emit',
                 'pos', 'amp', 'gain']
@@ -300,7 +299,7 @@ def _timber_to_dict(beam, plane, direction, data, db):
         dbws_nd[k] = np.array(dbws_nd[k], dtype=[('slots', float),
                                                  ('pos', np.ndarray),
                                                  ('amp', np.ndarray)])
-    return dbws_nd, bws_1d
+    return bws_1d, dbws_nd
 
 
 class BWS(object):
@@ -320,11 +319,29 @@ class BWS(object):
                       normalized emittance
     beam             : 'B1' for beam 1 or 'B2' for beam2
     t_start, t_end   : start/end time of extracted data
-    emit    : dictionary of normalized emittances
-              {slot: [time[s], emith[um], emitv[um]]}
-    emitfit : dictionary of fit of normalized emittances
-              between times t1 and t2
-              {slot: [t1[s], t2[s], emith [um],emitv[um]]}
+    data    : contains two dictionaries both indexed with the plane
+               ('H' or 'V') and the direction ('IN' or 'OUT'). The first
+               dict contains a MultiIndex DataFrame containing :
+                          gain, egev, beta, emit
+               time slot
+                 1   0
+                     1
+                 2   0
+                     1
+                The second dict contains a dict['time'] --> structured array
+                {time: [slot, pos, amp, amp_norm]}
+
+    data_fit : contains two dictionaries both indexed with the plane
+               ('H' or 'V') and the direction ('IN' or 'OUT'). The first
+               dict contains a MultiIndex DataFrame containing :
+                          gain, egev, beta, emit
+               time slot
+                 1   0
+                     1
+                 2   0
+                     1
+                The second dict contains a dict['time'] --> structured array
+                {time:  [slot, amp_norm, p_gauss, pcov_gauss]},
 
     Methods:
     --------
@@ -368,19 +385,18 @@ class BWS(object):
         Returns:
         -------
         class: BWS class instance with dictionary of normalized emittances,
-               profiles and other relevant parameters stored in self.emit.
-               self.emit is sorted after slot number. 'in' and 'out' refer
-               to the measurement of the wire moving inwards and outwards
-               respectively.
-              [{time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
-               mulitIndex DataFrame contaning the 1D data,
-               the indexing of the dataframe should be:
+               profiles and other relevant parameters stored in self.data.
+               self.data contains two dictionaries both indexed with the plane
+               ('H' or 'V') and the direction ('IN' or 'OUT'). The first
+               dict contains a MultiIndex DataFrame containing :
                           gain, egev, beta, emit
                time slot
                  1   0
                      1
                  2   0
                      1
+                The second dict contains a dict['time'] --> structured array
+                {time: [slot, pos, amp, amp_norm]},
         ]
         """
         if beam not in ['B1', 'B2']:
@@ -411,8 +427,8 @@ class BWS(object):
                                        direction=io,
                                        data=timber_data,
                                        db=db)
-                data_nd[plane][io] = data[0]
-                data_1d[plane][io] = data[1]
+                data_nd[plane][io] = data[1]
+                data_1d[plane][io] = data[0]
 
         return cls(db=db, timber_vars=timber_vars, data=[data_1d, data_nd],
                    t_start=t1, t_end=t2, beam=beam)
