@@ -385,10 +385,12 @@ class BWS(object):
         Returns:
         -------
         class: BWS class instance with dictionary of normalized emittances,
-               profiles and other relevant parameters stored in self.data.
-               self.data contains two dictionaries both indexed with the plane
-               ('H' or 'V') and the direction ('IN' or 'OUT'). The first
-               dict contains a MultiIndex DataFrame containing :
+               profiles and other relevant parameters stored in self.data
+               and self.data_fit.
+
+               self.data: contains two dictionaries both indexed with the plane
+               ('H' or 'V') and the direction ('IN' or 'OUT').
+               The first dict contains a MultiIndex DataFrame containing :
                           gain, egev, beta, emit
                time slot
                  1   0
@@ -396,8 +398,23 @@ class BWS(object):
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slot, pos, amp, amp_norm]},
-        ]
+                {time: [slot, pos, amp, amp_norm]}
+
+                self.data_fit: contains two dictionaries both indexed with the
+                plane ('H' or 'V') and the direction ('IN' or 'OUT').
+                The first dict contains a MultiIndex DataFrame containing :
+                             emit_gauss, emit_gauss_err
+
+                time, slot
+                  1    0
+                       1
+                  2    0
+                       1
+
+                The second element contains a dict['time'] --> structured array
+                {time: [slot, amp_norm, p_gauss, pcov_gauss]}
+
+
         """
         if beam not in ['B1', 'B2']:
             raise ValueError("beam = %s must be either 'B1' or 'B2'" % beam)
