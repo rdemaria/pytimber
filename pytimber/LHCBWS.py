@@ -6,7 +6,7 @@ except ImportError:
     print("No module found: pandas, numpy, matplotlib and scipy"
           "modules should be present to run pytimbertools")
 
-import pytimber
+from . import pytimber
 
 from . import toolbox as tb
 

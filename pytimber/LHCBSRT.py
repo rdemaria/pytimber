@@ -1,4 +1,4 @@
-import pytimber
+from . import pytimber
 
 try:
     import pandas as pd
