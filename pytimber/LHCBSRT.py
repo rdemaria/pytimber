@@ -6,7 +6,7 @@ try:
     import matplotlib.pyplot as pl
     from scipy.optimize import curve_fit
 except ImportError:
-    print(("No module found: pandas, numpy, matplotlib and scipy modules ",
+    print(("No module found: pandas, numpy, matplotlib and scipy modules "
            "should be present to run pytimbertools"))
 
 from .toolbox import emitnorm, exp_fit, movingaverage
@@ -115,7 +115,7 @@ def _get_timber_data(beam, t1, t2, db=None):
                                    [lsf_time[k] for k in bsrt_lsf_var] +
                                    [lsf_value[k] for k in bsrt_lsf_var]))
     cols = ['time',
-            'gate',
+            'slots',
             'sigh',
             'sigv',
             'lsfh_time',
@@ -133,22 +133,21 @@ def _get_timber_data(beam, t1, t2, db=None):
     return bsrt_data
 
 
-def _timber_to_emit(bsrt_array, use_dataframe=False):
+def _timber_to_emit(bsrt_array):
     """
     returns dictionary with emittance etc. as used in BSRT.fromdb
 
     Parameters:
     -----------
     bsrt_array : data extracted from timber with _get_timber_data
-    use_dataframe: return a MultiIndex DataFrame instead of the dict
     and structured array format, the MultiIndex DataFrame breaks
     the fitting & plotting functions
 
     Returns:
     --------
-    emit_dict: dictionary with emittances
-              {slot: [time [s],emith [um],emitv[um],sigh[mm],sigv[mm],
-              lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
+    bsrt_array: DataFrame of [time, gate, sigh, sigv, lsfh_time,
+        lsfv_time, beth_time, betv_time, energy_time,
+        lsfh, lsfv, beth, betv, energy]
     """
 
     t_unit_change = parsedate('2018-01-01 00:00:00')
@@ -172,7 +171,7 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
                  'beth', 'betv',
                  'emith', 'emitv',
                  'energy']
-    bsrt_array = bsrt_array.groupby(['gate', 'time'])[keep_cols].mean()
+    bsrt_array = bsrt_array.groupby(['slots', 'time'])[keep_cols].mean()
 
     def func(x):
         return emitnorm(x[0], x[1])
@@ -181,23 +180,7 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
                                       'energy']].apply(func, axis=1)
     bsrt_array['emitv'] = bsrt_array[['emitv',
                                       'energy']].apply(func, axis=1)
-    if not use_dataframe:
-        # create dictionary indexed with slot number
-        # to get the original dictionary & structured array format
-        emit_dict = {}
-        for slot, df in bsrt_array.groupby(level=0):
-            df = df.reset_index().drop('gate', axis=1)
-            ftype = [('time', float),
-                     ('sigh', float), ('sigv', float),
-                     ('lsfh', float), ('lsfv', float),
-                     ('beth', float), ('betv', float),
-                     ('emith', float), ('emitv', float),
-                     ('energy', float)]
-            df_list = [tuple(r[1]) for r in df.iterrows()]
-            emit_dict[slot] = np.array(df_list, dtype=ftype)
-        return emit_dict
-    else:
-        return bsrt_array
+    return bsrt_array
 
 
 class BSRT(object):
@@ -219,7 +202,7 @@ class BSRT(object):
     t_start, t_end   : start/end time of extracted data
     emit    : dictionary of normalized emittances
               {slot: [time[s], emith[um], emitv[um]]}
-    emitfit : dictionary of fit of normalized emittances
+    emit_fit : dictionary of fit of normalized emittances
               between times t1 and t2
               {slot: [t1[s], t2[s], emith [um],emitv[um]]}
 
@@ -228,7 +211,7 @@ class BSRT(object):
     get_timber_data : returns raw data from pytimber
     fromdb : create BSRT instance using the given pytimber database
     fit : make fit of BSRT emittance between timestamps t1,t2.
-          Values are added to *emitfit*.
+          Values are added to *emit_fit*.
     get_fit : extract fit data for specific slot and times
     """
     timber_vars = {}
@@ -249,22 +232,22 @@ class BSRT(object):
                          u'LHC.BSRT.5L4.B2:BETA_V',
                          'LHC.BOFSU:OFC_ENERGY']
 
-    def __init__(self, db=None, beam=None, emit=None, emitfit=None,
+    def __init__(self, db=None, beam=None, emit=None, emit_fit=None,
                  t_start=None, t_end=None):
         self.db = db
         self.beam = beam
         self.emit = emit
-        self.emitfit = emitfit
+        self.emit_fit = emit_fit
         self.t_start = t_start
         self.t_end = t_end
 
     @classmethod
-    def fromdb(cls, t1, t2, beam='B1', db=None, use_dataframe=False,
+    def fromdb(cls, t1, t2, beam='B1', db=None,
                verbose=False):
         """
         retrieve data using timber and calculate normalized emittances
         from extracted values.
-        Note: all values in self.emitfit are deleted
+        Note: all values in self.emit_fit are deleted
 
         Example:
         --------
@@ -280,17 +263,14 @@ class BSRT(object):
         beam : either 'B1' or 'B2'
         t1,t2 : start and end time of extracted data
                in unix time
-        use_dataframe: use a MultiIndex DataFrame instead of the dict
-            & structured array format, the MultiIndex DataFrame breaks
-            the fitting & plotting functions
         verbose: verbose mode, default verbose = False
 
         Returns:
         -------
-        class: BSRT class instance with dictionary of normalized emittances
-               stored in self.emit. self.emit is sorted after slot number
-              {slot: [time [s],emith [um],emitv[um],sigh[mm],sigv[mm],
-                      lsfh [mm], lsfv[mm], beth[mm], betv[mm],energy[GeV]]}
+        class: BSRT class instance with DataFrame of normalized emittances
+               stored in self.emit.
+                   sigh sigv lsfh lsfv beth betv emith emitv energy
+        slots time
         """
         if beam not in ['B1', 'B2']:
             raise ValueError("beam={} must be 'B1' or 'B2'".format(beam))
@@ -308,11 +288,8 @@ class BSRT(object):
         #    dictionary self.emit = emit
         if verbose:
             print('... calculating emittance for non-empty slots')
-        emit = _timber_to_emit(bsrt_array, use_dataframe=use_dataframe)
-        if use_dataframe and verbose:
-            print(("Using MultiIndex DataFrame, the fitting & plotting "
-                   "functions will be broken."))
-        return cls(db=db, emit=emit, emitfit=None,
+        emit = _timber_to_emit(bsrt_array)
+        return cls(db=db, emit=emit, emit_fit=None,
                    t_start=t1, t_end=t2, beam=beam)
 
     def get_timber_data(self, beam, t1, t2, db=None):
@@ -328,16 +305,10 @@ class BSRT(object):
 
         Returns:
         -------
-        bsrt_data: structured array with
-                   time = timestamp
-                   gate = gate delay
-                   sig* = beam size
-                   lsf* = calibration factors
-                   bet* = beta functions at position of BSRT
-                   *_time = time stamps for rarely logged
-                            variables, explicitly timber variables
-                            %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
-                            LHC.BOFSU:OFC_ENERGY
+        bsrt_data: MultiIndex DataFrame
+                    sigh sigv lsfh lsfv beth betv emith emitv energy
+        slots time
+
         """
         return _get_timber_data(beam=beam, t1=t1, t2=t2, db=db)
 
@@ -386,24 +357,20 @@ class BSRT(object):
 
         Returns:
         --------
-        fitdata: returns structured array with fitdata for slot *slot* and
-                 time interval (t1,t2) with:
-                   a*      = amplitude ah,av [um]
-                   siga*   = error of fit parameter ah,av [um]
-                   tau*    = growth time tauh,tauv [s]
-                   sigtau* = error of growth time tauh,tauv [s]
+        fitdata: the relevant row of self.emit_fit for the requested (slot, t1,
+            t2)
         """
         # -- set times
         t1, t2 = self._set_times(t1, t2, verbose)
         # -- check if values exist
         try:
             # values exist
-            return self.emitfit[slot][(t1, t2)]
-        except (KeyError, IndexError, TypeError):
+            return self.emit_fit.loc[(slot, t1, t2)]
+        except AttributeError:
             # values don't exist -> try to fit
             self.fit(t1=t1, t2=t2)
             try:
-                return self.emitfit[slot][(t1, t2)]
+                return self.emit_fit.loc[(slot, t1, t2)]
             except IndexError:
                 print('ERROR: Fit failed for slot %s ' % slot + ' and time ' +
                       'interval (t1,t2) = (%s,%s)' % (t1, t2))
@@ -414,7 +381,7 @@ class BSRT(object):
         function:
           a*exp((t-t1)/tau)
         with a=initial value [um] and tau=growth time [s]
-        and store values in self.emitfit. If t1=t2=None use full data
+        and store values in self.emit_fit. If t1=t2=None use full data
         range. Note that the fit is done with the unaveraged raw data.
 
         Parameters:
@@ -427,13 +394,10 @@ class BSRT(object):
         Returns:
         --------
         self: returns class object with updated fit parameters in
-              self.emitfit, where self.emitfit has the following structure:
-                 self.emitfit = {slot: {(t1,t2): fitdata} }
-              with fitdata being a structured array with:
-                a*      = amplitude ah,av [um]
-                siga*   = error of fit parameter ah,av [um]
-                tau*    = growth time tauh,tauv [s]
-                sigtau* = error of growth time tauh,tauv [s]
+              self.emit_fit, where self.emit_fit is a MultiIndex DataFrame
+                        ah sigah tauh sigtauh av sigav tauv sigtauv
+            slots t1 t2
+
         """
         # -- set times
         t1, t2 = self._set_times(t1, t2, verbose)
@@ -443,79 +407,68 @@ class BSRT(object):
             raise Exception("""First extract the emittance data using \
 BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
 < t_end.""")
-            return
-        # initialize self.emitfit if needed
-        if self.emitfit is None:
-            if verbose:
-                print('... no previous fits found')
-            force = True
-            # initialize dictionary
-            self.emitfit = {}
-            for slot in self.emit.keys():
-                self.emitfit[slot] = {}
-        # -- start fitting
-        # loop over all slots
-        for slot in self.emit.keys():
-            # case 1: fit data available + force = False
-            try:
-                if ((force is False) and
-                        (self.emitfit[slot][(t1, t2)].size > 0)):
-                    if verbose:
-                        error_str = ('...fit data already exists for slot' +
-                                     ' %s' % (slot) +
-                                     ' and force = False -> skip fit')
-                        print(error_str)
-                    continue
-            except KeyError:  # just continue and redo the fit
-                if verbose:
-                    print('... no fit data found for slot %s' % (slot))
-                pass
-            # case 2: fit data not available or force = True
-            try:
-                if verbose:
-                    print('... extracting emittances for slot %s ' % (slot) +
-                          'from %s to %s' % (dumpdate(t1), dumpdate(t2)))
-                mask = ((self.emit[slot]['time'] >= t1) &
-                        (self.emit[slot]['time'] <= t2))
-                data = self.emit[slot][mask]
-                # subtract initial time to make fitting easier
-                data['time'] = data['time'] - data['time'][0]
-                # give a guess for the initial paramters
-                # assume eps(t1)=a*exp(t1/tau)
-                #        eps(t2)=a*exp(t2/tau)
-                fit_data = []
-                for plane in ['h', 'v']:
-                    t2_fit = data['time'][-1] - data['time'][0]
-                    epst2_fit = data['emit%s' % plane][-1]
-                    epst1_fit = data['emit%s' % plane][0]
-                    if epst2_fit < 0:
-                        raise ValueError("""Invalid value of BSRT emittance \
-(eps < 0) for time t2=%s'%pytimber.parsedate(data['time'][-1])""")
+
+        cols = ['t1',
+                't2',
+                'ah',
+                'sigah',
+                'tauh',
+                'sigtauh',
+                'av',
+                'sigav',
+                'tauv',
+                'sigtauv']
+
+        def fit_slot(group):
+            slot = group.index.get_level_values(0)[0]
+            # don't fit if already done earlier
+            if (self.emit_fit is not None and force is False and
+               slot in self.emit_fit.index.get_level_values(0)):
+                if t1 in self.emit_fit.index.get_level_values(1):
+                    if t2 in self.emit_fit.index.get_level_values(2):
                         return
-                    if epst1_fit < 0:
-                        raise ValueError("""Invalid value of BSRT emittance \
-(eps < 0) for time t1=%s'%pytimber.parsedate(data['time'][0])""")
-                        return
-                    # initial values for fit parameters
-                    a_init = epst1_fit
-                    tau_init = t2_fit / (np.log(epst2_fit) - np.log(epst1_fit))
-                    if verbose:
-                        print(
-                            '... fitting emittance %s for slot %s ' %
-                            (plane, slot))
-                    popt, pcov = curve_fit(exp_fit, data['time'],
-                                           data['emit%s' % plane],
-                                           p0=[a_init, tau_init])
-                    psig = [np.sqrt(pcov[i, i]) for i in range(len(popt))]
-                    fit_data += [popt[0], psig[0], popt[1], psig[1]]
-                ftype = [('ah', float), ('sigah', float), ('tauh', float),
-                         ('sigtauh', float), ('av', float), ('sigav', float),
-                         ('tauv', float), ('sigtauv', float)]
-                self.emitfit[slot][(t1, t2)] = np.array([tuple(fit_data)],
-                                                        dtype=ftype)
-            except IndexError:
-                print(('ERROR: no data found for slot %s! ') % (slot) +
-                      'Check the data in timber using BSRT.get_timber_data()!')
+
+            time = group.index.get_level_values(1)
+            mask = np.logical_and(time >= t1,
+                                  time <= t2)
+
+            group = group.loc[mask, :]
+            time = time[mask]
+
+            time = time - time[0]
+            # give a guess for the initial paramters
+            # assume eps(t1)=a*exp(t1/tau)
+            #        eps(t2)=a*exp(t2/tau)
+            fit_data = []
+            for plane in ['h', 'v']:
+                emit_key = 'emit{}'.format(plane)
+                t2_fit = time[-1] - time[0]
+                epst2_fit = group[emit_key].iloc[-1]
+                epst1_fit = group[emit_key].iloc[0]
+                if epst2_fit < 0:
+                    raise ValueError(("Invalid value of BSRT emittance "
+                    "(eps < 0) for time t2=%s'%pytimber.parsedate(time[-1])"))
+                if epst1_fit < 0:
+                    raise ValueError(("Invalid value of BSRT emittance "
+                    "(eps < 0) for time t1=%s'%pytimber.parsedate(time[0])"))
+                # initial values for fit parameters
+                a_init = epst1_fit
+                tau_init = t2_fit / (np.log(epst2_fit) - np.log(epst1_fit))
+                if verbose:
+                    print('... fitting emittance {} for slot'.format(plane))
+                popt, pcov = curve_fit(exp_fit, time,
+                                       group[emit_key],
+                                       p0=[a_init, tau_init])
+                psig = [np.sqrt(pcov[i, i]) for i in range(len(popt))]
+                fit_data += [popt[0], psig[0], popt[1], psig[1]]
+
+            return pd.Series([t1, t2] + fit_data, index=cols)
+
+        out = self.emit.groupby(level=0).apply(fit_slot)
+        if not out.empty:
+            out = out.reset_index().set_index(['slots', 't1', 't2'])
+            self.emit_fit = pd.concat([self.emit_fit, out], axis=0)
+
         return self
 
     def get_slots(self):
@@ -530,7 +483,7 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
         slot.
         """
         if slots is None:
-            slots = list(self.emit.keys())
+            slots = list(np.unique(self.emit.index.get_level_values(0)))
         try:
             len(slots)
         except TypeError:
@@ -602,24 +555,32 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                 c = colors.pop()
             else:
                 c = color
-            mask = ((self.emit[slot]['time'] >= t1) &
-                    (self.emit[slot]['time'] <= t2))
-            eps = self.emit[slot][mask]
+            mask = np.logical_and(self.emit.loc[slot].index >= t1,
+                                  self.emit.loc[slot].index <= t2)
+            eps = self.emit.loc[slot][mask]
             # raw data
             if avg is None:
-                pl.plot(eps['time'], eps['emit%s' %
-                                         plane], '.', color=c, label=label)
+                pl.plot(eps.index, eps['emit{}'.format(plane)],
+                        '.', color=c, label=label)
             # averaged data
             else:
                 epsavg = {}  # use a dictionary instead of a structured array
-                for k in eps.dtype.fields:
-                    epsavg[k] = movingaverage(eps[k], avg)
-                pl.plot(epsavg['time'], epsavg['emit%s' % plane], '.',
-                        color=c, label=label)
+                for k in ['time', 'emit{}'.format(plane)]:
+                    epsavg[k] = movingaverage(eps.reset_index()[k], avg)
+                pl.plot(epsavg['time'],
+                        epsavg['emit{}'.format(plane)],
+                        '.',
+                        color=c,
+                        label=label)
         # plot fit with a black dashed line
         if fit:
-            self.plot_fit(plane=plane, t1=t1, t2=t2, slots=slots,
-                          linestyle='--', color='k', verbose=verbose)
+            self.plot_fit(plane=plane,
+                          t1=t1,
+                          t2=t2,
+                          slots=slots,
+                          linestyle='--',
+                          color='k',
+                          verbose=verbose)
         else:
             set_xaxis_date()
         pl.ylabel(r'$\epsilon_{N,%s} \ [\mu\mathrm{ m}]$' % plane.upper())
@@ -667,9 +628,9 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                 ls = '-'
             else:
                 ls = linestyle
-            mask = ((self.emit[slot]['time'] >= t1) &
-                    (self.emit[slot]['time'] <= t2))
-            ts = self.emit[slot][mask]['time']
+            mask = np.logical_and(self.emit.loc[slot].index >= t1,
+                                  self.emit.loc[slot].index <= t2)
+            ts = self.emit.loc[slot][mask].index
             fitparam = self.get_fit(slot=slot, t1=t1, t2=t2)
             pl.plot(ts,
                     exp_fit(ts - ts[0], fitparam['a%s' % plane],
