@@ -6,8 +6,8 @@ try:
     import matplotlib.pyplot as pl
     from scipy.optimize import curve_fit
 except ImportError:
-    print("""No module found: pandas, numpy, matplotlib and scipy modules should
-    be present to run pytimbertools""")
+    print(("No module found: pandas, numpy, matplotlib and scipy modules ",
+           "should be present to run pytimbertools"))
 
 from .toolbox import emitnorm, exp_fit, movingaverage
 from .dataquery import set_xaxis_date
@@ -27,16 +27,9 @@ def _get_timber_data(beam, t1, t2, db=None):
 
     Returns:
     -------
-    bsrt_data: structured array with
-               time = timestamp
-               gate = gate delay
-               sig* = beam size
-               lsf* = calibration factors
-               bet* = beta functions at position of BSRT
-               *_time = time stamps for rarely logged
-                        variables, explicitly timber variables
-                        %LHC%BSRT%LSF_%, %LHC%BSRT%BETA% and
-                        LHC.BOFSU:OFC_ENERGY
+    bsrt_data: DataFrame of [time, gate, sigh, sigv, lsfh_time,
+        lsfv_time, beth_time, betv_time, energy_time,
+        lsfh, lsfv, beth, betv, energy]
     """
     # -- some checks
     if t2 < t1:
@@ -159,7 +152,6 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
     """
 
     t_unit_change = parsedate('2018-01-01 00:00:00')
-    # Need to try with datafraem double groupby
     mask = bsrt_array['time'] < t_unit_change
     bsrt_prior = bsrt_array[mask]
     bsrt_post = bsrt_array[~mask]
@@ -173,7 +165,7 @@ def _timber_to_emit(bsrt_array, use_dataframe=False):
     bsrt_post['emith'] = (bsrt_post['sigh']**2 - (bsrt_post['lsfh'] /
         unit_rescale)**2) / bsrt_post['beth']
     bsrt_post['emitv'] = (bsrt_post['sigv']**2 - (bsrt_post['lsfv'] /
-         unit_rescale)**2) / bsrt_post['betv']
+        unit_rescale)**2) / bsrt_post['betv']
     bsrt_array = pd.concat([bsrt_prior, bsrt_post], axis=0)
     keep_cols = ['sigh', 'sigv',
                  'lsfh', 'lsfv',
