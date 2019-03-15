@@ -231,7 +231,7 @@ def _timber_to_dict(beam, plane, direction, data, db):
     --------
     mulitIndex DataFrame contaning the 1D data
         the indexing of the DataFrame is:
-               gain, egev, beta, emit, emit_gauss, emit_gauss_err
+               gain, egev, beta, emit
     time slot
       1   0
           1
@@ -239,7 +239,7 @@ def _timber_to_dict(beam, plane, direction, data, db):
           1
 
     dict: dictionary with structure
-      {time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
+      {time: [slot, pos, amp]},
     """
     keys_dic = ['gate', 'bunch', 'beta', 'emit',
                 'pos', 'amp', 'gain']
@@ -329,12 +329,12 @@ class BWS(object):
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slot, pos, amp, amp_norm]}
+                {time: [slot, pos, amp]}
 
     data_fit : contains two dictionaries both indexed with the plane
                ('H' or 'V') and the direction ('IN' or 'OUT'). The first
                dict contains a MultiIndex DataFrame containing :
-                          gain, egev, beta, emit
+                         emit_gauss, emit_gauss_err
                time slot
                  1   0
                      1
@@ -398,7 +398,7 @@ class BWS(object):
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slot, pos, amp, amp_norm]}
+                {time: [slot, pos, amp]}
 
                 self.data_fit: contains two dictionaries both indexed with the
                 plane ('H' or 'V') and the direction ('IN' or 'OUT').
@@ -538,6 +538,7 @@ class BWS(object):
 
         data_fit_dic: a dict['time'] --> structured array
             contains the fit params
+            {time: [slot, amp_norm, p_gauss, pcov_gauss]}
         '''
         assert(self.data is not None), "No data, run from_db first"
         data_fit_df = {}
@@ -573,6 +574,7 @@ class BWS(object):
 
         data_fit_dic: a dict['time'] --> structured array
             contains the fit params
+            {time: [slot, amp_norm, p_gauss, pcov_gauss]}
         '''
         df_fit = []
         dic_fit = {}
