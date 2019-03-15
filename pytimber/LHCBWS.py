@@ -333,11 +333,12 @@ class BWS(object):
     """
 
     def __init__(self, db=None, timber_vars=None, beam=None, data=None,
-                 t_start=None, t_end=None):
+                 t_start=None, t_end=None, data_fit=None):
         self.db = db
         self.timber_vars = timber_vars
         self.beam = beam
         self.data = data
+        self.data_fit = data_fit
         self.t_start = t_start
         self.t_end = t_end
 
@@ -374,7 +375,7 @@ class BWS(object):
               [{time: [slot, pos, amp, amp_norm, p_gauss, pcov_gauss]},
                mulitIndex DataFrame contaning the 1D data,
                the indexing of the dataframe should be:
-                          gain, egev, beta, emit, emit_gauss, emit_gauss_err
+                          gain, egev, beta, emit
                time slot
                  1   0
                      1
@@ -425,7 +426,7 @@ class BWS(object):
                                 convert_gate=False)
 
     def update_beta_energy(self, t1=None, t2=None, beth=None, betv=None,
-                           energy=None, verbose=False):
+                           energy=None):
         """
         update beta and energy for emit_gauss and emit_gauss_err
         within t1 and t2. emit = emittance as stored in timber is not
@@ -437,6 +438,8 @@ class BWS(object):
         betah,betav: hor./vert. beta function [m]
         energy: beam energy [GeV]
         """
+        assert(self.data_fit is not None), ("No fitted data found, "
+                                            "run fit_gaussian first")
         if t1 is None:
             t1 = self.t_start
         if t2 is None:
@@ -461,30 +464,45 @@ class BWS(object):
         for plane, beta in zip('HV', [beth, betv]):
             for io in 'IN', 'OUT':
                 data = self.data[0][plane][io].reset_index()
-                data_filt = data.loc[np.logical_and(data['time'] >= t1,
-                                                data['time'] <= t2)].copy()
+                data_fit = self.data_fit[0][plane][io].reset_index()
+                mask = np.logical_and(data_fit['time'] >= t1,
+                                      data_fit['time'] <= t2)
+                data_fit_filt = data_fit.loc[mask].copy()
+                data_filt = data.loc[mask].copy()
                 if energy is not None:
-                    data_filt[['emit_gauss',
-                         'emit_gauss_err']] = data_filt.apply(energy_func,
-                                                              axis=1)
+                    data_fit_filt[['emit_gauss',
+                        'emit_gauss_err']] = data_fit_filt.apply(energy_func,
+                                                                 axis=1)
                     data_filt['egev'] = energy
                 if beta is not None:
-                    data_filt[['emit_gauss',
+                    data_fit_filt[['emit_gauss',
                                'emit_gauss_err']] = data_filt.apply(beta_func,
                                                                     axis=1)
                     data_filt['beta'] = beta
-                data.loc[np.logical_and(data['time'] >= t1,
-                                        data['time'] <= t2)] = data_filt
+
+                data.loc[mask] = data_filt
+                data_fit.loc[mask] = data_fit_filt
                 self.data[0][plane][io] = data.set_index(['time', 'slots'])
+                self.data_fit[0][plane][io] = data_fit.set_index(['time',
+                                                                 'slots'])
 
     def fit_gaussian(self):
         '''
-        fits gaussian to the amp/pos data
+        Fits gaussian to the previously fetched data
 
         Returns:
         --------
         data_fit_df: MulitIndex DataFrame containing the fitted 'emit_gauss'
             and the 'emit_gauss_err'
+                         emit_gauss, emit_gauss_err
+
+            time, slot
+
+            1   0
+            1
+            2   0
+            1
+
         data_fit_dic: a dict['time'] --> structured array
             contains the fit params
         '''
@@ -500,6 +518,7 @@ class BWS(object):
                 df_fit, dic_fit = self._fit_gaussian(data_df, data_dic)
                 data_fit_df[plane][direction] = df_fit
                 data_fit_dic[plane][direction] = dic_fit
+        self.data_fit = [data_fit_df, data_fit_dic]
         return data_fit_df, data_fit_dic
 
     def _fit_gaussian(self, data_df, data_nd):
@@ -510,6 +529,15 @@ class BWS(object):
         --------
         data_fit_df: MulitIndex DataFrame containing the fitted 'emit_gauss'
             and the 'emit_gauss_err'
+                         emit_gauss, emit_gauss_err
+
+            time, slot
+
+            1   0
+            1
+            2   0
+            1
+
         data_fit_dic: a dict['time'] --> structured array
             contains the fit params
         '''
