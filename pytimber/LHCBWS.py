@@ -63,9 +63,9 @@ def _get_timber_variables(beam, wire, io='all', plane='all'):
         rl = 'L'
     assert(wire in ['1', '2']), "wire = {} must be either 1 or 2".format(wire)
     assert(io in ['all', 'IN', 'OUT']), ("io = {} must be either "
-                                         "'all', 'IN' or 'OUT'".format(wire))
+                                         "'all', 'IN' or 'OUT'").format(wire)
     assert(plane in ['all', 'H', 'V']), ("plane = {} must be either "
-                                         "'all', 'H' or 'V'".format(plane))
+                                         "'all', 'H' or 'V'").format(plane)
 
     var_template = [u'LHC.BWS.5{rl}4.{b}H{w}:NB_GATES',
                     u'LHC.BWS.5{rl}4.{b}V{w}:NB_GATES',
@@ -133,8 +133,8 @@ def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
         db = pytimber.LoggingDB()
     # -- some checks
     if t2 < t1:
-        raise ValueError('End time smaller than start time, t2 = ' +
-                         '%s > %s = t1' % (t2, t1))
+        raise ValueError(('End time smaller than start time, t2 = '
+                          '{} > {} = t1').format(t2, t1))
     name = '%LHC%BWS%' + beam.upper()
     # check for which wire we have data
     data = db.get(db.search(name + '%NB_GATES%'), t1, t2)
@@ -417,7 +417,8 @@ class BWS(object):
 
         """
         if beam not in ['B1', 'B2']:
-            raise ValueError("beam = %s must be either 'B1' or 'B2'" % beam)
+            err_str = "beam = {} must be either 'B1' or 'B2'".format(beam)
+            raise ValueError(err_str)
         # if no database is given create dummy database to extract data
         if db is None:
             db = pytimber.LoggingDB()

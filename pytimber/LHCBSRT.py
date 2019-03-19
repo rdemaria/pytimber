@@ -446,11 +446,15 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                 epst2_fit = group[emit_key].iloc[-1]
                 epst1_fit = group[emit_key].iloc[0]
                 if epst2_fit < 0:
-                    raise ValueError(("Invalid value of BSRT emittance "
-                    "(eps < 0) for time t2=%s'%pytimber.parsedate(time[-1])"))
+                    err_str = ("Invalid value of BSRT emittance "
+                               "(eps < 0) for time "
+                               "t2={}").format(pytimber.parsedate(time[-1]))
+                    raise ValueError(err_str)
                 if epst1_fit < 0:
-                    raise ValueError(("Invalid value of BSRT emittance "
-                    "(eps < 0) for time t1=%s'%pytimber.parsedate(time[0])"))
+                    err_str = ("Invalid value of BSRT emittance "
+                               "(eps < 0) for time "
+                               "t1={}").format(pytimber.parsedate(time[0]))
+                    raise ValueError(err_str)
                 # initial values for fit parameters
                 a_init = epst1_fit
                 tau_init = t2_fit / (np.log(epst2_fit) - np.log(epst1_fit))
@@ -498,22 +502,24 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
         if t1 is None:
             t1 = self.t_start
             if verbose:
-                print('... using start time %s' % (dumpdate(t1)))
+                print('... using start time {}'.format(dumpdate(t1)))
         if t2 is None:
             t2 = self.t_end
             if verbose:
-                print('... using end time %s' % (dumpdate(t2)))
+                print('... using end time {}'.format(dumpdate(t2)))
         # check timestamp
         if t1 < self.t_start:
             raise ValueError('Start time t1 = ' +
                              '%s < %s' % (t1, self.t_start) +
                              ' lies outside of data range!')
         if t2 > self.t_end:
-            raise ValueError('End time t2 = ' + '%s > %s' % (t1, self.t_end) +
-                             ' lies outside of data range!')
+            err_str = ('End time t2 = {} > {} '
+                       'lies outside of data range!').format(t1, self.t_end)
+            raise ValueError(err_str)
         if t2 < t1:
-            raise ValueError('End time smaller than start time, t2 = ' +
-                             '%s > %s = t1' % (t2, t1))
+            err_str = ('End time smaller than start time, t2 = '
+                       '{} > {} = t1').format(t2, t1)
+            raise ValueError(err_str)
         return t1, t2
 
     def plot(self, plane='h', t1=None, t2=None, slots=None, avg=10, fit=True,
