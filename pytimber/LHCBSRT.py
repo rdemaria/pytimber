@@ -135,19 +135,18 @@ def _get_timber_data(beam, t1, t2, db=None):
 
 def _timber_to_emit(bsrt_array):
     """
-    returns dictionary with emittance etc. as used in BSRT.fromdb
+    returns DataFrame with emittance etc. as used in BSRT.fromdb
 
     Parameters:
     -----------
     bsrt_array : data extracted from timber with _get_timber_data
-    and structured array format, the MultiIndex DataFrame breaks
-    the fitting & plotting functions
+    and structured array format
 
     Returns:
     --------
-    bsrt_array: DataFrame of [time, gate, sigh, sigv, lsfh_time,
-        lsfv_time, beth_time, betv_time, energy_time,
-        lsfh, lsfv, beth, betv, energy]
+    bsrt_array: MultiIndex DataFrame of:
+                sigh sigv lsfh lsfv beth betv emith emitv energy
+    slots time
     """
 
     t_unit_change = parsedate('2018-01-01 00:00:00')
@@ -198,13 +197,14 @@ class BSRT(object):
     -----------
     timber_vars : timber variables needed to calculate
                       normalized emittance
-    beam             : 'B1' for beam 1 or 'B2' for beam2
-    t_start, t_end   : start/end time of extracted data
-    emit    : dictionary of normalized emittances
-              {slot: [time[s], emith[um], emitv[um]]}
-    emit_fit : dictionary of fit of normalized emittances
-              between times t1 and t2
-              {slot: [t1[s], t2[s], emith [um],emitv[um]]}
+    beam : 'B1' for beam 1 or 'B2' for beam2
+    t_start, t_end : start/end time of extracted data
+    emit : MultiIndex DataFrame of:
+                sigh sigv lsfh lsfv beth betv emith emitv energy
+    slots time
+    emit_fit : MultiIndex DataFrame of:
+                ah sigah tauh sigtauh av sigav tauv sigtauv
+    slots t1 t2
 
     Methods:
     --------
@@ -268,7 +268,7 @@ class BSRT(object):
         Returns:
         -------
         class: BSRT class instance with DataFrame of normalized emittances
-               stored in self.emit.
+               stored in self.emit as a MultiIndex DataFrame:
                    sigh sigv lsfh lsfv beth betv emith emitv energy
         slots time
         """
@@ -329,9 +329,8 @@ class BSRT(object):
                                       t1=self.t_start, t2=self.t_end,
                                       db=self.db)
         # only change values between t1 and t2
-        mask = np.logical_and(
-            bsrt_array['time'] >= t1,
-            bsrt_array['time'] <= t2)
+        mask = np.logical_and(bsrt_array['time'] >= t1,
+                              bsrt_array['time'] <= t2)
         for k, v in zip(['beth', 'betv', 'lsfh', 'lsfv', 'energy'], [
                         beth, betv, lsfh, lsfv, energy]):
             if verbose:
@@ -448,12 +447,12 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                 if epst2_fit < 0:
                     err_str = ("Invalid value of BSRT emittance "
                                "(eps < 0) for time "
-                               "t2={}").format(pytimber.parsedate(time[-1]))
+                               "t2={}").format(parsedate(time[-1]))
                     raise ValueError(err_str)
                 if epst1_fit < 0:
                     err_str = ("Invalid value of BSRT emittance "
                                "(eps < 0) for time "
-                               "t1={}").format(pytimber.parsedate(time[0]))
+                               "t1={}").format(parsedate(time[0]))
                     raise ValueError(err_str)
                 # initial values for fit parameters
                 a_init = epst1_fit
@@ -523,7 +522,7 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
         return t1, t2
 
     def plot(self, plane='h', t1=None, t2=None, slots=None, avg=10, fit=True,
-             color=None, label=None, verbose=False):
+             color=None, label=None, verbose=False, err_bar=False):
         """plot BSRT data and fit. The unaveraged raw data is used for the
         fit.
 
@@ -570,9 +569,19 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                         '.', color=c, label=label)
             # averaged data
             else:
+                if len(eps) < avg:
+                    if verbose:
+                        warn_str = ('slot {} number of measurements: {} < '
+                                    'requested moving avg: {}')
+                        print(warn_str.format(slot, len(eps), avg))
+                        warn_str = 'averaging over {} measurements'
+                        print(warn_str.format(len(eps)))
+                    window = len(eps)
+                else:
+                    window = avg
                 epsavg = {}  # use a dictionary instead of a structured array
                 for k in ['time', 'emit{}'.format(plane)]:
-                    epsavg[k] = movingaverage(eps.reset_index()[k], avg)
+                    epsavg[k] = movingaverage(eps.reset_index()[k], window)
                 pl.plot(epsavg['time'],
                         epsavg['emit{}'.format(plane)],
                         '.',
