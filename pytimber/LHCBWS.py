@@ -239,7 +239,7 @@ def _timber_to_dict(beam, plane, direction, data, db):
           1
 
     dict: dictionary with structure
-      {time: [slots, pos, amp]},
+      {time: [slot, pos, amp]},
     """
     keys_dic = ['gate', 'bunch', 'beta', 'emit',
                 'pos', 'amp', 'gain']
@@ -329,7 +329,7 @@ class BWS(object):
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slots, pos, amp]}
+                {time: [slot, pos, amp]}
 
     data_fit : contains two dictionaries both indexed with the plane
                ('H' or 'V') and the direction ('IN' or 'OUT'). The first
@@ -341,7 +341,7 @@ class BWS(object):
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time:  [slots, amp_norm, p_gauss, pcov_gauss]},
+                {time:  [slot, amp_norm, p_gauss, pcov_gauss]},
 
     Methods:
     --------
@@ -398,7 +398,7 @@ class BWS(object):
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slots, pos, amp]}
+                {time: [slot, pos, amp]}
 
                 self.data_fit: contains two dictionaries both indexed with the
                 plane ('H' or 'V') and the direction ('IN' or 'OUT').
@@ -412,7 +412,7 @@ class BWS(object):
                        1
 
                 The second element contains a dict['time'] --> structured array
-                {time: [slots, amp_norm, p_gauss, pcov_gauss]}
+                {time: [slot, amp_norm, p_gauss, pcov_gauss]}
 
 
         """
@@ -575,7 +575,7 @@ class BWS(object):
 
         data_fit_dic: a dict['time'] --> structured array
             contains the fit params
-            {time: [slots, amp_norm, p_gauss, pcov_gauss]}
+            {time: [slot, amp_norm, p_gauss, pcov_gauss]}
         '''
         df_fit = []
         dic_fit = {}
