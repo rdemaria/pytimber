@@ -216,7 +216,7 @@ def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
 
 def _timber_to_dict(beam, plane, direction, data, db):
     """
-    converts timber data to dictionary of the slot number
+    converts timber data to dictionary of the slots number
     as keys, explicitly:
 
     Parameters:
@@ -232,14 +232,14 @@ def _timber_to_dict(beam, plane, direction, data, db):
     mulitIndex DataFrame contaning the 1D data
         the indexing of the DataFrame is:
                gain, egev, beta, emit
-    time slot
+    time slots
       1   0
           1
       2   0
           1
 
     dict: dictionary with structure
-      {time: [slot, pos, amp]},
+      {time: [slots, pos, amp]},
     """
     keys_dic = ['gate', 'bunch', 'beta', 'emit',
                 'pos', 'amp', 'gain']
@@ -323,25 +323,25 @@ class BWS(object):
                ('H' or 'V') and the direction ('IN' or 'OUT'). The first
                dict contains a MultiIndex DataFrame containing :
                           gain, egev, beta, emit
-               time slot
+               time slots
                  1   0
                      1
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slot, pos, amp]}
+                {time: [slots, pos, amp]}
 
     data_fit : contains two dictionaries both indexed with the plane
                ('H' or 'V') and the direction ('IN' or 'OUT'). The first
                dict contains a MultiIndex DataFrame containing :
                          emit_gauss, emit_gauss_err
-               time slot
+               time slots
                  1   0
                      1
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time:  [slot, amp_norm, p_gauss, pcov_gauss]},
+                {time:  [slots, amp_norm, p_gauss, pcov_gauss]},
 
     Methods:
     --------
@@ -392,27 +392,27 @@ class BWS(object):
                ('H' or 'V') and the direction ('IN' or 'OUT').
                The first dict contains a MultiIndex DataFrame containing :
                           gain, egev, beta, emit
-               time slot
+               time slots
                  1   0
                      1
                  2   0
                      1
                 The second dict contains a dict['time'] --> structured array
-                {time: [slot, pos, amp]}
+                {time: [slots, pos, amp]}
 
                 self.data_fit: contains two dictionaries both indexed with the
                 plane ('H' or 'V') and the direction ('IN' or 'OUT').
                 The first dict contains a MultiIndex DataFrame containing :
                              emit_gauss, emit_gauss_err
 
-                time, slot
+                time, slots
                   1    0
                        1
                   2    0
                        1
 
                 The second element contains a dict['time'] --> structured array
-                {time: [slot, amp_norm, p_gauss, pcov_gauss]}
+                {time: [slots, amp_norm, p_gauss, pcov_gauss]}
 
 
         """
@@ -433,7 +433,7 @@ class BWS(object):
         timber_vars = timber_data.keys()
         # generate dictionary
         if verbose:
-            print('... generating dictionary')
+            print('... converting data')
         data_1d = {}
         data_nd = {}
         for plane in 'HV':
@@ -530,7 +530,7 @@ class BWS(object):
             and the 'emit_gauss_err'
                          emit_gauss, emit_gauss_err
 
-            time, slot
+            time, slots
 
             1   0
             1
@@ -566,7 +566,7 @@ class BWS(object):
             and the 'emit_gauss_err'
                          emit_gauss, emit_gauss_err
 
-            time, slot
+            time, slots
 
             1   0
             1
@@ -575,7 +575,7 @@ class BWS(object):
 
         data_fit_dic: a dict['time'] --> structured array
             contains the fit params
-            {time: [slot, amp_norm, p_gauss, pcov_gauss]}
+            {time: [slots, amp_norm, p_gauss, pcov_gauss]}
         '''
         df_fit = []
         dic_fit = {}
