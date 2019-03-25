@@ -1,7 +1,38 @@
 # pytimber changelog
 
+### 2.7.1 (L. Coyle)
+
+  Reworked the LHCBSRT and LHCBWS classes.
+
+  LHCBSRT:
+
+  * Data processing makes use of pandas DataFrames
+  * Output data is now a MultiIndex DataFrame instead of a dict of structured arrays
+
+  The plotting could be improved by making use of DataFrame plotting functionalities.
+
+  LHCBWS:
+
+  * PEP 8 compliance
+  * Separated the gaussian fitting from the data fetching
+  * Improved gaussian fitting 
+  * Output format is a MultiIndex DataFrame of the compatible data and a dict of structured arrays (the original data format) for the rest
+
+  toolbox:
+
+  * PEP8 compliance
+
+  dataquery:
+
+  * PEP8 compliance
+
+Added examples/BWSExample.ipynb to provide some example usages of LHCBWS
+
+Added an example of emittance plotting with error bars estimates in examples/BSRTExample.ipynb.
+
 
 ### 2.7.0
+
   * Fix PEP8 issues in LHCBSRT
 
 
