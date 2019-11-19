@@ -66,7 +66,7 @@ def test_Timestamp():
     now2=ldb.fromTimestamp(ts_now,unixtime=True)
     dt_now2=ldb.fromTimestamp(ts_now,unixtime=False)
     assert now==now2
-    assert str(ts_now)[:17]==dt_now2.strftime("%Y-%m-%d %H:%M:%S.%f")
+    assert str(ts_now)[:26]==dt_now2.strftime("%Y-%m-%d %H:%M:%S.%f")[:26]
 
 
 

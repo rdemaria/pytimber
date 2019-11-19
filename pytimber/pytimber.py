@@ -103,7 +103,7 @@ class LoggingDB(object):
         self._builder = builder
         self._md = builder.createMetaService()
         self._ts = builder.createTimeseriesService()
-        self._FillService = FillService = builder.createLHCFillService()
+        self._FillService = builder.createLHCFillService()
         self.tree = Hierarchy('root', None, None, self._md)
 
     def toTimestamp(self, t):
