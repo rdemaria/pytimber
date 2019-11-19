@@ -56,6 +56,11 @@ Stat = namedtuple(
      'StandardDeviationValue']
 )
 
+
+def _Timestamp2float(ts):
+    return int(ts.getTime() / 1000) + ts.getNanos() / 1e9
+
+
 if six.PY3:
     long = int
 
@@ -122,7 +127,7 @@ class LoggingDB(object):
         if ts is None:
             return None
         else:
-            t = ts.fastTime / 1000.0 + ts.getNanos() / 1.0e9
+            t = _Timestamp2float(ts)
             if unixtime:
                 return t
             else:
@@ -660,7 +665,7 @@ class LoggingDB(object):
         for variable in variables:
             metadata = (self._md.getVectorElements(variable)
                         .getVectornumericElements())
-            ts = [tt.fastTime / 1000 + tt.getNanos() / 1e9 for tt in metadata]
+            ts = [_Timestamp2float(tt) for tt in metadata]
             #            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
             #                    for a in metadata.values()]
             vv = [[aa.value for aa in a.iterator()] for a in metadata.values()]
