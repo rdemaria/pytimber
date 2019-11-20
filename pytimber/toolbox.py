@@ -13,7 +13,7 @@ def gammarel(EGeV, m0=mp):
     EGeV: kinetic energy [GeV]
     m0: restmass [MeV]
     """
-    return (EGeV * 1.e3 + m0) / m0
+    return (EGeV * 1.0e3 + m0) / m0
 
 
 def betarel(EGeV, m0=mp):
@@ -29,6 +29,7 @@ def emitnorm(eps, EGeV, m0=mp):
     beta = betarel(EGeV, m0)
     return eps * (gamma * beta)
 
+
 # ----- general functions
 
 
@@ -40,7 +41,7 @@ def movingaverage(data, navg):
     """calculates the moving average over
     *navg* data points"""
     weights = np.repeat(1.0, navg) / navg
-    dataavg = np.convolve(data, weights, 'valid')
+    dataavg = np.convolve(data, weights, "valid")
     return dataavg
 
 

@@ -1,4 +1,5 @@
 import numpy as np
+
 try:
     import matplotlib
     import matplotlib.pyplot as pl
@@ -20,7 +21,7 @@ def flattenoverlap(v, test=100, start=0):
         v2 = v[j]
         newi = 0
         for i in range(start, len(v2) - test):
-            s = sum(v1[-test:] - v2[i:i + test])
+            s = sum(v1[-test:] - v2[i : i + test])
             if s == 0:
                 newi = i + test
                 break
@@ -34,7 +35,7 @@ def flattenoverlap(v, test=100, start=0):
 
 class rdmDateFormatter(matplotlib.ticker.Formatter):
     def __call__(self, x, pos=None):
-        return dumpdate(x, fmt='%Y-%m-%d\n%H:%M:%S')
+        return dumpdate(x, fmt="%Y-%m-%d\n%H:%M:%S")
 
 
 def set_xaxis_date(ax=None, bins=6):
@@ -74,18 +75,33 @@ def int2keyword(n):
 def subdict(d, names):
     return dict([(k, d[k]) for k in names if k in d])
 
+
 # from objdebug import ObjDebug as object
 
 
 class DataQuery(object):
     subplotchoices = {
-        1: (1, 1), 2: (2, 1), 3: (3, 1),
-        4: (2, 2), 5: (2, 3), 6: (2, 3),
-        7: (3, 3), 8: (3, 3), 9: (3, 3)}
+        1: (1, 1),
+        2: (2, 1),
+        3: (3, 1),
+        4: (2, 2),
+        5: (2, 3),
+        6: (2, 3),
+        7: (3, 3),
+        8: (3, 3),
+        9: (3, 3),
+    }
     figchoices = {
-        1: (8, 6), 2: (8, 6), 3: (8, 6),
-        4: (10, 10), 5: (12, 10), 6: (12, 10),
-        7: (12, 10), 8: (12, 10), 9: (12, 10)}
+        1: (8, 6),
+        2: (8, 6),
+        3: (8, 6),
+        4: (10, 10),
+        5: (12, 10),
+        6: (12, 10),
+        7: (12, 10),
+        8: (12, 10),
+        9: (12, 10),
+    }
 
     def __init__(self, source, names, t1, t2, data=None, **options):
         self.source = source
@@ -107,15 +123,15 @@ class DataQuery(object):
         return [subdict(self._cachedflatten, names)]
 
     def _setcache(self, lst):
-        self._cachedflatten, = lst
+        (self._cachedflatten,) = lst
 
     def _setshortcuts(self):
         if self.data:
             for i, name in enumerate(self.names):
                 s = int2keyword(i)
                 idx, val = self.data[name]
-                setattr(self, s + '0', idx)
-                setattr(self, s + '1', val)
+                setattr(self, s + "0", idx)
+                setattr(self, s + "1", val)
 
     def __repr__(self):
         out = []
@@ -127,7 +143,7 @@ class DataQuery(object):
             if len(idx) > 0:
                 typ += " <%gs|%gs>" % (idx[0] - self.t1, self.t2 - idx[-1])
             out.append(typ)
-        return '\n'.join(out)
+        return "\n".join(out)
 
     def search(self, names):
         return self.source.search(names)
@@ -184,8 +200,9 @@ class DataQuery(object):
                     mask = idx < (self.t2)
                     self.data[name] = idx[mask], val[mask]
             else:
-                dq = self.source.get(self.names, self.t2,
-                                     self.t2 + after, **self.options)
+                dq = self.source.get(
+                    self.names, self.t2, self.t2 + after, **self.options
+                )
                 self.t2 += after
                 for name in self.names:
                     idx, val = self.data[name]
@@ -203,10 +220,9 @@ class DataQuery(object):
                     mask = idx > (self.t1)
                     self.data[name] = idx[mask], val[mask]
             else:
-                dq = self.source.get(self.names,
-                                     self.t1 - before,
-                                     self.t1 - eps,
-                                     **self.options)
+                dq = self.source.get(
+                    self.names, self.t1 - before, self.t1 - eps, **self.options
+                )
                 self.t1 -= before
                 for name in self.names:
                     idx, val = self.data[name]
@@ -248,8 +264,7 @@ class DataQuery(object):
         newdata = {}
         for name in names:
             newdata[name] = self.data[name]
-        dq = DataQuery(self.source, names, self.t1,
-                       self.t2, newdata, **self.options)
+        dq = DataQuery(self.source, names, self.t1, self.t2, newdata, **self.options)
         dq._setcache(self._getcache(names))
         return dq
 
@@ -275,14 +290,14 @@ class DataQuery(object):
             datanew[vn] = tnew, vnew
         t1 = tnew[0]
         t2 = tnew[-1]
-        dq = DataQuery(self.source, self.names, t1,
-                       t2, datanew, **self.options)
+        dq = DataQuery(self.source, self.names, t1, t2, datanew, **self.options)
         return dq
 
     def copy(self, **argsn):
         """copy source including data"""
-        dq = DataQuery(self.source, self.names, self.t1, self.t2,
-                       self.data, **self.options)
+        dq = DataQuery(
+            self.source, self.names, self.t1, self.t2, self.data, **self.options
+        )
         dq.__dict__.update(argsn)
         return dq
 
@@ -292,7 +307,7 @@ class DataQuery(object):
         dq.reload()
         return dq
 
-    def get_ts_bmode(self, bm='HX:BMODE_SQUEEZE'):
+    def get_ts_bmode(self, bm="HX:BMODE_SQUEEZE"):
         """create list (fill,starttime,endtime) of timestamps with
         beam modes=bm using 'LHCLOG_PRO_DEFAULT' as default
         database"""
@@ -305,35 +320,37 @@ class DataQuery(object):
         except IndexError:  # catch exception in case last entry of array is 1
             start = start[:-1]
             end = tbmode[np.where(nbmode == 1)[0][:-1] + 1]
-            print('time window for bm=' + bm +
-                  'lies partly outside the requested time window')
+            print(
+                "time window for bm="
+                + bm
+                + "lies partly outside the requested time window"
+            )
         return zip(map(dumpdate, start), map(dumpdate, end))
 
-    def plot_2d(self, vscale='auto', rel_time=False, date_axes=True,
-                timezone='local'):
+    def plot_2d(self, vscale="auto", rel_time=False, date_axes=True, timezone="local"):
         """plot data with date in local time"""
         for i, name in enumerate(self.names):
             t, v = self.data[name]
             if rel_time:
                 t = t - t[0]
-            if vscale == 'auto':
+            if vscale == "auto":
                 vmax = np.max(abs(v))
                 vexp = np.floor(np.log10(vmax))
                 if abs(vexp) > 50:
                     lbl = name
                     vvscale = 1
                 else:
-                    lbl = '$10^{%d}$ %s' % (int(vexp), name)
-                    vvscale = 10**-vexp
+                    lbl = "$10^{%d}$ %s" % (int(vexp), name)
+                    vvscale = 10 ** -vexp
             elif float(vscale) == 1.0:
                 lbl = name
                 vvscale = 1
             else:
-                lbl = '$%g$ %s' % (vscale, name)
+                lbl = "$%g$ %s" % (vscale, name)
                 vvscale = vscale
-            pl.plot(t, v * vvscale, '-', label=lbl)
+            pl.plot(t, v * vvscale, "-", label=lbl)
             if date_axes:
-                if timezone == 'utc':
+                if timezone == "utc":
                     set_xaxis_utctime()
                 else:
                     set_xaxis_date()
@@ -343,46 +360,54 @@ class DataQuery(object):
             pl.grid(True)
         return self
 
-    def plot_2d_sub(self, vscale='auto', rel_time=False, date_axes=True,
-                    xlabel=None, ylabel=None, title=None, timezone='local'):
+    def plot_2d_sub(
+        self,
+        vscale="auto",
+        rel_time=False,
+        date_axes=True,
+        xlabel=None,
+        ylabel=None,
+        title=None,
+        timezone="local",
+    ):
         w, h = self.figchoices[len(self.names)]
         row, col = self.subplotchoices[len(self.names)]
         fig = pl.figure(figsize=(w, h))
         if title is not None:
             fig.suptitle(title, fontsize=12)
         gs = gridspec.GridSpec(row, col)
-        gs.update(hspace=.4, wspace=0.4)
+        gs.update(hspace=0.4, wspace=0.4)
         for i, name in enumerate(self.names):
             sb = fig.add_subplot(gs[i])
             t, v = self.data[name]
             if rel_time:
                 t = t - t[0]
-            if vscale == 'auto':
+            if vscale == "auto":
                 vmax = np.max(abs(v))
                 vexp = np.floor(np.log10(vmax))
                 if abs(vexp) > 50:
                     lbl = name
                     vvscale = 1
                 else:
-                    lbl = '$x10^{%d}$ %s' % (int(vexp), name)
-                    vvscale = 10**-vexp
+                    lbl = "$x10^{%d}$ %s" % (int(vexp), name)
+                    vvscale = 10 ** -vexp
             elif float(vscale) == 1.0:
                 lbl = name
                 vvscale = 1
             else:
-                lbl = '$%g$ %s' % (vscale, name)
+                lbl = "$%g$ %s" % (vscale, name)
                 vvscale = vscale
-            sb.plot(t, v * vvscale, '-')
+            sb.plot(t, v * vvscale, "-")
             sb.set_title(lbl, fontsize=12)
             if date_axes:
-                if timezone == 'utc':
+                if timezone == "utc":
                     set_xaxis_utctime()
                     if xlabel is None:
-                        xlabel = 'UTC time'
+                        xlabel = "UTC time"
                 else:
                     set_xaxis_date()
                     if xlabel is None:
-                        xlabel = 'local time'
+                        xlabel = "local time"
             else:
                 sb.xlabel("time [sec]")
             sb.axes.get_yaxis().get_major_formatter().set_useOffset(False)
@@ -394,8 +419,9 @@ class DataQuery(object):
             sb.grid(True)
         return self
 
-    def plot_specgramflat(self, NFFT=1024, Fs=1, noverlap=0, fmt='%H:%M:%S',
-                          realtime=False):
+    def plot_specgramflat(
+        self, NFFT=1024, Fs=1, noverlap=0, fmt="%H:%M:%S", realtime=False
+    ):
         """plot a spectogram of the data, where NFFT, Fs and noverlap are
         the options defined in specgram"""
         row, col = self.subplotchoices[len(self.names)]
@@ -408,35 +434,38 @@ class DataQuery(object):
             im = pl.specgram(val, NFFT=NFFT, Fs=Fs, noverlap=noverlap)[-1]
             pl.title(name)
             if realtime:
-                im.set_extent([t[0],
-                              t[0] + len(val) / float(Fs),
-                              0,
-                              float(Fs) / 2])
+                im.set_extent([t[0], t[0] + len(val) / float(Fs), 0, float(Fs) / 2])
             else:
                 im.set_extent([t[0], t[-1], 0, 0.5])
             set_xaxis_date()
         return self
 
-    def plot_specgramflat_simple(self, name, NFFT=1024, Fs=1, noverlap=0,
-                                 fmt='%H:%M:%S', realtime=False):
+    def plot_specgramflat_simple(
+        self, name, NFFT=1024, Fs=1, noverlap=0, fmt="%H:%M:%S", realtime=False
+    ):
         t, val = self.data[name]
         val = self.flatten(name)
         print("dq.flatten('%s')" % name)
         im = pl.specgram(val, NFFT=NFFT, Fs=Fs, noverlap=noverlap)[-1]
         pl.title(name)
         if realtime:
-            im.set_extent([t[0],
-                          t[0] + len(val) / float(Fs),
-                          0,
-                          float(Fs) / 2])
+            im.set_extent([t[0], t[0] + len(val) / float(Fs), 0, float(Fs) / 2])
         else:
             im.set_extent([t[0], t[-1], 0, 0.5])
         set_xaxis_date()
         return self
 
-    def plot_specgramfft_simple(self, name, NFFT=None, Fs=1, fmt='%H:%M:%S',
-                                realtime=False, timezone='local', frange=None,
-                                vmax=None):
+    def plot_specgramfft_simple(
+        self,
+        name,
+        NFFT=None,
+        Fs=1,
+        fmt="%H:%M:%S",
+        realtime=False,
+        timezone="local",
+        frange=None,
+        vmax=None,
+    ):
         """plot a spectogram of existing FFT data, where
            *Fs*: scalar
            The sampling frequency (samples per time unit).  It is used
@@ -445,10 +474,10 @@ class DataQuery(object):
            *vmin* *vmax*:
            saturate values outside of this range"""
         t, val = self.data[name]
-        if(NFFT is None):
+        if NFFT is None:
             (nn, NFFT) = np.shape(val)
         ff = np.linspace(1, NFFT, NFFT) * Fs / (NFFT * 2)  # frequency vector
-        if(frange is not None):  # take only data in range (fstart,fend)=frange
+        if frange is not None:  # take only data in range (fstart,fend)=frange
             fstart, fend = frange  # get the index fstart, fend
             df = Fs / (NFFT * 2)  # spacing between frequencies
             ifstart = int(fstart / df)
@@ -459,11 +488,11 @@ class DataQuery(object):
         pl.pcolormesh(X, Y, val.T, vmax=vmax)
         pl.axis([X.min(), X.max(), Y.min(), Y.max()])
         pl.title(name)
-        pl.ylabel('frequency [Hz]')
-        if timezone == 'utc':
+        pl.ylabel("frequency [Hz]")
+        if timezone == "utc":
             set_xaxis_utctime()
-            pl.xlabel('UTC time')
+            pl.xlabel("UTC time")
         else:
             set_xaxis_date()
-            pl.xlabel('local time')
+            pl.xlabel("local time")
         return self
