@@ -3,7 +3,7 @@
 
 import ast
 import os
-import setuptools
+from setuptools import setup, find_packages
 
 from setuptools.command.install import install as _install
 
@@ -46,18 +46,23 @@ class install(_install):
         _install.run(self)
 
 
-setuptools.setup(
+setup(
     name='pytimber',
     version=get_version_from_init(),
     description='A Python wrapping of CALS API',
     author='Riccardo De Maria',
     author_email='riccardo.de.maria@cern.ch',
     url='https://github.com/rdemaria/pytimber',
-    packages=['pytimber'],
+    packages=find_packages(),
     install_requires=[
+        'python-dateutil',
         'JPype1>=0.6.2',
-        'cmmnbuild-dep-manager>=2.1.2'
+        'cmmnbuild-dep-manager>=2.1.2',
+        'matplotlib',
+        'pytz',
+        'scipy',
     ],
+    extras_require={'test': ['pytest']},
     cmdclass={
         'install': install
     }

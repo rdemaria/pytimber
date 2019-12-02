@@ -1,0 +1,70 @@
+.conda_installer:
+  image: continuumio/miniconda3
+  variables:
+    JDK_VERSION: "8"
+    PY_VERSION: "3.6"
+    JPYPE_VERSION: "0.7"
+    EXTRA_DEPS: ""
+  before_script:
+    - conda create -n test_env openjdk=${JDK_VERSION} python=${PY_VERSION} Jpype1=${JPYPE_VERSION} ${EXTRA_DEPS} --yes --quiet -c conda-forge
+    - source activate test_env
+
+.install:
+  script:
+    - pip install .[test]
+    - mkdir not-the-source && cd not-the-source
+    - pytest --pyargs pytimber
+
+
+.dev_install:
+  script:
+    - pip install -e .[test]
+    - pip install pytest-cov
+    - pytest ./pytimber --cov=pytimber  --junitxml=report.xml
+
+
+install_py36_jdk8_jp0p6:
+  variables:
+    JDK_VERSION: "8"
+    PY_VERSION: "3.6"
+    JPYPE_VERSION: "0.6"
+  extends:
+    - .conda_installer
+    - .install
+
+
+install_py36_jdk8_jp0p7:
+  variables:
+    JDK_VERSION: "8"
+    PY_VERSION: "3.6"
+    JPYPE_VERSION: "0.7"
+  extends:
+    - .conda_installer
+    - .install
+
+
+install_py36_jdk11:
+  extends:
+    - .conda_installer
+    - .install
+  variables:
+    JDK_VERSION: "11"
+
+
+install_py27_jdk8:
+  extends:
+    - .conda_installer
+    - .install
+  variables:
+    PY_VERSION: "2.7"
+    EXTRA_DEPS: "subprocess32"
+
+
+dev_py36_jdk8:
+  variables:
+    JDK_VERSION: "8"
+    PY_VERSION: "3.6"
+    JPYPE_VERSION: "0.7"
+  extends:
+    - .conda_installer
+    - .dev_install
