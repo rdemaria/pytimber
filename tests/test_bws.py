@@ -1,12 +1,12 @@
 import os
 import sys
 
-sys.path.insert(0,os.getenv('HOME')+"/cernbox/lib/python/pagestore/")
-sys.path.insert(0,os.getenv('HOME')+"/cernbox/lib/python/pytimber/")
+# sys.path.insert(0,os.getenv('HOME')+"/cernbox/lib/python/pagestore/")
+# sys.path.insert(0,os.getenv('HOME')+"/cernbox/lib/python/pytimber/")
 
 import pytimber
 from pytimber import BWS,BSRT
-import pagestore
+import pytimber.pagestore as pagestore
 
 datadir=os.getenv('HOME')+"/data/MDs/MD2202/datadb"
 dbfile_ro=os.getenv('HOME')+"/data/MDs/MD2202/md2202.db"
