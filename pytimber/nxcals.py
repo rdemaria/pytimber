@@ -215,9 +215,9 @@ klist
             return self.processVariable(ds)
 
     def processVariable(self,ds):
-            ts_type=ds.dtypes()[1]._2()
-            val_type=ds.dtypes()[2]._2()
             data=ds.sort('nxcals_timestamp').select('nxcals_timestamp','nxcals_value').na().drop()
+            ts_type=data.dtypes()[0]._2()
+            val_type=data.dtypes()[1]._2()
             ts=self._SparkDataFrameConversions.extractDoubleColumn(data,"nxcals_timestamp")
             if val_type == "FloatType" or val_type == "DoubleType":
                 val=self._SparkDataFrameConversions.extractDoubleColumn(data,"nxcals_value")
