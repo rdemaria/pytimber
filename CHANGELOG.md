@@ -1,5 +1,11 @@
 # pytimber changelog
 
+### 2.9.0
+  Add NXCALS support
+
+### 2.8.0
+  Fix incompatibility with Jpype 0.7.x
+
 ### 2.7.1 (L. Coyle)
 
   Reworked the LHCBSRT and LHCBWS classes.
