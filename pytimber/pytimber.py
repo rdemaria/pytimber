@@ -99,6 +99,7 @@ class LoggingDB(object):
         # Start JVM
         mgr = cmmnbuild_dep_manager.Manager("pytimber", logging.WARNING)
         mgr.start_jpype_jvm()
+        self._mgr=mgr
 
         # log4j config
         null = jpype.JPackage("org").apache.log4j.varia.NullAppender()
@@ -187,8 +188,8 @@ class LoggingDB(object):
     def getVariables(self, pattern):
         """Get Variable from pattern. Wildcard is '%'."""
         types = self._VariableDataType.ALL
-        if self._source=='nxcals':
-            pattern=pattern.replace('%','%25')
+        #if self._source=='nxcals':
+        #    pattern=pattern.replace('%','%25')
         v = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
         return list(v.getVariables())
 
@@ -257,7 +258,10 @@ class LoggingDB(object):
             return (np.array([], dtype=float), np.array([], dtype=float))
 
         #PrimitiveDataSets = jpype.JPackage("cern").lhc.commons.cals.PrimitiveDataSets
-        PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.PrimitiveDataSets
+        if self._source=='nxcals':
+            PrimitiveDataSets=jpype.JPackage("org").pytimber.utils.BackPortDataSets
+        else:
+            PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.PrimitiveDataSets
         timestamps = np.array(PrimitiveDataSets.unixTimestamps(dataset)[:], dtype=float)
         if not unixtime:
             timestamps = np.array(
@@ -556,7 +560,10 @@ class LoggingDB(object):
                         jvar, ts1, ts2, fundamentals
                     )
                 else:
-                    res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
+                    try:
+                       res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
+                    except Exception as ex:
+                        return ex
                 datatype = res.getVariableDataType().toString()
                 self._log.info(
                     "Retrieved {0} values for {1}".format(

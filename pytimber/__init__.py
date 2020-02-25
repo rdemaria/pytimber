@@ -53,4 +53,5 @@ __all__ = [
 # workaround for missing keyword
 # see (https://github.com/jpype-project/jpype/issues/540) to be fixed in new version
 import jpype
-jpype._pykeywords.KEYWORDS.add('and')
+if hasattr(jpype._pykeywords,'_KEYWORDS'):
+  jpype._pykeywords._KEYWORDS.add('and')

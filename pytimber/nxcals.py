@@ -66,6 +66,7 @@ class NXCals(object):
         os.system(cmd)
         os.unlink("tmpcert")
 
+    @staticmethod
     def create_keytab():
         if not os.path.isdir(nxcals_home):
             os.mkdir(nxcals_home)
