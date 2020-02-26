@@ -269,6 +269,7 @@ class LoggingDB(object):
             )
 
         dataclass = PrimitiveDataSets.dataClass(dataset)
+        print(datatype)
         if datatype == "MATRIXNUMERIC":
             if dataclass == spi.MatrixNumericDoubleData:
                 data = np.array(

@@ -24,14 +24,15 @@ from .nxcals import NXCals
 __version__ = "2.9.0"
 
 __cmmnbuild_deps__ = [
-    "accsoft-cals-extr-client",
-    "accsoft-cals-extr-domain",
-#    "lhc-commons-cals-utils",
-    "nxcals-backport-api",
     "pytimber-utils",
-    "slf4j-log4j12",
-    "slf4j-api",
-    "log4j",
+#    "accsoft-cals-extr-client",
+#    "accsoft-cals-extr-domain",
+    "nxcals-backport-api", #needed although it is also in pytimber-utils
+#    "lhc-commons-cals-utils",
+#    "slf4j-log4j12",
+#    "slf4j-api",
+#    "log4j",
+     {'product': 'jackson-databind',   'version': '2.9.0'},
 ]
 
 __all__ = [
