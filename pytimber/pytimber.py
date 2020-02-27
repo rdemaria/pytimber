@@ -262,6 +262,7 @@ class LoggingDB(object):
             PrimitiveDataSets=jpype.JPackage("org").pytimber.utils.BackPortDataSets
         else:
             PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.PrimitiveDataSets
+
         timestamps = np.array(PrimitiveDataSets.unixTimestamps(dataset)[:], dtype=float)
         if not unixtime:
             timestamps = np.array(
@@ -269,7 +270,30 @@ class LoggingDB(object):
             )
 
         dataclass = PrimitiveDataSets.dataClass(dataset)
-        print(datatype)
+
+        if self._source=='nxcals':
+            print(datatype,dataclass)
+            idx =  ~np.array([d.isNullValue() for d in dataset])
+            ds=np.array(dataset)[idx]
+            timestamps=timestamps[idx]
+            if datatype == "NUMERIC":
+                try:
+                    ds = np.array([ d.getDoubleValue() for d in ds])
+                except jpype.java.lang.NoSuchMethodException:
+                    try:
+                         ds = np.array([ d.getLongValue() for d in ds])
+                    except jpype.java.lang.NoSuchMethodException:
+                        pass
+            elif datatype == "VECTORNUMERIC":
+                try:
+                    ds = np.array([ d.getDoubleValues() for d in ds])
+                except jpype.java.lang.NoSuchMethodException:
+                    try:
+                         ds = np.array([ d.getLongValues() for d in ds])
+                    except jpype.java.lang.NoSuchMethodException:
+                        pass
+            return (timestamps,ds)
+
         if datatype == "MATRIXNUMERIC":
             if dataclass == spi.MatrixNumericDoubleData:
                 data = np.array(
@@ -286,7 +310,7 @@ class LoggingDB(object):
                     ]
                 )
             else:
-                self._log.warning("Unsupported datatype, returning the " "java object")
+                self._log.warning("'%s' unsupported datatype, returning the java object"%(datatype))
                 data = [t for t in dataset]
         elif datatype == "VECTORNUMERIC":
             if dataclass == spi.VectorNumericDoubleData:
@@ -561,10 +585,7 @@ class LoggingDB(object):
                         jvar, ts1, ts2, fundamentals
                     )
                 else:
-                    try:
-                       res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
-                    except Exception as ex:
-                        return ex
+                    res = self._ts.getDataInTimeWindow(jvar, ts1, ts2)
                 datatype = res.getVariableDataType().toString()
                 self._log.info(
                     "Retrieved {0} values for {1}".format(

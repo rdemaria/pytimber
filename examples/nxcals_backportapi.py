@@ -1,31 +1,24 @@
 import cmmnbuild_dep_manager
 
 import pytimber
-db=pytimber.LoggingDB(source="nxcals")
-db.search("%LHC%LUMI%")
+cals=pytimber.LoggingDB()
+back=pytimber.LoggingDB(source="nxcals")
+
 
 t1="2018-11-27 01:00:00.000"
 t2="2018-11-27 01:10:00.000"
-out=db.get('LHC.BLM.LIFETIME:LUMINOSITY_LOSS',t1,t2)
-ts,val=db.get('LHC.BLM.LIFETIME:LUMINOSITY_LOSS',t1,t2)
-
-t1="2018-11-27 01:00:00.000"
-t2="2018-11-27 01:10:00.000"
-ts,val=db.get('LHC.BQBBQ.CONTINUOUS.B2:ACQ_DATA_H',t1,t2)
+name="LHC.BLM.LIFETIME:LUMINOSITY_LOSS"
+ts1,ds1=cals.get(name,t1,t2)[name]
+ts2,ds2=back.get(name,t1,t2)[name]
 
 
 
-nxcals=pytimber.NXCals()
+t1="2016-08-08 17:57:00"
+t2="2016-08-08 17:58:00"
+name='LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H'
 
-import jpype
+ts1,ds1=cals.get(name,t1,t2)[name]
+ts2,ds2=back.get(name,t1,t2)[name]
 
-mgr=nxcals._mgr
-
-
-ServiceBuilder=nxcals._cern.nxcals.api.backport.client.service.ServiceBuilder
-
-ts=ServiceBuilder.getInstance().createTimeseriesService()
-md=ServiceBuilder.getInstance().createMetaService()
-
-
-
+cals.search("%LHC%LUMI%")
+back.search("%LHC%LUMI%")

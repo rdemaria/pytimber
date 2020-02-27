@@ -32,7 +32,11 @@ __cmmnbuild_deps__ = [
 #    "slf4j-log4j12",
 #    "slf4j-api",
 #    "log4j",
-     {'product': 'jackson-databind',   'version': '2.9.0'},
+     {'product': 'jackson-databind',   'version': '2.9.8'},
+     {'product': 'jackson-core',   'version': '2.9.8'},
+     {'product': 'jackson-datatype-guava',   'version': '2.9.8'},
+     {'product': 'jackson-datatype-jsr310',   'version': '2.9.8'},
+     {'product': 'jackson-annotations',   'version': '2.9.8'},
 ]
 
 __all__ = [
