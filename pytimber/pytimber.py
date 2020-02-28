@@ -292,6 +292,11 @@ class LoggingDB(object):
                          ds = np.array([ d.getLongValues() for d in ds])
                     except jpype.java.lang.NoSuchMethodException:
                         pass
+            elif datatype == "TEXTUAL":
+                ds = np.array([ d.getStringValue() for d in ds])
+            elif datatype == "VECTORSTRING":
+                ds = np.array([ dd.getStringValue() for dd in d for d in ds])
+
             return (timestamps,ds)
 
         if datatype == "MATRIXNUMERIC":
