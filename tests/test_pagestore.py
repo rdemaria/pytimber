@@ -18,4 +18,3 @@ def test_list():
     finally:
       db.delete()
 """
-

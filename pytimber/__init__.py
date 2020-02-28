@@ -18,15 +18,25 @@ from . import timberdata
 
 from .pagestore import PageStore
 
-__version__ = "2.8.0"
+from .nxcals import NXCals
+
+
+__version__ = "3.0.0-alpha"
 
 __cmmnbuild_deps__ = [
-    "accsoft-cals-extr-client",
-    "accsoft-cals-extr-domain",
-    "lhc-commons-cals-utils",
-    "slf4j-log4j12",
-    "slf4j-api",
-    "log4j",
+    "pytimber-utils",
+    #    "accsoft-cals-extr-client",
+    #    "accsoft-cals-extr-domain",
+    "nxcals-backport-api",  # needed although it is also in pytimber-utils
+    #    "lhc-commons-cals-utils",
+    #    "slf4j-log4j12",
+    #    "slf4j-api",
+    #    "log4j",
+    {"product": "jackson-databind", "version": "2.9.8"},
+    {"product": "jackson-core", "version": "2.9.8"},
+    {"product": "jackson-datatype-guava", "version": "2.9.8"},
+    {"product": "jackson-datatype-jsr310", "version": "2.9.8"},
+    {"product": "jackson-annotations", "version": "2.9.8"},
 ]
 
 __all__ = [
@@ -44,3 +54,10 @@ __all__ = [
     "timberdata",
     "PageStore",
 ]
+
+# workaround for missing keyword
+# see (https://github.com/jpype-project/jpype/issues/540) to be fixed in new version
+import jpype
+
+if hasattr(jpype._pykeywords, "_KEYWORDS"):
+    jpype._pykeywords._KEYWORDS.add("and")

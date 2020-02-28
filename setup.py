@@ -56,8 +56,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'python-dateutil',
-        'JPype1>=0.6.2',
-        'cmmnbuild-dep-manager>=2.1.2',
+        'JPype1>=0.7.1',
+        'cmmnbuild-dep-manager>=2.3.1',
         'matplotlib',
         'pytz',
         'scipy',
