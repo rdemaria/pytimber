@@ -99,27 +99,35 @@ class LoggingDB(object):
         # Start JVM
         mgr = cmmnbuild_dep_manager.Manager("pytimber", logging.WARNING)
         mgr.start_jpype_jvm()
-        self._mgr=mgr
+        self._mgr = mgr
 
         # log4j config
         null = jpype.JPackage("org").apache.log4j.varia.NullAppender()
         jpype.JPackage("org").apache.log4j.BasicConfigurator.configure(null)
 
-        self._source=source
+        self._source = source
 
         if source == "nxcals":
             import getpass
-            username=getpass.getuser()
-            self._user=username
-            self._System=jpype.java.lang.System
-            self._System.setProperty("service.url", "https://cs-ccr-nxcals6.cern.ch:19093,https://cs-ccr-nxcals7.cern.ch:19093,https://cs-ccr-nxcals8.cern.ch:19093")
-            #self._System.setProperty("kerberos.principal", "rdemaria" )
-            #self._System.setProperty("kerberos.keytab", "/home/rdemaria/.nxcals/keytab")
-            ServiceBuilder=jpype.JPackage("cern").nxcals.api.backport.client.service.ServiceBuilder
+
+            username = getpass.getuser()
+            self._user = username
+            self._System = jpype.java.lang.System
+            self._System.setProperty(
+                "service.url",
+                "https://cs-ccr-nxcals6.cern.ch:19093,https://cs-ccr-nxcals7.cern.ch:19093,https://cs-ccr-nxcals8.cern.ch:19093",
+            )
+            # self._System.setProperty("kerberos.principal", "rdemaria" )
+            # self._System.setProperty("kerberos.keytab", "/home/rdemaria/.nxcals/keytab")
+            ServiceBuilder = jpype.JPackage(
+                "cern"
+            ).nxcals.api.backport.client.service.ServiceBuilder
             builder = ServiceBuilder.getInstance()
             self._md = builder.createMetaService()
             self._ts = builder.createTimeseriesService()
-            self._VariableDataType = jpype.JPackage( "cern").nxcals.api.backport.domain.core.constants.VariableDataType
+            self._VariableDataType = jpype.JPackage(
+                "cern"
+            ).nxcals.api.backport.domain.core.constants.VariableDataType
         else:
             # Data source preferences
             DataLocPrefs = jpype.JPackage(
@@ -140,7 +148,9 @@ class LoggingDB(object):
             self._ts = builder.createTimeseriesService()
             self._FillService = builder.createLHCFillService()
             self.tree = Hierarchy("root", None, None, self._md)
-            self._VariableDataType = jpype.JPackage( "cern").accsoft.cals.extr.domain.core.constants.VariableDataType
+            self._VariableDataType = jpype.JPackage(
+                "cern"
+            ).accsoft.cals.extr.domain.core.constants.VariableDataType
 
     def toTimestamp(self, t):
         Timestamp = jpype.java.sql.Timestamp
@@ -188,7 +198,7 @@ class LoggingDB(object):
     def getVariables(self, pattern):
         """Get Variable from pattern. Wildcard is '%'."""
         types = self._VariableDataType.ALL
-        #if self._source=='nxcals':
+        # if self._source=='nxcals':
         #    pattern=pattern.replace('%','%25')
         v = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
         return list(v.getVariables())
@@ -257,9 +267,9 @@ class LoggingDB(object):
         if dataset.isEmpty():
             return (np.array([], dtype=float), np.array([], dtype=float))
 
-        #PrimitiveDataSets = jpype.JPackage("cern").lhc.commons.cals.PrimitiveDataSets
-        if self._source=='nxcals':
-            PrimitiveDataSets=jpype.JPackage("org").pytimber.utils.BackPortDataSets
+        # PrimitiveDataSets = jpype.JPackage("cern").lhc.commons.cals.PrimitiveDataSets
+        if self._source == "nxcals":
+            PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.BackPortDataSets
         else:
             PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.PrimitiveDataSets
 
@@ -271,33 +281,33 @@ class LoggingDB(object):
 
         dataclass = PrimitiveDataSets.dataClass(dataset)
 
-        if self._source=='nxcals':
-            print(datatype,dataclass)
-            idx =  ~np.array([d.isNullValue() for d in dataset])
-            ds=np.array(dataset)[idx]
-            timestamps=timestamps[idx]
+        if self._source == "nxcals":
+            print(datatype, dataclass)
+            idx = ~np.array([d.isNullValue() for d in dataset])
+            ds = np.array(dataset)[idx]
+            timestamps = timestamps[idx]
             if datatype == "NUMERIC":
                 try:
-                    ds = np.array([ d.getDoubleValue() for d in ds])
+                    ds = np.array([d.getDoubleValue() for d in ds])
                 except jpype.java.lang.NoSuchMethodException:
                     try:
-                         ds = np.array([ d.getLongValue() for d in ds])
+                        ds = np.array([d.getLongValue() for d in ds])
                     except jpype.java.lang.NoSuchMethodException:
                         pass
             elif datatype == "VECTORNUMERIC":
                 try:
-                    ds = np.array([ d.getDoubleValues() for d in ds])
+                    ds = np.array([d.getDoubleValues() for d in ds])
                 except jpype.java.lang.NoSuchMethodException:
                     try:
-                         ds = np.array([ d.getLongValues() for d in ds])
+                        ds = np.array([d.getLongValues() for d in ds])
                     except jpype.java.lang.NoSuchMethodException:
                         pass
             elif datatype == "TEXTUAL":
-                ds = np.array([ d.getStringValue() for d in ds])
+                ds = np.array([d.getStringValue() for d in ds])
             elif datatype == "VECTORSTRING":
-                ds = np.array([ dd.getStringValue() for dd in d for d in ds])
+                ds = np.array([dd.getStringValue() for dd in d for d in ds])
 
-            return (timestamps,ds)
+            return (timestamps, ds)
 
         if datatype == "MATRIXNUMERIC":
             if dataclass == spi.MatrixNumericDoubleData:
@@ -315,7 +325,9 @@ class LoggingDB(object):
                     ]
                 )
             else:
-                self._log.warning("'%s' unsupported datatype, returning the java object"%(datatype))
+                self._log.warning(
+                    "'%s' unsupported datatype, returning the java object" % (datatype)
+                )
                 data = [t for t in dataset]
         elif datatype == "VECTORNUMERIC":
             if dataclass == spi.VectorNumericDoubleData:
