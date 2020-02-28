@@ -641,7 +641,7 @@ class LoggingDB(object):
             jvar = variables.getVariable(v)
             try:
                 res = self._ts.getDataInFixedIntervals(jvar, ts1, ts2, timescaling)
-            except jpype.JavaException as e:
+            except jpype.JException as e:
                 print(e.message())
                 print(
                     """

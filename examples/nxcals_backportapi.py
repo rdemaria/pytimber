@@ -13,12 +13,13 @@ ts2,ds2=back.get(name,t1,t2)[name]
 
 
 
-t1="2016-08-08 17:57:00"
-t2="2016-08-08 17:58:00"
+t1="2016-08-07 17:27:00"
+t2="2016-08-07 17:37:00"
 name='LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H'
 
-ts1,ds1=cals.get(name,t1,t2)[name]
-ts2,ds2=back.get(name,t1,t2)[name]
+%timeit -n 1 -r 1 ts1,ds1=cals.get(name,t1,t2)[name]
+%timeit -n 1 -r 1 ts2,ds2=back.get(name,t1,t2)[name]
+
 
 cals.search("%LHC%LUMI%")
 back.search("%LHC%LUMI%")
