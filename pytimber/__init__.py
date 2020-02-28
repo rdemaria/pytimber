@@ -21,7 +21,7 @@ from .pagestore import PageStore
 from .nxcals import NXCals
 
 
-__version__ = "2.9.0"
+__version__ = "3.0.0-alpha"
 
 __cmmnbuild_deps__ = [
     "pytimber-utils",
