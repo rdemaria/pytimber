@@ -85,8 +85,8 @@ class LoggingDB(object):
 
     def __init__(
         self,
-        appid="LHC_MD_ABP_ANALYSIS",
-        clientid="BEAM PHYSICS",
+        appid="PYTIMBER3",
+        clientid="PYTIMBER3",
         source="all",
         loglevel=None,
     ):
@@ -97,7 +97,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager("pytimber", logging.WARNING)
+        mgr = cmmnbuild_dep_manager.Manager("pytimber", logging.ERROR)
         mgr.start_jpype_jvm()
         self._mgr = mgr
 
@@ -282,7 +282,6 @@ class LoggingDB(object):
         dataclass = PrimitiveDataSets.dataClass(dataset)
 
         if self._source == "nxcals":
-            print(datatype, dataclass)
             idx = ~np.array([d.isNullValue() for d in dataset])
             ds = np.array(dataset)[idx]
             timestamps = timestamps[idx]
@@ -293,7 +292,7 @@ class LoggingDB(object):
                     try:
                         ds = np.array([d.getLongValue() for d in ds])
                     except jpype.java.lang.NoSuchMethodException:
-                        pass
+                        self._log.warning( "unsupported datatype, returning the java object")
             elif datatype == "VECTORNUMERIC":
                 try:
                     ds = np.array([d.getDoubleValues() for d in ds])
@@ -301,12 +300,19 @@ class LoggingDB(object):
                     try:
                         ds = np.array([d.getLongValues() for d in ds])
                     except jpype.java.lang.NoSuchMethodException:
-                        pass
+                        self._log.warning( "unsupported datatype, returning the java object")
             elif datatype == "TEXTUAL":
-                ds = np.array([d.getStringValue() for d in ds])
+                try:
+                   ds = np.array([d.getStringValue() for d in ds])
+                except jpype.java.lang.NoSuchMethodException:
+                   self._log.warning( "unsupported datatype, returning the java object")
             elif datatype == "VECTORSTRING":
-                ds = np.array([dd.getStringValue() for dd in d for d in ds])
-
+                try:
+                    ds = np.array([dd.getStringValue() for dd in d for d in ds])
+                except jpype.java.lang.NoSuchMethodException:
+                        self._log.warning( "unsupported datatype, returning the java object")
+            else:
+                   self._log.warning( "unsupported datatype, returning the java object")
             return (timestamps, ds)
 
         if datatype == "MATRIXNUMERIC":

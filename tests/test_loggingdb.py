@@ -96,7 +96,7 @@ def test_Timestamp():
     now2 = ldb.fromTimestamp(ts_now, unixtime=True)
     dt_now2 = ldb.fromTimestamp(ts_now, unixtime=False)
     assert now == now2
-    assert str(ts_now)[:25] == dt_now2.strftime("%Y-%m-%d %H:%M:%S.%f")[:25]
+    assert str(ts_now)[:24] == dt_now2.strftime("%Y-%m-%d %H:%M:%S.%f")[:24]
 
     time_str = "2015-10-12 12:12:32.453255123"
     ta = ldb.toTimestamp(time_str)
