@@ -64,7 +64,7 @@ def test_get_vectornumeric():
 
 def test_get_vectorstring():
     t1 = "2016-03-28 00:00:00.000"
-    t2 = "2016-03-28 00:59:59.999"
+    t2 = "2016-03-28 23:59:59.999"
 
     t, v = ldb.getVariable("LHC.BOFSU:BPM_NAMES_H", t1, t2)
     assert v[0][123] == "BPM.16L3.B1"
