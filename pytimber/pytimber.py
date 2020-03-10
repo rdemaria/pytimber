@@ -182,9 +182,14 @@ class LoggingDB(object):
         return myList
 
     def toTimescale(self, timescale_list):
-        Timescale = jpype.JPackage(
+        if self._source=="nxcals":
+            Timescale = jpype.JPackage(
             "cern"
-        ).accsoft.cals.extr.domain.core.constants.TimescalingProperties
+            ).nxcals.api.backport.domain.core.constants.TimescalingProperties
+        else:
+            Timescale = jpype.JPackage(
+            "cern"
+            ).accsoft.cals.extr.domain.core.constants.TimescalingProperties
         try:
             timescale_str = "_".join(timescale_list)
             return Timescale.valueOf(timescale_str)

@@ -142,5 +142,5 @@ def test_getStats():
     vn = "LHC.BOFSU:EIGEN_FREQ_2_B1"
     stat = ldb.getStats(vn, t1, t2)[vn]
 
-    assert stat.MinTstamp == 1457962796.972
+    assert stat.MinTstamp == 1457962796.971
     assert stat.StandardDeviationValue == 0.00401594
