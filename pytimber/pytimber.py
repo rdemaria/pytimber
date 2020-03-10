@@ -303,7 +303,7 @@ class LoggingDB(object):
                         )
             elif datatype == "TEXTUAL":
                 try:
-                    ds = np.array([d.getStringValue() for d in ds])
+                    ds = np.array([d.getVarcharValue() for d in ds])
                 except jpype.java.lang.NoSuchMethodException:
                     self._log.warning("unsupported datatype, returning the java object")
             elif datatype == "VECTORSTRING":
