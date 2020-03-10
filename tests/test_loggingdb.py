@@ -11,7 +11,7 @@ import pytimber
 ldb = pytimber.LoggingDB(source="ldb")
 
 
-def test_earch():
+def test_search():
     variables = ldb.search("HX:BETA%")
     assert "HX:BETASTAR_IP1" in variables
     assert len(variables) == 4
@@ -52,7 +52,7 @@ def test_get_unixtime():
     assert t[0] == datetime.datetime(2015, 5, 13, 15, 28, 4, 764000)
 
 
-def test_get_vectonumeric():
+def test_get_vectornumeric():
     t1 = "2015-05-13 12:00:00.000"
     t2 = "2015-05-13 12:00:01.000"
     data = ldb.get("LHC.BQBBQ.CONTINUOUS_HS.B1:ACQ_DATA_H", t1, t2)
@@ -62,8 +62,9 @@ def test_get_vectonumeric():
     for vv in v:
         assert len(vv) == 4096
 
+def test_get_vectorstring():
     t1 = "2016-03-28 00:00:00.000"
-    t2 = "2016-03-28 23:59:59.999"
+    t2 = "2016-03-28 00:59:59.999"
 
     t, v = ldb.getVariable("LHC.BOFSU:BPM_NAMES_H", t1, t2)
     assert v[0][123] == "BPM.16L3.B1"

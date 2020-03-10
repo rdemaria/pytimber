@@ -93,7 +93,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager("pytimber", logging.ERROR)
+        mgr = cmmnbuild_dep_manager.Manager('pytimber')
         mgr.start_jpype_jvm()
         self._mgr = mgr
 
@@ -308,7 +308,7 @@ class LoggingDB(object):
                     self._log.warning("unsupported datatype, returning the java object")
             elif datatype == "VECTORSTRING":
                 try:
-                    ds = np.array([dd.getStringValue() for dd in d for d in ds])
+                    ds = np.array([d.getStringValues() for d in ds])
                 except jpype.java.lang.NoSuchMethodException:
                     self._log.warning("unsupported datatype, returning the java object")
             else:

@@ -15,54 +15,29 @@ def get_version_from_init():
             if line.startswith("__version__"):
                 return ast.literal_eval(line.split("=", 1)[1].strip())
 
-
-# Custom install function to install and register with cmmnbuild-dep-manager
-class install(_install):
-    """Install and perform the jar resolution"""
-
-    user_options = _install.user_options + [
-        ("no-jars", None, "do not register with cmmnbuild_dep_manager")
-    ]
-
-    def initialize_options(self):
-        self.no_jars = False
-        _install.initialize_options(self)
-
-    def run(self):
-        try:
-            import pagestore
-            import pip
-
-            print("WARNING: removing standalone pagestore package")
-            pip.main(["uninstall", "pagestore", "-y"])
-        except:
-            pass
-
-        if not self.no_jars:
-            import cmmnbuild_dep_manager
-
-            mgr = cmmnbuild_dep_manager.Manager()
-            mgr.install("pytimber")
-            print("registered pytimber with cmmnbuild_dep_manager")
-        _install.run(self)
-
+VERSION=get_version_from_init()
 
 setup(
     name="pytimber",
-    version=get_version_from_init(),
+    version=VERSION,
     description="A Python wrapping of CALS API",
     author="Riccardo De Maria",
     author_email="riccardo.de.maria@cern.ch",
     url="https://github.com/rdemaria/pytimber",
     packages=find_packages(),
+    python_requires='>=3.6, <4',
     install_requires=[
         "python-dateutil",
         "JPype1>=0.7.1",
-        "cmmnbuild-dep-manager>=2.3.1",
+        "cmmnbuild-dep-manager>=2.4.0",
         "matplotlib",
         "pytz",
         "scipy",
+        "six",
     ],
-    extras_require={"test": ["pytest"]},
-    cmdclass={"install": install},
+    extras_require={"dev": ["pytest"]},
+    entry_points={
+        # Register with cmmnbuild_dep_manager.
+        'cmmnbuild_dep_manager': [f'pytimber={VERSION}'],
+    },
 )
