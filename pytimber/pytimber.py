@@ -84,7 +84,11 @@ class LoggingDB(object):
         print("ERROR: jpype is note defined!")
 
     def __init__(
-        self, appid="PYTIMBER3", clientid="PYTIMBER3", source="all", loglevel=None,
+        self,
+        appid="PYTIMBER3",
+        clientid="PYTIMBER3",
+        source="all",
+        loglevel=None,
     ):
         # Configure logging
         logging.basicConfig()
@@ -93,7 +97,7 @@ class LoggingDB(object):
             self._log.setLevel(loglevel)
 
         # Start JVM
-        mgr = cmmnbuild_dep_manager.Manager('pytimber')
+        mgr = cmmnbuild_dep_manager.Manager("pytimber")
         mgr.start_jpype_jvm()
         self._mgr = mgr
 
@@ -182,13 +186,13 @@ class LoggingDB(object):
         return myList
 
     def toTimescale(self, timescale_list):
-        if self._source=="nxcals":
+        if self._source == "nxcals":
             Timescale = jpype.JPackage(
-            "cern"
+                "cern"
             ).nxcals.api.backport.domain.core.constants.TimescalingProperties
         else:
             Timescale = jpype.JPackage(
-            "cern"
+                "cern"
             ).accsoft.cals.extr.domain.core.constants.TimescalingProperties
         try:
             timescale_str = "_".join(timescale_list)
@@ -220,11 +224,16 @@ class LoggingDB(object):
     def getUnit(self, pattern):
         """Get Variable Unit from pattern. Wildcard is '%'."""
         return dict(
-            [(vv.getVariableName(), vv.getUnit()) for vv in self.getVariables(pattern)]
+            [
+                (vv.getVariableName(), vv.getUnit())
+                for vv in self.getVariables(pattern)
+            ]
         )
 
     def getFundamentals(self, t1, t2, fundamental):
-        self._log.info("Querying fundamentals (pattern: {0}):".format(fundamental))
+        self._log.info(
+            "Querying fundamentals (pattern: {0}):".format(fundamental)
+        )
         fundamentals = self._md.getFundamentalsInTimeWindowWithNameLikePattern(
             t1, t2, fundamental
         )
@@ -234,7 +243,9 @@ class LoggingDB(object):
             logfuns = []
             for f in fundamentals:
                 logfuns.append(f)
-            self._log.info("List of fundamentals found: {0}".format(", ".join(logfuns)))
+            self._log.info(
+                "List of fundamentals found: {0}".format(", ".join(logfuns))
+            )
         return fundamentals
 
     def getVariablesList(self, pattern_or_list):
@@ -255,7 +266,9 @@ class LoggingDB(object):
         return variables
 
     def processDataset(self, dataset, datatype, unixtime):
-        spi = jpype.JPackage("cern").accsoft.cals.extr.domain.core.timeseriesdata.spi
+        spi = jpype.JPackage(
+            "cern"
+        ).accsoft.cals.extr.domain.core.timeseriesdata.spi
 
         if type(dataset) is list:
             new_ds = jpype.JPackage(
@@ -270,11 +283,17 @@ class LoggingDB(object):
 
         # PrimitiveDataSets = jpype.JPackage("cern").lhc.commons.cals.PrimitiveDataSets
         if self._source == "nxcals":
-            PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.BackPortDataSets
+            PrimitiveDataSets = jpype.JPackage(
+                "org"
+            ).pytimber.utils.BackPortDataSets
         else:
-            PrimitiveDataSets = jpype.JPackage("org").pytimber.utils.PrimitiveDataSets
+            PrimitiveDataSets = jpype.JPackage(
+                "org"
+            ).pytimber.utils.PrimitiveDataSets
 
-        timestamps = np.array(PrimitiveDataSets.unixTimestamps(dataset)[:], dtype=float)
+        timestamps = np.array(
+            PrimitiveDataSets.unixTimestamps(dataset)[:], dtype=float
+        )
         if not unixtime:
             timestamps = np.array(
                 [datetime.datetime.fromtimestamp(t) for t in timestamps]
@@ -283,10 +302,10 @@ class LoggingDB(object):
         dataclass = PrimitiveDataSets.dataClass(dataset)
 
         if self._source == "nxcals":
-            
-            #idx = ~np.array([d.isNullValue() for d in dataset])
-            #ds = np.array(dataset)[idx]
-            #timestamps = timestamps[idx]
+
+            # idx = ~np.array([d.isNullValue() for d in dataset])
+            # ds = np.array(dataset)[idx]
+            # timestamps = timestamps[idx]
 
             ds = dataset
 
@@ -314,14 +333,20 @@ class LoggingDB(object):
                 try:
                     ds = np.array([d.getVarcharValue() for d in ds])
                 except jpype.java.lang.NoSuchMethodException:
-                    self._log.warning("unsupported datatype, returning the java object")
+                    self._log.warning(
+                        "unsupported datatype, returning the java object"
+                    )
             elif datatype == "VECTORSTRING":
                 try:
                     ds = np.array([d.getStringValues() for d in ds])
                 except jpype.java.lang.NoSuchMethodException:
-                    self._log.warning("unsupported datatype, returning the java object")
+                    self._log.warning(
+                        "unsupported datatype, returning the java object"
+                    )
             else:
-                self._log.warning("unsupported datatype, returning the java object")
+                self._log.warning(
+                    "unsupported datatype, returning the java object"
+                )
             return (timestamps, ds)
 
         if datatype == "MATRIXNUMERIC":
@@ -329,7 +354,9 @@ class LoggingDB(object):
                 data = np.array(
                     [
                         [np.array(a[:], dtype=float) for a in matrix]
-                        for matrix in PrimitiveDataSets.doubleMatrixData(dataset)
+                        for matrix in PrimitiveDataSets.doubleMatrixData(
+                            dataset
+                        )
                     ]
                 )
             elif dataclass == spi.MatrixNumericLongData:
@@ -341,7 +368,8 @@ class LoggingDB(object):
                 )
             else:
                 self._log.warning(
-                    "'%s' unsupported datatype, returning the java object" % (datatype)
+                    "'%s' unsupported datatype, returning the java object"
+                    % (datatype)
                 )
                 data = [t for t in dataset]
         elif datatype == "VECTORNUMERIC":
@@ -360,7 +388,9 @@ class LoggingDB(object):
                     ]
                 )
             else:
-                self._log.warning("Unsupported datatype, returning the " "java object")
+                self._log.warning(
+                    "Unsupported datatype, returning the " "java object"
+                )
                 data = [t for t in dataset]
         elif datatype == "VECTORSTRING":
             data = np.array(
@@ -371,23 +401,39 @@ class LoggingDB(object):
             )
         elif datatype == "NUMERIC":
             if dataclass == spi.NumericDoubleData:
-                data = np.array(PrimitiveDataSets.doubleData(dataset)[:], dtype=float)
+                data = np.array(
+                    PrimitiveDataSets.doubleData(dataset)[:], dtype=float
+                )
             elif dataclass == spi.NumericLongData:
-                data = np.array(PrimitiveDataSets.longData(dataset)[:], dtype=int)
+                data = np.array(
+                    PrimitiveDataSets.longData(dataset)[:], dtype=int
+                )
             else:
-                self._log.warning("Unsupported datatype, returning the " "java object")
+                self._log.warning(
+                    "Unsupported datatype, returning the " "java object"
+                )
                 data = [t for t in dataset]
         elif datatype == "FUNDAMENTAL":
             data = np.ones_like(timestamps, dtype=bool)
         elif datatype == "TEXTUAL":
-            data = np.array(PrimitiveDataSets.stringData(dataset)[:], dtype="U")
+            data = np.array(
+                PrimitiveDataSets.stringData(dataset)[:], dtype="U"
+            )
         else:
-            self._log.warning("Unsupported datatype, returning the " "java object")
+            self._log.warning(
+                "Unsupported datatype, returning the " "java object"
+            )
             data = [t for t in dataset]
         return (timestamps, data)
 
     def getAligned(
-        self, pattern_or_list, t1, t2, fundamental=None, master=None, unixtime=True
+        self,
+        pattern_or_list,
+        t1,
+        t2,
+        fundamental=None,
+        master=None,
+        unixtime=True,
     ):
         """Get data aligned to a variable"""
         ts1 = self.toTimestamp(t1)
@@ -430,7 +476,9 @@ class LoggingDB(object):
                     logvars.append(v)
 
             self._log.info(
-                "List of variables to be queried: {0}".format(", ".join(logvars))
+                "List of variables to be queried: {0}".format(
+                    ", ".join(logvars)
+                )
             )
 
         # Acquire master dataset
@@ -464,7 +512,9 @@ class LoggingDB(object):
                     res.size(), jvar.getVariableName()
                 )
             )
-            self._log.info("{0} seconds for aqn".format(time.time() - start_time))
+            self._log.info(
+                "{0} seconds for aqn".format(time.time() - start_time)
+            )
             out[v] = self.processDataset(
                 res, res.getVariableDataType().toString(), unixtime
             )[1]
@@ -496,7 +546,9 @@ class LoggingDB(object):
             for v in variables:
                 logvars.append(v)
                 self._log.info(
-                    "List of variables to be queried: {0}".format(", ".join(logvars))
+                    "List of variables to be queried: {0}".format(
+                        ", ".join(logvars)
+                    )
                 )
 
         # Acquire
@@ -541,7 +593,9 @@ class LoggingDB(object):
     #        for v in variables:
     #            return self._ts.getJVMHeapSizeEstimationForDataInTimeWindow(v,ts1,ts2,None,None)
 
-    def get(self, pattern_or_list, t1, t2=None, fundamental=None, unixtime=True):
+    def get(
+        self, pattern_or_list, t1, t2=None, fundamental=None, unixtime=True
+    ):
         """Query the database for a list of variables or for variables whose
         name matches a pattern (string) in a time window from t1 to t2.
 
@@ -569,7 +623,9 @@ class LoggingDB(object):
             for v in variables:
                 logvars.append(v)
             self._log.info(
-                "List of variables to be queried: {0}".format(", ".join(logvars))
+                "List of variables to be queried: {0}".format(
+                    ", ".join(logvars)
+                )
             )
 
         # Fundamentals
@@ -589,7 +645,9 @@ class LoggingDB(object):
             jvar = variables.getVariable(v)
             if t2 is None or t2 == "last":
                 res = [
-                    self._ts.getLastDataPriorToTimestampWithinDefaultInterval(jvar, ts1)
+                    self._ts.getLastDataPriorToTimestampWithinDefaultInterval(
+                        jvar, ts1
+                    )
                 ]
                 if res[0] is None:
                     res = []
@@ -597,11 +655,15 @@ class LoggingDB(object):
                 else:
                     datatype = res[0].getVariableDataType().toString()
                     self._log.info(
-                        "Retrieved {0} values for {1}".format(1, jvar.getVariableName())
+                        "Retrieved {0} values for {1}".format(
+                            1, jvar.getVariableName()
+                        )
                     )
             elif t2 == "next":
                 res = [
-                    self._ts.getNextDataAfterTimestampWithinDefaultInterval(jvar, ts1)
+                    self._ts.getNextDataAfterTimestampWithinDefaultInterval(
+                        jvar, ts1
+                    )
                 ]
                 if res[0] is None:
                     res = []
@@ -609,7 +671,9 @@ class LoggingDB(object):
                 else:
                     datatype = res[0].getVariableDataType().toString()
                     self._log.info(
-                        "Retrieved {0} values for {1}".format(1, jvar.getVariableName())
+                        "Retrieved {0} values for {1}".format(
+                            1, jvar.getVariableName()
+                        )
                     )
             else:
                 if fundamental is not None:
@@ -627,7 +691,9 @@ class LoggingDB(object):
             out[v] = self.processDataset(res, datatype, unixtime)
         return out
 
-    def getVariable(self, variable, t1, t2=None, fundamental=None, unixtime=True):
+    def getVariable(
+        self, variable, t1, t2=None, fundamental=None, unixtime=True
+    ):
         return self.get(variable, t1, t2, fundamental, unixtime)[variable]
 
     def getScaled(
@@ -652,7 +718,9 @@ class LoggingDB(object):
         """
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
-        timescaling = self.toTimescale([scaleSize, scaleInterval, scaleAlgorithm])
+        timescaling = self.toTimescale(
+            [scaleSize, scaleInterval, scaleAlgorithm]
+        )
 
         out = {}
         # Build variable list
@@ -665,14 +733,18 @@ class LoggingDB(object):
             for v in variables:
                 logvars.append(v)
             self._log.info(
-                "List of variables to be queried: {0}".format(", ".join(logvars))
+                "List of variables to be queried: {0}".format(
+                    ", ".join(logvars)
+                )
             )
 
         # Acquire
         for v in variables:
             jvar = variables.getVariable(v)
             try:
-                res = self._ts.getDataInFixedIntervals(jvar, ts1, ts2, timescaling)
+                res = self._ts.getDataInFixedIntervals(
+                    jvar, ts1, ts2, timescaling
+                )
             except jpype.JException as e:
                 print(e.message())
                 print(
@@ -680,8 +752,24 @@ class LoggingDB(object):
                    scaleAlgorithm should be one of:{},
                    scaleInterval one of:{},
                    scaleSize an integer""".format(
-                        ["MAX", "MIN", "AVG", "COUNT", "SUM", "REPEAT", "INTERPOLATE"],
-                        ["SECOND", "MINUTE", "HOUR", "DAY", "WEEK", "MONTH", "YEAR"],
+                        [
+                            "MAX",
+                            "MIN",
+                            "AVG",
+                            "COUNT",
+                            "SUM",
+                            "REPEAT",
+                            "INTERPOLATE",
+                        ],
+                        [
+                            "SECOND",
+                            "MINUTE",
+                            "HOUR",
+                            "DAY",
+                            "WEEK",
+                            "MONTH",
+                            "YEAR",
+                        ],
                     )
                 )
                 return
@@ -702,7 +790,9 @@ class LoggingDB(object):
         None to get the last completed fill.
         """
         if isinstance(fill_number, int):
-            data = self._FillService.getLHCFillAndBeamModesByFillNumber(fill_number)
+            data = self._FillService.getLHCFillAndBeamModesByFillNumber(
+                fill_number
+            )
         else:
             data = self._FillService.getLastCompletedLHCFillAndBeamModes()
 
@@ -716,8 +806,12 @@ class LoggingDB(object):
                 "beamModes": [
                     {
                         "mode": mode.getBeamModeValue().toString(),
-                        "startTime": self.fromTimestamp(mode.getStartTime(), unixtime),
-                        "endTime": self.fromTimestamp(mode.getEndTime(), unixtime),
+                        "startTime": self.fromTimestamp(
+                            mode.getStartTime(), unixtime
+                        ),
+                        "endTime": self.fromTimestamp(
+                            mode.getEndTime(), unixtime
+                        ),
                     }
                     for mode in data.getBeamModes()
                 ],
@@ -735,25 +829,34 @@ class LoggingDB(object):
         ).accsoft.cals.extr.domain.core.constants.BeamModeValue
 
         if beam_modes is None:
-            fills = self._FillService.getLHCFillsAndBeamModesInTimeWindow(ts1, ts2)
+            fills = self._FillService.getLHCFillsAndBeamModesInTimeWindow(
+                ts1, ts2
+            )
         else:
             if isinstance(beam_modes, str):
                 beam_modes = beam_modes.split(",")
 
             valid_beam_modes = [
-                mode for mode in beam_modes if BeamModeValue.isBeamModeValue(mode)
+                mode
+                for mode in beam_modes
+                if BeamModeValue.isBeamModeValue(mode)
             ]
 
             if len(valid_beam_modes) == 0:
                 raise ValueError("no valid beam modes found")
 
-            java_beam_modes = BeamModeValue.parseBeamModes(",".join(valid_beam_modes))
+            java_beam_modes = BeamModeValue.parseBeamModes(
+                ",".join(valid_beam_modes)
+            )
 
             fills = self._FillService.getLHCFillsAndBeamModesInTimeWindowContainingBeamModes(
                 ts1, ts2, java_beam_modes
             )
 
-        return [self.getLHCFillData(fill, unixtime) for fill in fills.getFillNumbers()]
+        return [
+            self.getLHCFillData(fill, unixtime)
+            for fill in fills.getFillNumbers()
+        ]
 
     def getIntervalsByLHCModes(
         self,
@@ -800,7 +903,9 @@ class LoggingDB(object):
         out = {}
         variables = self.getVariablesList(pattern_or_list).getVariables()
         for variable in variables:
-            metadata = self._md.getVectorElements(variable).getVectornumericElements()
+            metadata = self._md.getVectorElements(
+                variable
+            ).getVectornumericElements()
             ts = [_Timestamp2float(tt) for tt in metadata]
             #            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
             #                    for a in metadata.values()]
@@ -825,7 +930,9 @@ class Hierarchy(object):
             objs = self.src.getHierachies(1)
         else:
             objs = self.src.getChildHierarchies(self.obj)
-        return dict([(self._cleanName(hh.getHierarchyName()), hh) for hh in objs])
+        return dict(
+            [(self._cleanName(hh.getHierarchyName()), hh) for hh in objs]
+        )
 
     def _cleanName(self, s):
         if s[0].isdigit():
@@ -851,7 +958,9 @@ class Hierarchy(object):
     def __dir__(self):
         if jpype.isThreadAttachedToJVM() == 0:
             jpype.attachThreadToJVM()
-        v = sorted([self._cleanName(i) for i in self._get_vars() if len(i) > 0])
+        v = sorted(
+            [self._cleanName(i) for i in self._get_vars() if len(i) > 0]
+        )
         return sorted(self._dict.keys()) + v
 
     def __repr__(self):

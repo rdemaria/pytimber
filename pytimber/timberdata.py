@@ -14,7 +14,9 @@ import numpy as np
 from .localdate import parsedate, parsedate_myl
 
 
-def load(fh, sep=",", t1=None, t2=None, debug=False, nmax=1e99, types=(float, float)):
+def load(
+    fh, sep=",", t1=None, t2=None, debug=False, nmax=1e99, types=(float, float)
+):
     """Parse the output of the CERN logging database command line tool
 
   Usage:
@@ -108,7 +110,15 @@ def combine_data(data, vtype=float, ttype=float):
     return data
 
 
-def open(fn, sep=None, t1=None, t2=None, nmax=1e99, debug=False, types=(float, float)):
+def open(
+    fn,
+    sep=None,
+    t1=None,
+    t2=None,
+    nmax=1e99,
+    debug=False,
+    types=(float, float),
+):
     """Load output of the CERN measurement database query from a filename
 
   Usage:  open("test.tsv")

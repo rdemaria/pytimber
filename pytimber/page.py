@@ -158,7 +158,8 @@ class Page(object):
                 lengths = np.fromfile(self.lenpath, dtype="<i8", count=cc)
                 recfh = open(self.recpath)
                 rec = [
-                    np.fromfile(recfh, dtype=self.rectype, count=cc) for cc in lengths
+                    np.fromfile(recfh, dtype=self.rectype, count=cc)
+                    for cc in lengths
                 ]
                 recfh.close()
                 if "S" in self.rectype:
@@ -168,7 +169,9 @@ class Page(object):
             elif reclen == 0:
                 rec = np.fromfile(self.recpath, dtype=self.rectype, count=cc)
             else:
-                rec = np.fromfile(self.recpath, dtype=self.rectype, count=cc * reclen)
+                rec = np.fromfile(
+                    self.recpath, dtype=self.rectype, count=cc * reclen
+                )
                 if len(rec) < cc * reclen:
                     msg = "Error in Page %s: not enough records:%d!=%d*%d"
                     raise IOError(msg % (self.pageid, cc * reclen, cc, reclen))
@@ -234,7 +237,9 @@ class Page(object):
             return self.count(idxa, idxb, skip=skip) * itemsize
         else:
             a, b = self.get_range(idxa, idxb)
-            items = np.sum(np.fromfile(self.lenpath, dtype="<i8", count=cc)[a:b:skip])
+            items = np.sum(
+                np.fromfile(self.lenpath, dtype="<i8", count=cc)[a:b:skip]
+            )
             return items * np.dtype(self.rectype).itemsize
 
     def check(self):

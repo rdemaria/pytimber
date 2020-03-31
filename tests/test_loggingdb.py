@@ -62,6 +62,7 @@ def test_get_vectornumeric():
     for vv in v:
         assert len(vv) == 4096
 
+
 def test_get_vectorstring():
     t1 = "2016-03-28 00:00:00.000"
     t2 = "2016-03-28 23:59:59.999"

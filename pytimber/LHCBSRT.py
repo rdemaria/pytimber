@@ -38,7 +38,8 @@ def _get_timber_data(beam, t1, t2, db=None):
     # -- some checks
     if t2 < t1:
         raise ValueError(
-            "End time smaller than start time, t2 = " + "%s > %s = t1" % (t2, t1)
+            "End time smaller than start time, t2 = "
+            + "%s > %s = t1" % (t2, t1)
         )
 
     if beam.upper() == "B1":
@@ -68,7 +69,8 @@ def _get_timber_data(beam, t1, t2, db=None):
     for k in bsrt_sig_var:
         if np.any(bsrt_sig[bsrt_sig_var[0]][0] != bsrt_sig[k][0]):
             error_str = (
-                "Time stamps for %s and %s differ!" % (bsrt_sig_var[0], bsrt_sig_var[k])
+                "Time stamps for %s and %s differ!"
+                % (bsrt_sig_var[0], bsrt_sig_var[k])
                 + "The data can not be combined"
             )
             raise ValueError(error_str)
@@ -267,7 +269,13 @@ class BSRT(object):
     ]
 
     def __init__(
-        self, db=None, beam=None, emit=None, emit_fit=None, t_start=None, t_end=None
+        self,
+        db=None,
+        beam=None,
+        emit=None,
+        emit_fit=None,
+        t_start=None,
+        t_end=None,
     ):
         self.db = db
         self.beam = beam
@@ -325,7 +333,9 @@ class BSRT(object):
         if verbose:
             print("... calculating emittance for non-empty slots")
         emit = _timber_to_emit(bsrt_array)
-        return cls(db=db, emit=emit, emit_fit=None, t_start=t1, t_end=t2, beam=beam)
+        return cls(
+            db=db, emit=emit, emit_fit=None, t_start=t1, t_end=t2, beam=beam
+        )
 
     def get_timber_data(self, beam, t1, t2, db=None):
         """
@@ -372,9 +382,12 @@ class BSRT(object):
             beam=self.beam, t1=self.t_start, t2=self.t_end, db=self.db
         )
         # only change values between t1 and t2
-        mask = np.logical_and(bsrt_array["time"] >= t1, bsrt_array["time"] <= t2)
+        mask = np.logical_and(
+            bsrt_array["time"] >= t1, bsrt_array["time"] <= t2
+        )
         for k, v in zip(
-            ["beth", "betv", "lsfh", "lsfv", "energy"], [beth, betv, lsfh, lsfv, energy]
+            ["beth", "betv", "lsfh", "lsfv", "energy"],
+            [beth, betv, lsfh, lsfv, energy],
         ):
             if verbose:
                 print(k, "old=", bsrt_array[k][mask], "new=", v)
@@ -498,12 +511,16 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                 epst1_fit = group[emit_key].iloc[0]
                 if epst2_fit < 0:
                     err_str = (
-                        "Invalid value of BSRT emittance " "(eps < 0) for time " "t2={}"
+                        "Invalid value of BSRT emittance "
+                        "(eps < 0) for time "
+                        "t2={}"
                     ).format(parsedate(time[-1]))
                     raise ValueError(err_str)
                 if epst1_fit < 0:
                     err_str = (
-                        "Invalid value of BSRT emittance " "(eps < 0) for time " "t1={}"
+                        "Invalid value of BSRT emittance "
+                        "(eps < 0) for time "
+                        "t1={}"
                     ).format(parsedate(time[0]))
                     raise ValueError(err_str)
                 # initial values for fit parameters
@@ -566,14 +583,14 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
                 + " lies outside of data range!"
             )
         if t2 > self.t_end:
-            err_str = ("End time t2 = {} > {} " "lies outside of data range!").format(
-                t1, self.t_end
-            )
+            err_str = (
+                "End time t2 = {} > {} " "lies outside of data range!"
+            ).format(t1, self.t_end)
             raise ValueError(err_str)
         if t2 < t1:
-            err_str = ("End time smaller than start time, t2 = " "{} > {} = t1").format(
-                t2, t1
-            )
+            err_str = (
+                "End time smaller than start time, t2 = " "{} > {} = t1"
+            ).format(t2, t1)
             raise ValueError(err_str)
         return t1, t2
 
@@ -629,13 +646,18 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
             else:
                 c = color
             mask = np.logical_and(
-                self.emit.loc[slot].index >= t1, self.emit.loc[slot].index <= t2
+                self.emit.loc[slot].index >= t1,
+                self.emit.loc[slot].index <= t2,
             )
             eps = self.emit.loc[slot][mask]
             # raw data
             if avg is None:
                 pl.plot(
-                    eps.index, eps["emit{}".format(plane)], ".", color=c, label=label
+                    eps.index,
+                    eps["emit{}".format(plane)],
+                    ".",
+                    color=c,
+                    label=label,
                 )
             # averaged data
             else:
@@ -730,13 +752,18 @@ BSRT.fromdb(beam,EGeV,t_start,t_end,db) with t_start < t1 < t2 \
             else:
                 ls = linestyle
             mask = np.logical_and(
-                self.emit.loc[slot].index >= t1, self.emit.loc[slot].index <= t2
+                self.emit.loc[slot].index >= t1,
+                self.emit.loc[slot].index <= t2,
             )
             ts = self.emit.loc[slot][mask].index
             fitparam = self.get_fit(slot=slot, t1=t1, t2=t2)
             pl.plot(
                 ts,
-                exp_fit(ts - ts[0], fitparam["a%s" % plane], fitparam["tau%s" % plane]),
+                exp_fit(
+                    ts - ts[0],
+                    fitparam["a%s" % plane],
+                    fitparam["tau%s" % plane],
+                ),
                 linestyle=ls,
                 color=c,
                 label=label,

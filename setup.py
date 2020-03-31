@@ -9,13 +9,16 @@ from setuptools.command.install import install as _install
 
 
 def get_version_from_init():
-    init_file = os.path.join(os.path.dirname(__file__), "pytimber", "__init__.py")
+    init_file = os.path.join(
+        os.path.dirname(__file__), "pytimber", "__init__.py"
+    )
     with open(init_file, "r") as fd:
         for line in fd:
             if line.startswith("__version__"):
                 return ast.literal_eval(line.split("=", 1)[1].strip())
 
-VERSION=get_version_from_init()
+
+VERSION = get_version_from_init()
 
 setup(
     name="pytimber",
@@ -25,7 +28,7 @@ setup(
     author_email="riccardo.de.maria@cern.ch",
     url="https://github.com/rdemaria/pytimber",
     packages=find_packages(),
-    python_requires='>=3.6, <4',
+    python_requires=">=3.6, <4",
     install_requires=[
         "python-dateutil",
         "JPype1>=0.7.1",
@@ -39,6 +42,6 @@ setup(
     extras_require={"dev": ["pytest"]},
     entry_points={
         # Register with cmmnbuild_dep_manager.
-        'cmmnbuild_dep_manager': [f'pytimber={VERSION}'],
+        "cmmnbuild_dep_manager": [f"pytimber={VERSION}"],
     },
 )

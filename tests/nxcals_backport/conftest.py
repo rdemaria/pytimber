@@ -1,20 +1,28 @@
 import pytest
 import logging
 import pytimber
+
 # should be done before importing pytimber
 logging.basicConfig(level=logging.INFO)
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--runcore", action="store_true", default=False, help="run core tests only"
+        "--runcore",
+        action="store_true",
+        default=False,
+        help="run core tests only",
     )
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "core: mark test as essential for running")
+    config.addinivalue_line(
+        "markers", "core: mark test as essential for running"
+    )
     config.addinivalue_line("markers", "unit: mark class for unit tests")
-    config.addinivalue_line("markers", "integration: mark class for integration tests")
+    config.addinivalue_line(
+        "markers", "integration: mark class for integration tests"
+    )
 
 
 def pytest_collection_modifyitems(config, items):

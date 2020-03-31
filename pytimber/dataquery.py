@@ -264,7 +264,9 @@ class DataQuery(object):
         newdata = {}
         for name in names:
             newdata[name] = self.data[name]
-        dq = DataQuery(self.source, names, self.t1, self.t2, newdata, **self.options)
+        dq = DataQuery(
+            self.source, names, self.t1, self.t2, newdata, **self.options
+        )
         dq._setcache(self._getcache(names))
         return dq
 
@@ -290,13 +292,20 @@ class DataQuery(object):
             datanew[vn] = tnew, vnew
         t1 = tnew[0]
         t2 = tnew[-1]
-        dq = DataQuery(self.source, self.names, t1, t2, datanew, **self.options)
+        dq = DataQuery(
+            self.source, self.names, t1, t2, datanew, **self.options
+        )
         return dq
 
     def copy(self, **argsn):
         """copy source including data"""
         dq = DataQuery(
-            self.source, self.names, self.t1, self.t2, self.data, **self.options
+            self.source,
+            self.names,
+            self.t1,
+            self.t2,
+            self.data,
+            **self.options
         )
         dq.__dict__.update(argsn)
         return dq
@@ -327,7 +336,9 @@ class DataQuery(object):
             )
         return zip(map(dumpdate, start), map(dumpdate, end))
 
-    def plot_2d(self, vscale="auto", rel_time=False, date_axes=True, timezone="local"):
+    def plot_2d(
+        self, vscale="auto", rel_time=False, date_axes=True, timezone="local"
+    ):
         """plot data with date in local time"""
         for i, name in enumerate(self.names):
             t, v = self.data[name]
@@ -434,7 +445,9 @@ class DataQuery(object):
             im = pl.specgram(val, NFFT=NFFT, Fs=Fs, noverlap=noverlap)[-1]
             pl.title(name)
             if realtime:
-                im.set_extent([t[0], t[0] + len(val) / float(Fs), 0, float(Fs) / 2])
+                im.set_extent(
+                    [t[0], t[0] + len(val) / float(Fs), 0, float(Fs) / 2]
+                )
             else:
                 im.set_extent([t[0], t[-1], 0, 0.5])
             set_xaxis_date()
@@ -449,7 +462,9 @@ class DataQuery(object):
         im = pl.specgram(val, NFFT=NFFT, Fs=Fs, noverlap=noverlap)[-1]
         pl.title(name)
         if realtime:
-            im.set_extent([t[0], t[0] + len(val) / float(Fs), 0, float(Fs) / 2])
+            im.set_extent(
+                [t[0], t[0] + len(val) / float(Fs), 0, float(Fs) / 2]
+            )
         else:
             im.set_extent([t[0], t[-1], 0, 0.5])
         set_xaxis_date()

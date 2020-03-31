@@ -19,7 +19,9 @@ ts, val = nxcals.getVariable("LHC.BCTFR.A6R4.B1:BEAM_INTENSITY", t1, t2)
 t1 = "2018-05-23 00:05:54.500"
 t2 = "2018-05-23 00:06:54.500"
 
-ds = nxcals.getVariable("LHC.BCTFR.A6R4.B1:BEAM_INTENSITY", t1, t2, output="spark")
+ds = nxcals.getVariable(
+    "LHC.BCTFR.A6R4.B1:BEAM_INTENSITY", t1, t2, output="spark"
+)
 rows = (
     ds.select("nxcals_timestamp", "nxcals_value")
     .na()
@@ -178,7 +180,12 @@ ds = (
 )
 
 ds.printSchema()
-rows = ds.select("acqStamp", "I_MEAS").orderBy("acqStamp", ascending=False).na().drop()
+rows = (
+    ds.select("acqStamp", "I_MEAS")
+    .orderBy("acqStamp", ascending=False)
+    .na()
+    .drop()
+)
 [(r.get(0), r.get(1)) for r in rows.collect()]
 
 ts, val = nxcals.getVariable("RPMBB.UA87.RSF2.A81B1:I_MEAS", t1, t2)
@@ -219,7 +226,9 @@ rows = ds.limit(10).collect()
 print(f"Time elapsed {time.time()-start} seconds")
 ts0 = np.array([row.getAs("acqStamp") for row in rows]) / 1e9
 print(f"Time elapsed {time.time()-start} seconds")
-data0 = np.array([np.array(row.getAs("lastRawDataH").getList(0)) for row in rows])
+data0 = np.array(
+    [np.array(row.getAs("lastRawDataH").getList(0)) for row in rows]
+)
 print(f"Time elapsed {time.time()-start} seconds")
 print(f"ts0: {ts0.shape}; data0: {data0.shape}")
 

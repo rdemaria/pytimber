@@ -49,7 +49,9 @@ _suffixes = ["bytes", "KiB", "MiB", "GiB", "TiB", "EiB", "ZiB"]
 
 def human_readable(size, suffixes=" kMGTEZ"):
     order = int(np.log10(size) / 3) if size else 0
-    return ("%.4g%s" % (size / (10.0 ** (order * 3)), suffixes[order])).rstrip()
+    return (
+        "%.4g%s" % (size / (10.0 ** (order * 3)), suffixes[order])
+    ).rstrip()
 
 
 class PageStore(object):
@@ -70,7 +72,9 @@ class PageStore(object):
             if dbname.startswith("file:"):
                 if readonly:
                     dbname += "?mode=ro"
-                self.db = sqlite3.connect(dbname, isolation_level="IMMEDIATE", uri=True)
+                self.db = sqlite3.connect(
+                    dbname, isolation_level="IMMEDIATE", uri=True
+                )
             else:
                 if readonly:
                     tmp = tempfile.mktemp()
@@ -351,7 +355,9 @@ class PageStore(object):
             suf += ' WHERE name=="%s"' % variable
             out = ""
         else:
-            nvars = cur.execute("SELECT COUNT(DISTINCT name) FROM pages").fetchone()[0]
+            nvars = cur.execute(
+                "SELECT COUNT(DISTINCT name) FROM pages"
+            ).fetchone()[0]
             out = "%s variables, " % (human_readable(nvars))
         npages = cur.execute("SELECT COUNT(*)" + suf).fetchone()[0]
         nrecords = cur.execute("SELECT SUM(count)" + suf).fetchone()[0]
@@ -379,7 +385,9 @@ class PageStore(object):
                 print("Splitting in %d pages" % chunks)
                 for i in range(0, page.count, step):
                     idx, rec = page.get_all()
-                    self.store_page(variable, idx[i : i + step], rec[i : i + step])
+                    self.store_page(
+                        variable, idx[i : i + step], rec[i : i + step]
+                    )
                 self.delete_page(page)
 
     def prune_delete_pages(self, timestamp=None):

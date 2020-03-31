@@ -118,7 +118,9 @@ klist
                 NXCals.create_certs()
             except Exception as ex:
                 print(ex)
-                raise ValueError(f"Certificate file {certs} could not be created")
+                raise ValueError(
+                    f"Certificate file {certs} could not be created"
+                )
 
         self._user = user
 
@@ -142,7 +144,9 @@ klist
 
         # nxcals shortcuts
         self._builders = self._cern.nxcals.api.extraction.data.builders
-        self._Variables = self._cern.nxcals.api.extraction.metadata.queries.Variables
+        self._Variables = (
+            self._cern.nxcals.api.extraction.metadata.queries.Variables
+        )
         self._ServiceClientFactory = (
             self._cern.nxcals.api.extraction.metadata.ServiceClientFactory
         )
@@ -154,8 +158,12 @@ klist
 
         # nxcals services
         try:
-            self._variableService = self._ServiceClientFactory.createVariableService()
-            self._entityService = self._ServiceClientFactory.createEntityService()
+            self._variableService = (
+                self._ServiceClientFactory.createVariableService()
+            )
+            self._entityService = (
+                self._ServiceClientFactory.createEntityService()
+            )
         except TypeError:
             print("Possible problems with kerberos. Checking with keylist")
             os.system("klist")
@@ -178,7 +186,9 @@ klist
         self._System.setProperty("spring.main.web-application-type", "none")
         if self._certs is not None:
             self._System.setProperty("javax.net.ssl.trustStore", self._certs)
-            self._System.setProperty("javax.net.ssl.trustStorePassword", "nxcals")
+            self._System.setProperty(
+                "javax.net.ssl.trustStorePassword", "nxcals"
+            )
         self._System.setProperty("kerberos.principal", self._user)
         if self._keytab is not None:
             self._System.setProperty("kerberos.keytab", self._keytab)
@@ -202,7 +212,9 @@ klist
             .variableName()
             .like(pattern)
         )
-        out = [k.getVariableName() for k in self._variableService.findAll(query)]
+        out = [
+            k.getVariableName() for k in self._variableService.findAll(query)
+        ]
         return sorted(out)
 
     @property
@@ -261,7 +273,9 @@ klist
                 data, "nxcals_value"
             )
         else:
-            val = self._SparkDataFrameConversions.extractColumn(data, "nxcals_value")
+            val = self._SparkDataFrameConversions.extractColumn(
+                data, "nxcals_value"
+            )
         return np.array(ts[:] / 1e9, dtype=float), np.array(val[:])
 
     def searchEntity(self, pattern):

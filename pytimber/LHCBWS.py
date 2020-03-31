@@ -57,9 +57,9 @@ def _get_timber_variables(beam, wire, io="all", plane="all"):
     plane: either 'all', 'H', 'V'
     """
     beam = beam.upper()
-    assert beam in ["B1", "B2"], ("beam = {} " "must be either 'B1' or 'B2'").format(
-        beam
-    )
+    assert beam in ["B1", "B2"], (
+        "beam = {} " "must be either 'B1' or 'B2'"
+    ).format(beam)
     if beam == "B1":
         rl = "R"
     elif beam == "B2":
@@ -98,11 +98,15 @@ def _get_timber_variables(beam, wire, io="all", plane="all"):
         u"LHC.BOFSU:OFC_ENERGY",
     ]
 
-    variables = [v.format(rl=rl.upper(), b=beam.upper(), w=wire) for v in var_template]
+    variables = [
+        v.format(rl=rl.upper(), b=beam.upper(), w=wire) for v in var_template
+    ]
     if io != "all" and io in ["IN", "OUT"]:
         not_io = list(set(["IN", "OUT"]) - set([io]))[0]
         variables = [
-            v for v in variables if ("." + not_io not in v and "_" + not_io not in v)
+            v
+            for v in variables
+            if ("." + not_io not in v and "_" + not_io not in v)
         ]
     if plane != "all" and plane in ["H", "V"]:
         not_plane = list(set(["H", "V"]) - set([plane]))[0]
@@ -140,7 +144,9 @@ def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
     # -- some checks
     if t2 < t1:
         raise ValueError(
-            ("End time smaller than start time, t2 = " "{} > {} = t1").format(t2, t1)
+            ("End time smaller than start time, t2 = " "{} > {} = t1").format(
+                t2, t1
+            )
         )
     name = "%LHC%BWS%" + beam.upper()
     # check for which wire we have data
@@ -163,7 +169,8 @@ def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
             pass
         elif wire == "":
             err_str = (
-                "No data found for wire 1 or wire 2 as " "db.search('{}') is empty!"
+                "No data found for wire 1 or wire 2 as "
+                "db.search('{}') is empty!"
             )
             err_str = err_str.format(name + "%NB_GATES%")
             raise ValueError(err_str)
@@ -177,7 +184,10 @@ def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
             )
             raise ValueError(err_str)
         else:
-            err_str = "This completely failed! wire = {} and " "db.search('{}') = {}!"
+            err_str = (
+                "This completely failed! wire = {} and "
+                "db.search('{}') = {}!"
+            )
             err_str = err_str.format(
                 wire, name + "%NB_GATES%", db.search(name + "%NB_GATES%")
             )
@@ -224,7 +234,9 @@ def _get_timber_data(beam, t1, t2, convert_gate=False, db=None):
             data[b_v] = list(data[b_v])
             val = data[b_v][1]
             # run the binary to bunch conversion
-            data[b_v][1] = np.array([extract_bunch_selection(vv) for vv in val])
+            data[b_v][1] = np.array(
+                [extract_bunch_selection(vv) for vv in val]
+            )
             data[b_v] = tuple(data[b_v])
     return data
 
@@ -304,7 +316,9 @@ def _timber_to_dict(beam, plane, direction, data, db):
             dbws_nd[t].append(row_nd)
 
     cols_1d = ["time", "slots", "time_app", "gain", "egev", "beta", "emit"]
-    bws_1d = pd.DataFrame(data=df_ws, columns=cols_1d).set_index(["time", "slots"])
+    bws_1d = pd.DataFrame(data=df_ws, columns=cols_1d).set_index(
+        ["time", "slots"]
+    )
     # the goal here is to output a nice pd.DataFrame of the 1D data
     # and a horrible dictionnary --> array for the nD data
     for k in dbws_nd.keys():
@@ -465,7 +479,11 @@ class BWS(object):
             data_nd[plane] = {}
             for io in "IN", "OUT":
                 data = _timber_to_dict(
-                    beam=beam, plane=plane, direction=io, data=timber_data, db=db
+                    beam=beam,
+                    plane=plane,
+                    direction=io,
+                    data=timber_data,
+                    db=db,
                 )
                 data_nd[plane][io] = data[1]
                 data_1d[plane][io] = data[0]
@@ -488,7 +506,9 @@ class BWS(object):
             beam=self.beam, t1=t1, t2=t2, db=self.db, convert_gate=False
         )
 
-    def update_beta_energy(self, t1=None, t2=None, beth=None, betv=None, energy=None):
+    def update_beta_energy(
+        self, t1=None, t2=None, beth=None, betv=None, energy=None
+    ):
         """
         update beta and energy for emit_gauss and emit_gauss_err
         within t1 and t2. emit = emittance as stored in timber is not
@@ -528,7 +548,9 @@ class BWS(object):
             for io in "IN", "OUT":
                 data = self.data[0][plane][io].reset_index()
                 data_fit = self.data_fit[0][plane][io].reset_index()
-                mask = np.logical_and(data_fit["time"] >= t1, data_fit["time"] <= t2)
+                mask = np.logical_and(
+                    data_fit["time"] >= t1, data_fit["time"] <= t2
+                )
                 data_fit_filt = data_fit.loc[mask].copy()
                 data_filt = data.loc[mask].copy()
                 if energy is not None:
@@ -537,15 +559,17 @@ class BWS(object):
                     ] = data_fit_filt.apply(energy_func, axis=1)
                     data_filt["egev"] = energy
                 if beta is not None:
-                    data_fit_filt[["emit_gauss", "emit_gauss_err"]] = data_filt.apply(
-                        beta_func, axis=1
-                    )
+                    data_fit_filt[
+                        ["emit_gauss", "emit_gauss_err"]
+                    ] = data_filt.apply(beta_func, axis=1)
                     data_filt["beta"] = beta
 
                 data.loc[mask] = data_filt
                 data_fit.loc[mask] = data_fit_filt
                 self.data[0][plane][io] = data.set_index(["time", "slots"])
-                self.data_fit[0][plane][io] = data_fit.set_index(["time", "slots"])
+                self.data_fit[0][plane][io] = data_fit.set_index(
+                    ["time", "slots"]
+                )
 
     def fit_gaussian(self):
         """
@@ -634,13 +658,20 @@ class BWS(object):
                 else:
                     amp_norm = amp / int_dist
                     p, pcov = curve_fit(
-                        f=tb.gauss_pdf, xdata=pos, ydata=amp_norm, p0=[0, 1, 0, 1000]
+                        f=tb.gauss_pdf,
+                        xdata=pos,
+                        ydata=amp_norm,
+                        p0=[0, 1, 0, 1000],
                     )
                     sigma_gauss = p[3]
                     sigma_gauss_err = np.sqrt(pcov[3, 3])
-                    emit_gauss = tb.emitnorm(sigma_gauss ** 2 / beta, egev) * 1.0e-6
+                    emit_gauss = (
+                        tb.emitnorm(sigma_gauss ** 2 / beta, egev) * 1.0e-6
+                    )
                     emit_gauss_err = (
-                        tb.emitnorm(2 * sigma_gauss * sigma_gauss_err / beta, egev)
+                        tb.emitnorm(
+                            2 * sigma_gauss * sigma_gauss_err / beta, egev
+                        )
                         * 1.0e-6
                     )
 
