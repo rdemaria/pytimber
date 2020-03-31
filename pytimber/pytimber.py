@@ -283,9 +283,13 @@ class LoggingDB(object):
         dataclass = PrimitiveDataSets.dataClass(dataset)
 
         if self._source == "nxcals":
-            idx = ~np.array([d.isNullValue() for d in dataset])
-            ds = np.array(dataset)[idx]
-            timestamps = timestamps[idx]
+            
+            #idx = ~np.array([d.isNullValue() for d in dataset])
+            #ds = np.array(dataset)[idx]
+            #timestamps = timestamps[idx]
+
+            ds = dataset
+
             if datatype == "NUMERIC":
                 try:
                     ds = np.array([d.getDoubleValue() for d in ds])

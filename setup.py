@@ -34,6 +34,7 @@ setup(
         "pytz",
         "scipy",
         "six",
+        "numpy",
     ],
     extras_require={"dev": ["pytest"]},
     entry_points={
