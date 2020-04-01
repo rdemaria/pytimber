@@ -39,6 +39,8 @@ import datetime
 import six
 import logging
 
+from .check_kerberos import check_kerberos
+
 try:
     import jpype
     import cmmnbuild_dep_manager
@@ -108,17 +110,12 @@ class LoggingDB(object):
         self._source = source
 
         if source == "nxcals":
-            import getpass
-
-            username = getpass.getuser()
-            self._user = username
+            check_kerberos()
             self._System = jpype.java.lang.System
             self._System.setProperty(
                 "service.url",
                 "https://cs-ccr-nxcals6.cern.ch:19093,https://cs-ccr-nxcals7.cern.ch:19093,https://cs-ccr-nxcals8.cern.ch:19093",
             )
-            # self._System.setProperty("kerberos.principal", "rdemaria" )
-            # self._System.setProperty("kerberos.keytab", "/home/rdemaria/.nxcals/keytab")
             ServiceBuilder = jpype.JPackage(
                 "cern"
             ).nxcals.api.backport.client.service.ServiceBuilder
