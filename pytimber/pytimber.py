@@ -239,7 +239,7 @@ class LoggingDB(object):
         else:
             logfuns = []
             for f in fundamentals:
-                logfuns.append(f)
+                logfuns.append(f.toString())
             self._log.info(
                 "List of fundamentals found: {0}".format(", ".join(logfuns))
             )
