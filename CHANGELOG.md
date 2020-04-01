@@ -1,7 +1,10 @@
 # pytimber changelog
 
-### 2.9.0
+### 3.0.0
   Add NXCALS support
+  Requiring Python >=3.6
+  Removing getVariables and getVariablesList
+  Requiring 0.7.2
 
 ### 2.8.0
   Fix incompatibility with Jpype 0.7.x
