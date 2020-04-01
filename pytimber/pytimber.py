@@ -197,24 +197,18 @@ class LoggingDB(object):
         except Exception as e:
             self._log.warning("exception in timescale:{}".format(e))
 
-    def getVariables(self, pattern):
-        """Get Variable from pattern. Wildcard is '%'."""
-        types = self._VariableDataType.ALL
-        # if self._source=='nxcals':
-        #    pattern=pattern.replace('%','%25')
-        v = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
-        return list(v.getVariables())
-
     def search(self, pattern):
         """Search for parameter names. Wildcard is '%'."""
-        return [vv.getVariableName() for vv in self.getVariables(pattern)]
+        types = self._VariableDataType.ALL
+        vl = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
+        return [vv.getVariableName() for vv in vl]
 
     def getDescription(self, pattern):
         """Get Variable Description from pattern. Wildcard is '%'."""
         return dict(
             [
                 (vv.getVariableName(), vv.getDescription())
-                for vv in self.getVariables(pattern)
+                for vv in self.getVariableSet(pattern)
             ]
         )
 
@@ -223,7 +217,7 @@ class LoggingDB(object):
         return dict(
             [
                 (vv.getVariableName(), vv.getUnit())
-                for vv in self.getVariables(pattern)
+                for vv in self.getVariableSet(pattern)
             ]
         )
 
@@ -245,7 +239,7 @@ class LoggingDB(object):
             )
         return fundamentals
 
-    def getVariablesList(self, pattern_or_list):
+    def getVariableSet(self, pattern_or_list):
         """Get a list of variables based on a list of strings or a pattern.
         Wildcard for the pattern is '%'.
         """
@@ -259,7 +253,7 @@ class LoggingDB(object):
                 jpype.java.util.Arrays.asList(pattern_or_list)
             )
         else:
-            variables = None
+            raise ValueError(f"{pattern_or_list} not pattern or list")
         return variables
 
     def processDataset(self, dataset, datatype, unixtime):
@@ -445,7 +439,7 @@ class LoggingDB(object):
                 return {}
 
         # Build variable list
-        variables = self.getVariablesList(pattern_or_list)
+        variables = self.getVariableSet(pattern_or_list)
 
         if master is None:
             if isinstance(pattern_or_list, (list, tuple)):
@@ -536,7 +530,7 @@ class LoggingDB(object):
         ts2 = self.toTimestamp(t2)
 
         # Build variable list
-        variables = self.getVariablesList(pattern_or_list)
+        variables = self.getVariableSet(pattern_or_list)
         if len(variables) == 0:
             self._log.warning("No variables found.")
             return {}
@@ -578,7 +572,7 @@ class LoggingDB(object):
     #        ts2 = self.toTimestamp(t2)
     #
     #        # Build variable list
-    #        variables = self.getVariablesList(pattern_or_list)
+    #        variables = self.getVariableSet(pattern_or_list)
     #        if len(variables) == 0:
     #            log.warning('No variables found.')
     #            return {}
@@ -613,7 +607,7 @@ class LoggingDB(object):
         out = {}
 
         # Build variable list
-        variables = self.getVariablesList(pattern_or_list)
+        variables = self.getVariableSet(pattern_or_list)
         if len(variables) == 0:
             self._log.warning("No variables found.")
             return {}
@@ -724,7 +718,7 @@ class LoggingDB(object):
 
         out = {}
         # Build variable list
-        variables = self.getVariablesList(pattern_or_list)
+        variables = self.getVariableSet(pattern_or_list)
         if len(variables) == 0:
             self._log.warning("No variables found.")
             return {}
@@ -902,7 +896,7 @@ class LoggingDB(object):
     def getMetaData(self, pattern_or_list):
         """Get All MetaData for a variable defined by a pattern_or_list"""
         out = {}
-        variables = self.getVariablesList(pattern_or_list).getVariables()
+        variables = self.getVariableSet(pattern_or_list)
         for variable in variables:
             metadata = self._md.getVectorElements(
                 variable

@@ -42,11 +42,11 @@ class TestUnit:
                 var_list.append(
                     _Variable.builder()
                     .variableName(pattern.replace("%", str(i)))
-                    .build()
+                    .build().toString()
                 )
             return var_list
 
-        monkeypatch.setattr(nxcals, "getVariables", mockreturn)
+        monkeypatch.setattr(nxcals, "search", mockreturn)
         variable_list = TestUnit._search(nxcals, "VARIABLE%")
 
         assert "VARIABLE1" in variable_list
