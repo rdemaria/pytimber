@@ -467,6 +467,7 @@ class LoggingDB(object):
         else:
             logvars = []
             for v in variables:
+                v = v.toString()
                 if v == master_name:
                     logvars.append("{0} (master)".format(v))
                 else:
@@ -499,6 +500,7 @@ class LoggingDB(object):
 
         # Acquire aligned data based on master dataset timestamps
         for v in variables:
+            v = v.toString()
             if v == master_name:
                 continue
             jvar = variables.getVariable(v)
@@ -541,12 +543,12 @@ class LoggingDB(object):
         else:
             logvars = []
             for v in variables:
-                logvars.append(v)
-                self._log.info(
-                    "List of variables to be queried: {0}".format(
-                        ", ".join(logvars)
-                    )
+                logvars.append(v.toString())
+            self._log.info(
+                "List of variables to be queried: {0}".format(
+                    ", ".join(logvars)
                 )
+            )
 
         # Acquire
         data = self._ts.getVariableStatisticsOverMultipleVariablesInTimeWindow(
@@ -618,7 +620,7 @@ class LoggingDB(object):
         else:
             logvars = []
             for v in variables:
-                logvars.append(v)
+                logvars.append(v.toString())
             self._log.info(
                 "List of variables to be queried: {0}".format(
                     ", ".join(logvars)
@@ -639,6 +641,7 @@ class LoggingDB(object):
 
         # Acquire
         for v in variables:
+            v = v.toString()
             jvar = variables.getVariable(v)
             if t2 is None or t2 == "last":
                 res = [
@@ -728,7 +731,7 @@ class LoggingDB(object):
         else:
             logvars = []
             for v in variables:
-                logvars.append(v)
+                logvars.append(v.toString())
             self._log.info(
                 "List of variables to be queried: {0}".format(
                     ", ".join(logvars)
@@ -737,6 +740,7 @@ class LoggingDB(object):
 
         # Acquire
         for v in variables:
+            v = v.toString()
             jvar = variables.getVariable(v)
             try:
                 res = self._ts.getDataInFixedIntervals(
