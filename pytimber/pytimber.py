@@ -910,7 +910,7 @@ class LoggingDB(object):
             ts = [_Timestamp2float(tt) for tt in metadata]
             #            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
             #                    for a in metadata.values()]
-            vv = [[aa.value for aa in a.iterator()] for a in metadata.values()]
+            vv = [[aa.getValue() for aa in a.iterator()] for a in metadata.values()]
             out[variable.getVariableName()] = ts, vv
         return out
 

@@ -145,3 +145,10 @@ def test_getStats():
 
     assert stat.MinTstamp == 1457962796.972
     assert stat.StandardDeviationValue == 0.00401594
+
+
+def test_getMetaData():
+    var = 'LHC.BLMI:LOSS_RS09'
+    out = ldb.getMetaData(var)
+    assert len(out[var][0]) >= 24
+    assert len(out[var][1]) >= 24
