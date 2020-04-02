@@ -222,7 +222,7 @@ class LoggingDB(object):
             ]
         )
 
-    def getFundamentals(self, t1, t2, fundamental):
+    def _getFundamentals(self, t1, t2, fundamental):
         self._log.info(
             "Querying fundamentals (pattern: {0}):".format(fundamental)
         )
@@ -239,6 +239,10 @@ class LoggingDB(object):
                 "List of fundamentals found: {0}".format(", ".join(logfuns))
             )
         return fundamentals
+
+    def getFundamentals(self, t1, t2, fundamental):
+        self._log.warning("getFundamentals will be deprecated")
+        return searchFundamental(fundamental,t1,t2)
 
     def getVariableSet(self, pattern_or_list):
         """Get a list of variables based on a list of strings or a pattern.
@@ -440,7 +444,7 @@ class LoggingDB(object):
 
         # Fundamentals
         if fundamental is not None:
-            fundamentals = self.getFundamentals(ts1, ts2, fundamental)
+            fundamentals = self._getFundamentals(ts1, ts2, fundamental)
             if fundamentals is None:
                 return {}
 
@@ -523,7 +527,7 @@ class LoggingDB(object):
         if t2 is None:
             t2 = time.time()
         ts2 = self.toTimestamp(t2)
-        fundamentals = self.getFundamentals(ts1, ts2, fundamental)
+        fundamentals = self._getFundamentals(ts1, ts2, fundamental)
         if fundamentals is not None:
             return list(fundamentals.getVariableNames())
         else:
@@ -633,7 +637,7 @@ class LoggingDB(object):
             )
             return {}
         if fundamental is not None:
-            fundamentals = self.getFundamentals(ts1, ts2, fundamental)
+            fundamentals = self._getFundamentals(ts1, ts2, fundamental)
             if fundamentals is None:
                 return {}
 
