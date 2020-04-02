@@ -7,6 +7,9 @@ import numpy as np
 
 import cmmnbuild_dep_manager
 
+from .check_kerberos import check_kerberos
+
+
 user_home = os.environ["HOME"]
 nxcals_home = os.path.join(user_home, ".nxcals")
 keytab = os.path.join(nxcals_home, "keytab")
@@ -92,6 +95,9 @@ klist
            certs: default $HOME/.nxcals/nxcals_cacerts
         """
 
+        check_kerberos()
+
+
         # Configure logging
         logging.basicConfig()
         self._log = logging.getLogger(__name__)
@@ -103,24 +109,24 @@ klist
 
         if os.path.isfile(keytab):
             self._keytab = keytab
-        else:
-            try:
-                NXCals.create_keytab()
-            except Exception as ex:
-                print(ex)
-                raise ValueError(f"Keytab file {keytab} could not be created")
+        #else:
+        #    try:
+        #        NXCals.create_keytab()
+        #    except Exception as ex:
+        #        print(ex)
+        #        raise ValueError(f"Keytab file {keytab} could not be created")
 
         self._certs = None
         if os.path.isfile(certs):
             self._certs = certs
-        else:
-            try:
-                NXCals.create_certs()
-            except Exception as ex:
-                print(ex)
-                raise ValueError(
-                    f"Certificate file {certs} could not be created"
-                )
+        #else:
+        #    try:
+        #        NXCals.create_certs()
+        #    except Exception as ex:
+        #        print(ex)
+        #        raise ValueError(
+        #            f"Certificate file {certs} could not be created"
+        #        )
 
         self._user = user
 
@@ -187,7 +193,10 @@ klist
             self._System.setProperty(
                 "javax.net.ssl.trustStorePassword", "nxcals"
             )
-        self._System.setProperty("kerberos.principal", self._user)
+
+        if self._user is not None:
+            self._System.setProperty("kerberos.principal", self._user)
+
         if self._keytab is not None:
             self._System.setProperty("kerberos.keytab", self._keytab)
 
