@@ -28,7 +28,7 @@ setup(
     python_requires=">=3.6, <4",
     install_requires=[
         "python-dateutil",
-        "JPype1>=0.7.2",
+        "JPype1>=0.7.1",
         "cmmnbuild-dep-manager>=2.4.0",
         "matplotlib",
         "pytz",

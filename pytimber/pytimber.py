@@ -202,14 +202,14 @@ class LoggingDB(object):
         """Search for parameter names. Wildcard is '%'."""
         types = self._VariableDataType.ALL
         vl = self._md.getVariablesOfDataTypeWithNameLikePattern(pattern, types)
-        return [vv.getVariableName() for vv in vl]
+        return [vv.getVariableName() for vv in vl.getVariables()]
 
     def getDescription(self, pattern):
         """Get Variable Description from pattern. Wildcard is '%'."""
         return dict(
             [
                 (vv.getVariableName(), vv.getDescription())
-                for vv in self.getVariableSet(pattern)
+                for vv in self._getVariableList(pattern)
             ]
         )
 
@@ -218,7 +218,7 @@ class LoggingDB(object):
         return dict(
             [
                 (vv.getVariableName(), vv.getUnit())
-                for vv in self.getVariableSet(pattern)
+                for vv in self._getVariableList(pattern)
             ]
         )
 
@@ -233,7 +233,7 @@ class LoggingDB(object):
             self._log.info("No fundamental found in time window")
         else:
             logfuns = []
-            for f in fundamentals:
+            for f in fundamentals.getVariables(): #workaround 0.7.1
                 logfuns.append(f.toString())
             self._log.info(
                 "List of fundamentals found: {0}".format(", ".join(logfuns))
@@ -256,6 +256,11 @@ class LoggingDB(object):
         else:
             raise ValueError(f"{pattern_or_list} not pattern or list")
         return variables
+
+    def _getVariableList(self,pattern_or_list):
+        """work around for jpype 0.7.1 as list(vset) gives strings
+        """
+        return self.getVariableSet(pattern_or_list).getVariables()
 
     def processDataset(self, dataset, datatype, unixtime):
         spi = jpype.JPackage(
@@ -440,7 +445,7 @@ class LoggingDB(object):
                 return {}
 
         # Build variable list
-        variables = self.getVariableSet(pattern_or_list)
+        variables = self._getVariableList(pattern_or_list)
 
         if master is None:
             if isinstance(pattern_or_list, (list, tuple)):
@@ -461,12 +466,12 @@ class LoggingDB(object):
             return {}
         else:
             logvars = []
-            for v in variables:
-                v = v.toString()
-                if v == master_name:
-                    logvars.append("{0} (master)".format(v))
+            for jvar in variables:
+                vname = jvar.getVariableName()
+                if vname == master_name:
+                    logvars.append("{0} (master)".format(vname))
                 else:
-                    logvars.append(v)
+                    logvars.append(vname)
 
             self._log.info(
                 "List of variables to be queried: {0}".format(
@@ -494,11 +499,9 @@ class LoggingDB(object):
         )
 
         # Acquire aligned data based on master dataset timestamps
-        for v in variables:
-            v = v.toString()
-            if v == master_name:
+        for jvar in variables:
+            if jvar.toString() == master_name:
                 continue
-            jvar = variables.getVariable(v)
             start_time = time.time()
             res = self._ts.getDataAlignedToTimestamps(jvar, master_ds)
             self._log.info(
@@ -509,7 +512,7 @@ class LoggingDB(object):
             self._log.info(
                 "{0} seconds for aqn".format(time.time() - start_time)
             )
-            out[v] = self.processDataset(
+            out[jvar.getVariableName()] = self.processDataset(
                 res, res.getVariableDataType().toString(), unixtime
             )[1]
         return out
@@ -537,8 +540,8 @@ class LoggingDB(object):
             return {}
         else:
             logvars = []
-            for v in variables:
-                logvars.append(v.toString())
+            for jvar in variables.getVariables(): #workaround 0.7.1
+                logvars.append(jvar.toString())
             self._log.info(
                 "List of variables to be queried: {0}".format(
                     ", ".join(logvars)
@@ -573,7 +576,7 @@ class LoggingDB(object):
     #        ts2 = self.toTimestamp(t2)
     #
     #        # Build variable list
-    #        variables = self.getVariableSet(pattern_or_list)
+    #        variables = self._getVariableList(pattern_or_list)
     #        if len(variables) == 0:
     #            log.warning('No variables found.')
     #            return {}
@@ -608,14 +611,14 @@ class LoggingDB(object):
         out = {}
 
         # Build variable list
-        variables = self.getVariableSet(pattern_or_list)
+        variables = self._getVariableList(pattern_or_list)
         if len(variables) == 0:
             self._log.warning("No variables found.")
             return {}
         else:
             logvars = []
-            for v in variables:
-                logvars.append(v.toString())
+            for jvar in variables:
+                logvars.append(jvar.toString())
             self._log.info(
                 "List of variables to be queried: {0}".format(
                     ", ".join(logvars)
@@ -635,9 +638,7 @@ class LoggingDB(object):
                 return {}
 
         # Acquire
-        for v in variables:
-            v = v.toString()
-            jvar = variables.getVariable(v)
+        for jvar in variables:
             if t2 is None or t2 == "last":
                 res = [
                     self._ts.getLastDataPriorToTimestampWithinDefaultInterval(
@@ -683,7 +684,7 @@ class LoggingDB(object):
                         res.size(), jvar.getVariableName()
                     )
                 )
-            out[v] = self.processDataset(res, datatype, unixtime)
+            out[jvar.getVariableName()] = self.processDataset(res, datatype, unixtime)
         return out
 
     def getVariable(
@@ -719,14 +720,14 @@ class LoggingDB(object):
 
         out = {}
         # Build variable list
-        variables = self.getVariableSet(pattern_or_list)
+        variables = self._getVariableList(pattern_or_list)
         if len(variables) == 0:
             self._log.warning("No variables found.")
             return {}
         else:
             logvars = []
-            for v in variables:
-                logvars.append(v.toString())
+            for jvar in variables:
+                logvars.append(jvar.toString())
             self._log.info(
                 "List of variables to be queried: {0}".format(
                     ", ".join(logvars)
@@ -734,9 +735,7 @@ class LoggingDB(object):
             )
 
         # Acquire
-        for v in variables:
-            v = v.toString()
-            jvar = variables.getVariable(v)
+        for jvar in variables:
             try:
                 res = self._ts.getDataInFixedIntervals(
                     jvar, ts1, ts2, timescaling
@@ -775,9 +774,10 @@ class LoggingDB(object):
                     res.size(), jvar.getVariableName()
                 )
             )
-            out[v] = self.processDataset(res, datatype, unixtime)
-            if np.isnan(out[v][1]).any():
-                self._log.warning("Variable {} contains NaN values".format(v))
+            vname= jvar.getVariableName()
+            out[vname] = self.processDataset(res, datatype, unixtime)
+            if np.isnan(out[vname][1]).any():
+                self._log.warning("Variable {} contains NaN values".format(vname))
         return out
 
     def getLHCFillData(self, fill_number=None, unixtime=True):
@@ -897,10 +897,10 @@ class LoggingDB(object):
     def getMetaData(self, pattern_or_list):
         """Get All MetaData for a variable defined by a pattern_or_list"""
         out = {}
-        variables = self.getVariableSet(pattern_or_list)
-        for variable in variables:
+        variables = self._getVariableList(pattern_or_list)
+        for jvar in variables:
             metadata = self._md.getVectorElements(
-                variable
+                jvar
             ).getVectornumericElements()
             ts = [_Timestamp2float(tt) for tt in metadata]
             #            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
@@ -909,7 +909,7 @@ class LoggingDB(object):
                 [aa.getValue() for aa in a.iterator()]
                 for a in metadata.values()
             ]
-            out[variable.getVariableName()] = ts, vv
+            out[jvar.getVariableName()] = ts, vv
         return out
 
 
