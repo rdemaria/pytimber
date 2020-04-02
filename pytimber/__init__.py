@@ -19,7 +19,7 @@ from . import timberdata
 from .pagestore import PageStore
 
 from .nxcals import NXCals
-
+from .check_kerberos import check_kerberos
 
 __version__ = "3.0.0alpha"
 
@@ -59,6 +59,7 @@ __all__ = [
     "timberdata",
     "PageStore",
     "NXCals",
+    "check_kerberos",
 ]
 
 # workaround for missing keyword
