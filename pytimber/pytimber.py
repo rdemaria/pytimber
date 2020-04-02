@@ -31,6 +31,7 @@ Authors:
     M. Fitterer     <mfittere@fnal.gov>
     R. Castellotti  <riccardo.castellotti@cern.ch>
     L. Coyle        <loic.coyle@epfl.ch>
+    P. Sowinski     <piotr.sowinski@cern.ch>
 """
 
 import os
@@ -904,7 +905,10 @@ class LoggingDB(object):
             ts = [_Timestamp2float(tt) for tt in metadata]
             #            vv=[dict([(aa.key,aa.value) for aa in a.iterator()])
             #                    for a in metadata.values()]
-            vv = [[aa.getValue() for aa in a.iterator()] for a in metadata.values()]
+            vv = [
+                [aa.getValue() for aa in a.iterator()]
+                for a in metadata.values()
+            ]
             out[variable.getVariableName()] = ts, vv
         return out
 

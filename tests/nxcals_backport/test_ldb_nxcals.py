@@ -42,7 +42,8 @@ class TestUnit:
                 var_list.append(
                     _Variable.builder()
                     .variableName(pattern.replace("%", str(i)))
-                    .build().toString()
+                    .build()
+                    .toString()
                 )
             return var_list
 

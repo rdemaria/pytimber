@@ -125,8 +125,6 @@ klist
         self._user = user
 
         # Start JVM and set basic hook
-        import cmmnbuild_dep_manager
-
         self._mgr = cmmnbuild_dep_manager.Manager("pytimber", loglevel)
         self._jpype = self._mgr.start_jpype_jvm()
         self._org = self._jpype.JPackage("org")
@@ -203,7 +201,6 @@ klist
         return self._NxcalsSparkSession.sparkSession()
 
     def searchVariable(self, pattern, system="CMW"):
-        pattern = pattern.replace("%", "%25")
         query = (
             self._Variables.suchThat()
             .systemName()
@@ -261,22 +258,22 @@ klist
         )
         ts_type = data.dtypes()[0]._2()
         val_type = data.dtypes()[1]._2()
-        ts = self._SparkDataFrameConversions.extractDoubleColumn(
+        ts = np.array(self._SparkDataFrameConversions.extractDoubleColumn(
             data, "nxcals_timestamp"
-        )
+        ))
         if val_type == "FloatType" or val_type == "DoubleType":
-            val = self._SparkDataFrameConversions.extractDoubleColumn(
+            val = np.array(self._SparkDataFrameConversions.extractDoubleColumn(
                 data, "nxcals_value"
-            )
+            ))
         elif val_type == "LongType":
-            val = self._SparkDataFrameConversions.extractLongColumn(
+            val = np.array(self._SparkDataFrameConversions.extractLongColumn(
                 data, "nxcals_value"
-            )
+            ))
         else:
-            val = self._SparkDataFrameConversions.extractColumn(
+            val = np.array(self._SparkDataFrameConversions.extractColumn(
                 data, "nxcals_value"
-            )
-        return np.array(ts[:] / 1e9, dtype=float), np.array(val[:])
+            ))
+        return ts[:] / 1e9, val
 
     def searchEntity(self, pattern):
         out = []

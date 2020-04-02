@@ -5,9 +5,6 @@ import ast
 import os
 from setuptools import setup, find_packages
 
-from setuptools.command.install import install as _install
-
-
 def get_version_from_init():
     init_file = os.path.join(
         os.path.dirname(__file__), "pytimber", "__init__.py"

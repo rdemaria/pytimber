@@ -148,7 +148,7 @@ def test_getStats():
 
 
 def test_getMetaData():
-    var = 'LHC.BLMI:LOSS_RS09'
+    var = "LHC.BLMI:LOSS_RS09"
     out = ldb.getMetaData(var)
     assert len(out[var][0]) >= 24
     assert len(out[var][1]) >= 24

@@ -1,7 +1,7 @@
 import pytimber
 
 
-def test_loggingdb():
+def test_search():
 
     ldb = pytimber.LoggingDB()
 

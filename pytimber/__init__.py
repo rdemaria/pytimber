@@ -32,16 +32,16 @@ __cmmnbuild_deps__ = [
     #    "slf4j-log4j12",
     #    "slf4j-api",
     #    "log4j",
-    #{"product": "jackson-databind", "version": "2.9.8"},
-    #{"product": "jackson-core", "version": "2.9.8"},
-    #{"product": "jackson-datatype-guava", "version": "2.9.8"},
-    #{"product": "jackson-datatype-jsr310", "version": "2.9.8"},
-    #{"product": "jackson-annotations", "version": "2.9.8"},
-    #{"product": "jackson-dataformat-yaml", "version": "2.9.8"},
-    #{"product": "jackson-datatype-jdk8", "version": "2.9.8"},
-    #{"product": "jackson-module-parameter-names", "version": "2.9.8"},
-    #{"product": "jackson-module-paranamer", "version": "2.9.8"},
-#    {"product": "jackson-module-scala", "version": "2.9.8"},
+    # {"product": "jackson-databind", "version": "2.9.8"},
+    # {"product": "jackson-core", "version": "2.9.8"},
+    # {"product": "jackson-datatype-guava", "version": "2.9.8"},
+    # {"product": "jackson-datatype-jsr310", "version": "2.9.8"},
+    # {"product": "jackson-annotations", "version": "2.9.8"},
+    # {"product": "jackson-dataformat-yaml", "version": "2.9.8"},
+    # {"product": "jackson-datatype-jdk8", "version": "2.9.8"},
+    # {"product": "jackson-module-parameter-names", "version": "2.9.8"},
+    # {"product": "jackson-module-paranamer", "version": "2.9.8"},
+    #    {"product": "jackson-module-scala", "version": "2.9.8"},
 ]
 
 __all__ = [
@@ -58,6 +58,7 @@ __all__ = [
     "BWS",
     "timberdata",
     "PageStore",
+    "NXCals",
 ]
 
 # workaround for missing keyword
