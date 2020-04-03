@@ -1,4 +1,7 @@
-import os, sys, shutil, tempfile
+import os
+import sys
+import shutil
+import tempfile
 
 import sqlite3
 import numpy as np

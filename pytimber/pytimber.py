@@ -34,7 +34,6 @@ Authors:
     P. Sowinski     <piotr.sowinski@cern.ch>
 """
 
-import os
 import time
 import datetime
 import six

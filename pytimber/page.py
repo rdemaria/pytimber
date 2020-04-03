@@ -1,9 +1,7 @@
-import os, time, gzip
+import os
 import hashlib
 
 import numpy as np
-
-import sys
 
 
 def id_to_path(num, nchar=3):
@@ -224,6 +222,7 @@ class Page(object):
         return idx[a:b:skip]
 
     def get_range(self, idxa, idxb):
+        idx = self.get_idx_all()
         a = idx.searchsorted(idxa, side="left")
         b = idx.searchsorted(idxb, side="right")
         return a, b
@@ -236,6 +235,7 @@ class Page(object):
             itemsize = self.recsize / self.count
             return self.count(idxa, idxb, skip=skip) * itemsize
         else:
+            cc = self.count
             a, b = self.get_range(idxa, idxb)
             items = np.sum(
                 np.fromfile(self.lenpath, dtype="<i8", count=cc)[a:b:skip]
@@ -252,6 +252,6 @@ class Page(object):
         else:
             sha = hashfile(sha, self.recpath)
         res = sha.hexdigest() == self.checksum
-        if res == False:
+        if res is False:
             print("Checksum failsed for page %s" % self.pageid)
         return res

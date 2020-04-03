@@ -1,5 +1,5 @@
-from pytimber.pagestore import *
-from numpy import *
+from pytimber.pagestore import Page
+from numpy import zeros, arange, random, array
 
 
 def mktest(idx, rec, comp=None):

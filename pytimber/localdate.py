@@ -1,6 +1,7 @@
-import time, pytz
+import time
+import pytz
 import re
-from dateutil.tz import gettz, tzlocal
+from dateutil.tz import gettz
 from datetime import datetime
 
 myzones = {
@@ -70,11 +71,11 @@ def dumpdate(t=None, fmt="%Y-%m-%d %H:%M:%S.SSS", zone="cern"):
   ----------
   t : unix time [s], if t = None the time now is used
   fmt : = format string for output
-  zone : time zone, either predefined (bnl,cern,fnal,lbl and z for 
-         utc time) or datetime timezones (e.g. 'Europe/Zurich' for 
+  zone : time zone, either predefined (bnl,cern,fnal,lbl and z for
+         utc time) or datetime timezones (e.g. 'Europe/Zurich' for
          cern).
          If zone = None local time is used
-  """
+    """
     if t is None:
         t = time.time()
     ti = int(t)

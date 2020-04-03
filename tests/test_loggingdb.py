@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import pytimber
 
 # should be done before importing pytimber
 logging.basicConfig(level=logging.INFO)
 
-import pytimber
 
 ldb = pytimber.LoggingDB(source="ldb")
 

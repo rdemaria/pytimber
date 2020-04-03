@@ -264,7 +264,7 @@ klist
             .na()
             .drop()
         )
-        ts_type = data.dtypes()[0]._2()
+        # ts_type = data.dtypes()[0]._2()
         val_type = data.dtypes()[1]._2()
         ts = np.array(
             self._SparkDataFrameConversions.extractDoubleColumn(

@@ -49,7 +49,7 @@ def set_xaxis_date(ax=None, bins=6):
 def set_xaxis_utctime(ax=None):
     if ax is None:
         ax = pl.gca()
-    ax.xaxis.set_major_formatter(rdmTimeFormatter())
+    ax.xaxis.set_major_formatter(rdmDateFormatter())
     ax.xaxis.major.locator._nbins = 6
     pl.draw()
 
@@ -180,7 +180,7 @@ class DataQuery(object):
         return self
 
     def append(self, t1, t2):
-        data = self.source.get(self.names, t1, t2, **self.options)
+        dq = self.source.get(self.names, t1, t2, **self.options)
         for name in self.names:
             idx, val = self.data[name]
             nidx, nval = dq.data[name]

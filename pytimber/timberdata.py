@@ -6,12 +6,12 @@ Usage:
   load:   Parse and return the output of a query from a file object
 """
 
-import os
-import time
 import gzip
 import numpy as np
 
 from .localdate import parsedate, parsedate_myl
+
+file = open
 
 
 def load(
@@ -37,9 +37,10 @@ def load(
     data = {}
     dataon = False
     header = True
-    for l in fh:
-        if l.startswith("VARIABLE"):
-            vname = l.split()[1]
+    log = []
+    for line in fh:
+        if line.startswith("VARIABLE"):
+            vname = line.split()[1]
             count = 0
             if debug is True:
                 print("Found var %s" % vname)
@@ -50,19 +51,19 @@ def load(
                 data[vname] = [t, v]
             dataon = False
             header = False
-        elif l.startswith("Timestamp"):
+        elif line.startswith("Timestamp"):
             dataon = True
             tformat = "string"
-            if "UNIX Format" in l:
+            if "UNIX Format" in line:
                 tformat = "unix"
-            elif "LOCAL_TIME" in l:
+            elif "LOCAL_TIME" in line:
                 tformat = "local"
-            elif "UTC_TIME" in l:
+            elif "UTC_TIME" in line:
                 tformat = "utc"
-        elif l == "\n":
+        elif line == "\n":
             dataon = False
         elif dataon:
-            ll = l.strip().split(sep)
+            ll = line.strip().split(sep)
             if tformat == "unix":
                 trec = float(ll[0]) / 1000.0
             elif tformat == "utc":
@@ -80,8 +81,8 @@ def load(
                 count += 1
         elif header:
             if debug is True:
-                print(l)
-            log.append(l)
+                print(line)
+            log.append(line)
     if types is not None:
         ttype, vtype = types
         data = combine_data(data, vtype=vtype, ttype=ttype)
@@ -183,7 +184,7 @@ def merge_out(fnames):
         data = load(fn)
         for vname in data.keys():
             t, v = data[vname]
-            nt = data_final[vname][0].extend(t)
-            nv = data_final[vname][1].extend(v)
+            data_final[vname][0].extend(t)
+            data_final[vname][1].extend(v)
         data_final["log"].extend(data["log"])
     return data_final
