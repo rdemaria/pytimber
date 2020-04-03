@@ -233,7 +233,7 @@ class LoggingDB(object):
             self._log.info("No fundamental found in time window")
         else:
             logfuns = []
-            for f in fundamentals.getVariables(): #workaround 0.7.1
+            for f in fundamentals.getVariables():  # workaround 0.7.1
                 logfuns.append(f.toString())
             self._log.info(
                 "List of fundamentals found: {0}".format(", ".join(logfuns))
@@ -242,7 +242,7 @@ class LoggingDB(object):
 
     def getFundamentals(self, t1, t2, fundamental):
         self._log.warning("getFundamentals will be deprecated")
-        return searchFundamental(fundamental,t1,t2)
+        return self.searchFundamental(fundamental, t1, t2)
 
     def getVariableSet(self, pattern_or_list):
         """Get a list of variables based on a list of strings or a pattern.
@@ -261,7 +261,7 @@ class LoggingDB(object):
             raise ValueError(f"{pattern_or_list} not pattern or list")
         return variables
 
-    def _getVariableList(self,pattern_or_list):
+    def _getVariableList(self, pattern_or_list):
         """work around for jpype 0.7.1 as list(vset) gives strings
         """
         return self.getVariableSet(pattern_or_list).getVariables()
@@ -544,7 +544,7 @@ class LoggingDB(object):
             return {}
         else:
             logvars = []
-            for jvar in variables.getVariables(): #workaround 0.7.1
+            for jvar in variables.getVariables():  # workaround 0.7.1
                 logvars.append(jvar.toString())
             self._log.info(
                 "List of variables to be queried: {0}".format(
@@ -688,7 +688,9 @@ class LoggingDB(object):
                         res.size(), jvar.getVariableName()
                     )
                 )
-            out[jvar.getVariableName()] = self.processDataset(res, datatype, unixtime)
+            out[jvar.getVariableName()] = self.processDataset(
+                res, datatype, unixtime
+            )
         return out
 
     def getVariable(
@@ -778,10 +780,12 @@ class LoggingDB(object):
                     res.size(), jvar.getVariableName()
                 )
             )
-            vname= jvar.getVariableName()
+            vname = jvar.getVariableName()
             out[vname] = self.processDataset(res, datatype, unixtime)
             if np.isnan(out[vname][1]).any():
-                self._log.warning("Variable {} contains NaN values".format(vname))
+                self._log.warning(
+                    "Variable {} contains NaN values".format(vname)
+                )
         return out
 
     def getLHCFillData(self, fill_number=None, unixtime=True):

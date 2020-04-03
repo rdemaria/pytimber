@@ -97,7 +97,6 @@ klist
 
         check_kerberos()
 
-
         # Configure logging
         logging.basicConfig()
         self._log = logging.getLogger(__name__)
@@ -109,7 +108,7 @@ klist
 
         if os.path.isfile(keytab):
             self._keytab = keytab
-        #else:
+        # else:
         #    try:
         #        NXCals.create_keytab()
         #    except Exception as ex:
@@ -119,7 +118,7 @@ klist
         self._certs = None
         if os.path.isfile(certs):
             self._certs = certs
-        #else:
+        # else:
         #    try:
         #        NXCals.create_certs()
         #    except Exception as ex:
@@ -267,21 +266,29 @@ klist
         )
         ts_type = data.dtypes()[0]._2()
         val_type = data.dtypes()[1]._2()
-        ts = np.array(self._SparkDataFrameConversions.extractDoubleColumn(
-            data, "nxcals_timestamp"
-        ))
+        ts = np.array(
+            self._SparkDataFrameConversions.extractDoubleColumn(
+                data, "nxcals_timestamp"
+            )
+        )
         if val_type == "FloatType" or val_type == "DoubleType":
-            val = np.array(self._SparkDataFrameConversions.extractDoubleColumn(
-                data, "nxcals_value"
-            ))
+            val = np.array(
+                self._SparkDataFrameConversions.extractDoubleColumn(
+                    data, "nxcals_value"
+                )
+            )
         elif val_type == "LongType":
-            val = np.array(self._SparkDataFrameConversions.extractLongColumn(
-                data, "nxcals_value"
-            ))
+            val = np.array(
+                self._SparkDataFrameConversions.extractLongColumn(
+                    data, "nxcals_value"
+                )
+            )
         else:
-            val = np.array(self._SparkDataFrameConversions.extractColumn(
-                data, "nxcals_value"
-            ))
+            val = np.array(
+                self._SparkDataFrameConversions.extractColumn(
+                    data, "nxcals_value"
+                )
+            )
         return ts[:] / 1e9, val
 
     def searchEntity(self, pattern):
