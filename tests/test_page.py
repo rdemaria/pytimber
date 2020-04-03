@@ -1,5 +1,5 @@
 from pytimber.pagestore import Page
-from numpy import zeros, arange, random, array
+from numpy import zeros, arange, random, array, all
 
 
 def mktest(idx, rec, comp=None):
@@ -9,6 +9,8 @@ def mktest(idx, rec, comp=None):
     try:
         nidx = p.get_idx_all()
         nrec = p.get_rec_all()
+        print(nidx)
+        print(nrec)
         assert all(nrec == rec)
         assert all(nidx == idx)
     finally:

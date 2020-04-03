@@ -9,17 +9,8 @@ import numpy as np
 from .page import Page
 
 
-try:
-    isinstance("", basestring)
-
-    def isstr(s):
-        return isinstance(s, basestring)
-
-
-except NameError:
-
-    def isstr(s):
-        return isinstance(s, str)
+def isstr(s):
+    return isinstance(s, str)
 
 
 def merge(idx0, rec0, idx1, rec1):
@@ -40,7 +31,7 @@ def merge(idx0, rec0, idx1, rec1):
 def concatenate(val):
     try:
         return np.concatenate(val)
-    except:
+    except ValueError:
         out = []
         for vv in val:
             out.extend(vv)
