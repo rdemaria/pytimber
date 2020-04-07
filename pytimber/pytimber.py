@@ -122,6 +122,7 @@ class LoggingDB(object):
             builder = ServiceBuilder.getInstance()
             self._md = builder.createMetaService()
             self._ts = builder.createTimeseriesService()
+            self._FillService = builder.createLHCFillService()
             self._VariableDataType = jpype.JPackage(
                 "cern"
             ).nxcals.api.backport.domain.core.constants.VariableDataType

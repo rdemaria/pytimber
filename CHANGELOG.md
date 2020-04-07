@@ -4,7 +4,7 @@
   Add NXCALS support
   Requiring Python >=3.6
   Removing getVariables and getVariablesList
-  Requiring 0.7.2
+  Requiring >=0.7.1
 
 ### 2.8.0
   Fix incompatibility with Jpype 0.7.x
