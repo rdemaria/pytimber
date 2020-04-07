@@ -21,7 +21,7 @@ from .pagestore import PageStore
 from .nxcals import NXCals
 from .check_kerberos import check_kerberos
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 __cmmnbuild_deps__ = [
     "pytimber-utils",
