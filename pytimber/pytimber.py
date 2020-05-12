@@ -40,6 +40,7 @@ import six
 import logging
 
 from .check_kerberos import check_kerberos
+from .sparkresources import SparkResources
 
 try:
     import jpype
@@ -91,6 +92,8 @@ class LoggingDB(object):
         clientid="PYTIMBER3",
         source="all",
         loglevel=None,
+        sparkconf=None,
+        sparkprops=None
     ):
         # Configure logging
         logging.basicConfig()
@@ -119,13 +122,42 @@ class LoggingDB(object):
             ServiceBuilder = jpype.JPackage(
                 "cern"
             ).nxcals.api.backport.client.service.ServiceBuilder
-            builder = ServiceBuilder.getInstance()
+
+            if sparkconf is not None:
+                conf = SparkResources.from_str(sparkconf.upper())
+
+                spark_properties = jpype.JPackage("cern").nxcals.api.config.SparkProperties()
+                spark_properties.setAppName(appid)
+                spark_properties.setMasterType("yarn")
+
+                properties = jpype.JClass('java.util.HashMap')()
+
+                for key, value in conf.properties.items():
+                    properties[key] = value
+
+                if conf == SparkResources.CUSTOM:
+                    for key, value in sparkprops:
+                        properties[key] = value
+
+                spark_properties.setProperties(properties)
+
+                builder = ServiceBuilder.getInstance(spark_properties)
+            else:
+                builder = ServiceBuilder.getInstance()
+
             self._md = builder.createMetaService()
             self._ts = builder.createTimeseriesService()
             self._FillService = builder.createLHCFillService()
             self._VariableDataType = jpype.JPackage(
                 "cern"
             ).nxcals.api.backport.domain.core.constants.VariableDataType
+            # self.tree = Hierarchy("root", None, None, self._md, self._VariableDataType)
+            self._BeamModeValue = jpype.JPackage(
+                "cern"
+            ).nxcals.api.backport.domain.core.constants.BeamModeValue
+
+#            h = self._md.getAllHierarchies()
+#            print(h)
         else:
             # Data source preferences
             DataLocPrefs = jpype.JPackage(
@@ -145,10 +177,16 @@ class LoggingDB(object):
             self._md = builder.createMetaService()
             self._ts = builder.createTimeseriesService()
             self._FillService = builder.createLHCFillService()
-            self.tree = Hierarchy("root", None, None, self._md)
             self._VariableDataType = jpype.JPackage(
                 "cern"
             ).accsoft.cals.extr.domain.core.constants.VariableDataType
+            self.tree = Hierarchy("root", None, None, self._md, self._VariableDataType)
+            self._BeamModeValue = jpype.JPackage(
+                "cern"
+            ).accsoft.cals.extr.domain.core.constants.BeamModeValue
+
+            h = self._md.getAllHierarchies()
+            print(h)
 
     def toTimestamp(self, t):
         Timestamp = jpype.java.sql.Timestamp
@@ -828,9 +866,7 @@ class LoggingDB(object):
         ts1 = self.toTimestamp(t1)
         ts2 = self.toTimestamp(t2)
 
-        BeamModeValue = jpype.JPackage(
-            "cern"
-        ).accsoft.cals.extr.domain.core.constants.BeamModeValue
+        BeamModeValue = self._BeamModeValue
 
         if beam_modes is None:
             fills = self._FillService.getLHCFillsAndBeamModesInTimeWindow(
@@ -922,10 +958,11 @@ class LoggingDB(object):
 
 
 class Hierarchy(object):
-    def __init__(self, name, obj, src, varsrc):
+    def __init__(self, name, obj, src, varsrc, vardtype):
         self.name = name
         self.obj = obj
         self.varsrc = varsrc
+        self.vardatatype = vardtype
         if src is not None:
             self.src = src
         for vvv in self._get_vars():
@@ -960,7 +997,7 @@ class Hierarchy(object):
             self._dict = self._get_childs()
             return self._dict
         else:
-            return Hierarchy(k, self._dict[k], self.src, self.varsrc)
+            return Hierarchy(k, self._dict[k], self.src, self.varsrc, self.vardatatype)
 
     def __dir__(self):
         if jpype.isThreadAttachedToJVM() == 0:
@@ -979,9 +1016,13 @@ class Hierarchy(object):
             return "<{0}: {1}>".format(name, desc)
 
     def _get_vars(self):
-        VariableDataType = jpype.JPackage(
-            "cern"
-        ).accsoft.cals.extr.domain.core.constants.VariableDataType
+
+        VariableDataType = self.vardatatype
+        #VariableDataType = jpype.JPackage(
+        #    "cern"
+        #).accsoft.cals.extr.domain.core.constants.VariableDataType
+
+
         if self.obj is not None:
             vvv = self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(
                 self.obj, VariableDataType.ALL

@@ -1,6 +1,7 @@
 import pytest
 import logging
 import pytimber
+from pytimber.sparkresources import SparkResources
 
 # should be done before importing pytimber
 logging.basicConfig(level=logging.INFO)
@@ -35,4 +36,4 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def nxcals():
-    return pytimber.LoggingDB(source="nxcals")
+    return pytimber.LoggingDB(source="nxcals", sparkconf=SparkResources.SMALL.name) #, sparkconf="small"
