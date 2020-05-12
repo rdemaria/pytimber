@@ -36,4 +36,6 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def nxcals():
-    return pytimber.LoggingDB(source="nxcals", sparkconf=SparkResources.SMALL.name) #, sparkconf="small"
+    return pytimber.LoggingDB(
+        source="nxcals", sparkconf=SparkResources.SMALL.name
+    )  # , sparkconf="small"

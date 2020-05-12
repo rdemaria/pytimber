@@ -33,7 +33,6 @@ class TestIntegration:
         [("LHC", "Beam_Instrumentation"), ("LHC.ALICE", "Temperatures")],
     )
     def test_hierarchy(self, nxcals, path, node):
-        t = nxcals.tree
         assert hasattr(TestIntegration._rgetattr(nxcals.tree, path), node)
 
     @pytest.mark.core

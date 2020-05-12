@@ -93,7 +93,7 @@ class LoggingDB(object):
         source="all",
         loglevel=None,
         sparkconf=None,
-        sparkprops=None
+        sparkprops=None,
     ):
         # Configure logging
         logging.basicConfig()
@@ -126,11 +126,13 @@ class LoggingDB(object):
             if sparkconf is not None:
                 conf = SparkResources.from_str(sparkconf.upper())
 
-                spark_properties = jpype.JPackage("cern").nxcals.api.config.SparkProperties()
+                spark_properties = jpype.JPackage(
+                    "cern"
+                ).nxcals.api.config.SparkProperties()
                 spark_properties.setAppName(appid)
                 spark_properties.setMasterType("yarn")
 
-                properties = jpype.JClass('java.util.HashMap')()
+                properties = jpype.JClass("java.util.HashMap")()
 
                 for key, value in conf.properties.items():
                     properties[key] = value
@@ -156,8 +158,8 @@ class LoggingDB(object):
                 "cern"
             ).nxcals.api.backport.domain.core.constants.BeamModeValue
 
-#            h = self._md.getAllHierarchies()
-#            print(h)
+        #            h = self._md.getAllHierarchies()
+        #            print(h)
         else:
             # Data source preferences
             DataLocPrefs = jpype.JPackage(
@@ -180,13 +182,14 @@ class LoggingDB(object):
             self._VariableDataType = jpype.JPackage(
                 "cern"
             ).accsoft.cals.extr.domain.core.constants.VariableDataType
-            self.tree = Hierarchy("root", None, None, self._md, self._VariableDataType)
+            self.tree = Hierarchy(
+                "root", None, None, self._md, self._VariableDataType
+            )
             self._BeamModeValue = jpype.JPackage(
                 "cern"
             ).accsoft.cals.extr.domain.core.constants.BeamModeValue
 
             h = self._md.getAllHierarchies()
-            print(h)
 
     def toTimestamp(self, t):
         Timestamp = jpype.java.sql.Timestamp
@@ -997,7 +1000,9 @@ class Hierarchy(object):
             self._dict = self._get_childs()
             return self._dict
         else:
-            return Hierarchy(k, self._dict[k], self.src, self.varsrc, self.vardatatype)
+            return Hierarchy(
+                k, self._dict[k], self.src, self.varsrc, self.vardatatype
+            )
 
     def __dir__(self):
         if jpype.isThreadAttachedToJVM() == 0:
@@ -1018,10 +1023,9 @@ class Hierarchy(object):
     def _get_vars(self):
 
         VariableDataType = self.vardatatype
-        #VariableDataType = jpype.JPackage(
+        # VariableDataType = jpype.JPackage(
         #    "cern"
-        #).accsoft.cals.extr.domain.core.constants.VariableDataType
-
+        # ).accsoft.cals.extr.domain.core.constants.VariableDataType
 
         if self.obj is not None:
             vvv = self.varsrc.getVariablesOfDataTypeAttachedToHierarchy(
