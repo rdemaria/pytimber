@@ -1,5 +1,9 @@
 # pytimber changelog
 
+### 3.0.2
+  Add spark context support [P. Sowinski]
+  Add check nxcals version [R. De Maria]
+
 ### 3.0.0
   Add NXCALS support
   Requiring Python >=3.6

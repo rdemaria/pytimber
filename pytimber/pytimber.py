@@ -41,6 +41,7 @@ import logging
 
 from .check_kerberos import check_kerberos
 from .sparkresources import SparkResources
+from .check_version import check_nxcals_version
 
 try:
     import jpype
@@ -84,7 +85,7 @@ class LoggingDB(object):
     try:
         _jpype = jpype
     except NameError:
-        print("ERROR: jpype is note defined!")
+        print("ERROR: jpype is not defined!")
 
     def __init__(
         self,
@@ -95,6 +96,9 @@ class LoggingDB(object):
         sparkconf=None,
         sparkprops=None,
     ):
+        # Check nxcals version
+        check_nxcals_version()
+
         # Configure logging
         logging.basicConfig()
         self._log = logging.getLogger(__name__)
@@ -188,8 +192,6 @@ class LoggingDB(object):
             self._BeamModeValue = jpype.JPackage(
                 "cern"
             ).accsoft.cals.extr.domain.core.constants.BeamModeValue
-
-            h = self._md.getAllHierarchies()
 
     def toTimestamp(self, t):
         Timestamp = jpype.java.sql.Timestamp

@@ -46,6 +46,6 @@ class SparkResources(Enum):
         ] = "ithdp1001.cern.ch:18080"
         self._props["spark.yarn.access.hadoopFileSystems"] = "nxcals"
 
-        # self._props['spark.sql.caseSensitive'] = "true"
+        self._props['spark.sql.caseSensitive'] = "true"
 
         return self._props
