@@ -387,6 +387,20 @@ class LoggingDB(object):
                     self._log.warning(
                         "unsupported datatype, returning the java object"
                     )
+            elif datatype == "MATRIXNUMERIC":
+                try:
+                    ds = np.array([np.array(d.getMatrixDoubleValues()) for d in ds])
+                except jpype.java.lang.NoSuchMethodException:
+                   try:
+                       ds = np.array([np.array(d.getMatrixLongValues()) for d in ds])
+                   except jpype.java.lang.NoSuchMethodException:
+                       self._log.warning(
+                           "unsupported datatype, returning the java object"
+                       )
+                except jpype.java.lang.NoSuchMethodException:
+                    self._log.warning(
+                        "unsupported datatype, returning the java object"
+                    )
             else:
                 self._log.warning(
                     "unsupported datatype, returning the java object"
