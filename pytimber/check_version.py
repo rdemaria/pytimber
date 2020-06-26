@@ -3,9 +3,12 @@ import urllib
 
 
 def check_installed_version(mgr, name):
-    jar = filter(lambda j: name in j, mgr.jars())
-    jar = list(jar)[0]
-    version = list(map(int, jar.split("-")[-1].split(".")[:-1]))
+    jar = list(filter(lambda j: name in j, mgr.jars()))
+    if len(jar)==0:
+        version= None
+    else:
+        jar = jar[0]
+        version = list(map(int, jar.split("-")[-1].split(".")[:-1]))
     return version
 
 
@@ -19,6 +22,7 @@ def check_nxcals_online_version():
 def check_nxcals_version():
     mgr = cmmnbuild_dep_manager.Manager()
     installed = check_installed_version(mgr, "nxcals-extraction-api")
-    proposed = check_nxcals_online_version()
-    if proposed > installed:
-        mgr.resolve()
+    if installed is not None:
+      proposed = check_nxcals_online_version()
+      if proposed > installed:
+          mgr.resolve()
