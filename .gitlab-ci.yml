@@ -1,4 +1,13 @@
+include:
+ - project: acc-co/devops/python/acc-py-devtools
+   file: acc_py_devtools/templates/gitlab-ci/python.yml
+
+variables:
+  project_name: acc_py_deploy
+
+
 .conda_installer:
+  extends: .acc_py_base
   image: continuumio/miniconda3
   variables:
     JDK_VERSION: "8"
@@ -9,25 +18,36 @@
     - conda create -n test_env openjdk=${JDK_VERSION} python=${PY_VERSION} Jpype1=${JPYPE_VERSION} ${EXTRA_DEPS} --yes --quiet -c conda-forge
     - source activate test_env
 
+
+build_wheel:
+  extends: .acc_py_build_wheel
+
+
 .install:
   script:
-    - pip install .[test]
+    - pip install $(ls -A wheelhouse/*.whl)[test]
+    - python -m cmmnbuild_dep_manager resolve
     - mkdir not-the-source && cd not-the-source
+    # TODO: Run the tests that are outside of the package too (i.e. those in ./tests)
     - pytest --pyargs pytimber
 
 
 .dev_install:
   script:
     - pip install -e .[test]
+    - python -m cmmnbuild_dep_manager resolve
     - pip install pytest-cov
+    # TODO: Run the tests that are outside of the package too (i.e. those in ./tests)
     - pytest ./pytimber --cov=pytimber  --junitxml=report.xml
+  stage: test
+  needs: []
 
 
-install_py36_jdk8_jp0p6:
+install_py36_jdk8_jp1p0:
   variables:
     JDK_VERSION: "8"
     PY_VERSION: "3.6"
-    JPYPE_VERSION: "0.6"
+    JPYPE_VERSION: "1.0"
   extends:
     - .conda_installer
     - .install
@@ -51,15 +71,6 @@ install_py36_jdk11:
     JDK_VERSION: "11"
 
 
-install_py27_jdk8:
-  extends:
-    - .conda_installer
-    - .install
-  variables:
-    PY_VERSION: "2.7"
-    EXTRA_DEPS: "subprocess32"
-
-
 dev_py36_jdk8:
   variables:
     JDK_VERSION: "8"
@@ -68,3 +79,13 @@ dev_py36_jdk8:
   extends:
     - .conda_installer
     - .dev_install
+
+
+# Release a wheel on git tag.
+release_wheel:
+  extends: .acc_py_release_wheel
+
+
+# Release an sdist on git tag.
+release_sdist:
+  extends: .acc_py_release_sdist_v2
