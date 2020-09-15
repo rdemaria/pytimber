@@ -1,4 +1,6 @@
 # pytimber changelog
+### 3.0.3
+  Add support for new data conversion methods spark2numpy and spark2pandas [V. Baggiolini] 
 
 ### 3.0.2
   Add spark context support [P. Sowinski]

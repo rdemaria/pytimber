@@ -1,20 +1,21 @@
-import os
 import getpass
 import logging
-import six
-
-import numpy as np
+import os
+from typing import Dict, Iterable, Optional
 
 import cmmnbuild_dep_manager
+import numpy as np
+import six
 
 from .check_kerberos import check_kerberos
-
 
 user_home = os.environ["HOME"]
 nxcals_home = os.path.join(user_home, ".nxcals")
 keytab = os.path.join(nxcals_home, "keytab")
 certs = os.path.join(nxcals_home, "nxcals_cacerts")
 username = getpass.getuser()
+
+NANOSECONDS_PER_SECOND = 1e9
 
 
 def schema2dtype(schema):
@@ -44,6 +45,68 @@ class NXCals(object):
         return np.fromiter(
             (tuple(row.values()) for row in rows), dtype=dtype, count=len(rows)
         )
+
+    def spark2numpy(self, spark_dataset) -> Dict[str, np.array]:
+        """
+        Convert a Spark Dataset to an dictionary of named numpy arrays,
+        where keys are the column names of the dataset.
+        Args:
+            spark_dataset: a spark dataset obtained from Java Spark (through jpype)
+        Returns:
+            a dictionary where keys are the column names of the dataset, and values the numpy arrays of the columns
+        """
+        name2primitive = self._spark2java_primitives(spark_dataset)
+        return {k: NXCals._to_numpy_array(v) for k, v in name2primitive.items()}
+
+    def spark2pandas(self, spark_dataset, create_date_time_index=True):
+        """
+        Convert a Spark Dataset to a Pandas dataframe with the same structure
+        Args:
+            spark_dataset: a spark dataset obtained from Java Spark (through jpype)
+            create_date_time_index: if True, create a pandas.DateTimeIndex
+        Returns:
+            A Pandas dataframe with the same structure as the spark_dataset
+        """
+        import pandas as pd
+        name2numpy = self.spark2numpy(spark_dataset)
+        pdf = pd.DataFrame()
+        for col_name, column_values in name2numpy.items():
+            pdf[col_name] = pd.Series(column_values, dtype=object)
+
+        timestamp_col_name = NXCals._get_timestamp_col_name(pdf.columns)
+        if not timestamp_col_name:
+            return pdf
+        if create_date_time_index:
+            return pdf.set_index(pd.to_datetime(pdf[timestamp_col_name]))
+        else:
+            return pdf.set_index(pdf[timestamp_col_name] / NANOSECONDS_PER_SECOND)
+
+    def _spark2java_primitives(self, spark_dataset) -> Dict:
+        return self._SparkDataFrameConversions.extractAllColumns(spark_dataset)
+
+    @staticmethod
+    def _to_numpy_array(prim_arr):
+        """
+        Convert an jpype array of primitives or an array of primitive arrays to a numpy array of primitives or arrays
+        """
+        if not prim_arr.getClass().isArray():
+            raise ValueError(f"Expected array, got {prim_arr.getClass()}")
+        # we want a np.array that contains arrays (np.ndim==1)
+        # we need to pre-construct a np.array of objects here otherwise np.array creates a matrix (np.ndim==2)
+        # https://stackoverflow.com/questions/50971123/converty-numpy-array-of-arrays-to-2d-array
+        if prim_arr.getClass().getComponentType().isPrimitive():
+            return np.array(prim_arr)
+        arr_of_prim_arrays = [np.array(sub_arr) for sub_arr in prim_arr]
+        arr_of_arr = np.empty(len(arr_of_prim_arrays), object)
+        arr_of_arr[:] = arr_of_prim_arrays
+        return arr_of_arr
+
+    @classmethod
+    def _get_timestamp_col_name(cls, col_names: Iterable[str]) -> Optional[str]:
+        for col_name in ("nxcals_timestamp", "timestamp", "acqStamp"):
+            if col_name in col_names:
+                return col_name
+        return None
 
     @staticmethod
     def rows2pandas(rows):
@@ -86,7 +149,7 @@ klist
         )
 
     def __init__(
-        self, user=username, keytab=keytab, certs=certs, loglevel=logging.ERROR
+            self, user=username, keytab=keytab, certs=certs, loglevel=logging.ERROR
     ):
         """
         Needs
@@ -211,11 +274,11 @@ klist
     def searchVariable(self, pattern, system="CMW"):
         query = (
             self._Variables.suchThat()
-            .systemName()
-            .eq(system)
-            .and_()
-            .variableName()
-            .like(pattern)
+                .systemName()
+                .eq(system)
+                .and_()
+                .variableName()
+                .like(pattern)
         )
         out = [
             k.getVariableName() for k in self._variableService.findAll(query)
@@ -246,11 +309,11 @@ klist
     def getVariable(self, variable, t1, t2, system="CMW", output="data"):
         ds = (
             self.DataQuery.byVariables()
-            .system(system)
-            .startTime(t1)
-            .endTime(t2)
-            .variable(variable)
-            .buildDataset()
+                .system(system)
+                .startTime(t1)
+                .endTime(t2)
+                .variable(variable)
+                .buildDataset()
         )
         if output == "spark":
             return ds
@@ -260,9 +323,9 @@ klist
     def processVariable(self, ds):
         data = (
             ds.sort("nxcals_timestamp")
-            .select("nxcals_timestamp", "nxcals_value")
-            .na()
-            .drop()
+                .select("nxcals_timestamp", "nxcals_value")
+                .na()
+                .drop()
         )
         # ts_type = data.dtypes()[0]._2()
         val_type = data.dtypes()[1]._2()
