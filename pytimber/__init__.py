@@ -20,6 +20,7 @@ from .pagestore import PageStore
 
 from .nxcals import NXCals
 from .check_kerberos import check_kerberos
+from .sparkresources import SparkResources
 
 __version__ = "3.0.3"
 
