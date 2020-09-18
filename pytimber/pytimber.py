@@ -149,7 +149,7 @@ class LoggingDB(object):
                     properties[key] = value
 
                 if conf == SparkResources.CUSTOM:
-                    for key, value in sparkprops:
+                    for key, value in sparkprops.items():
                         properties[key] = value
 
                 spark_properties.setProperties(properties)
