@@ -13,6 +13,13 @@ from cern.nxcals.common.utils.SparkUtils \
 from cern.nxcals.api.config import SparkProperties
 from cern.nxcals.api.extraction.data.builders import DataQuery
 
+System = jpype.java.lang.System
+System.setProperty(
+                "service.url",
+                "https://cs-ccr-nxcals6.cern.ch:19093,https://cs-ccr-nxcals7.cern.ch:19093,https://cs-ccr-nxcals8.cern.ch:19093"
+)
+
+
 props={"spark.executor.memory":"2G",
        "spark.executor.cores":"10",
        "spark.yarn.appMasterEnv.JAVA_HOME":"/var/nxcals/jdk1.8.0_121",
@@ -32,7 +39,7 @@ spark_conf=createSparkConf(spark_properties)
 spark=createSparkSession(spark_conf)
 
 
-dq=( DataQuery.builder(spark).byEntities()
+ds=( DataQuery.builder(spark).byEntities()
     .system("CMW")
     .startTime("2018-04-29 00:00:00.000")
     .endTime("2018-04-30 00:00:00.000")
@@ -42,7 +49,7 @@ dq=( DataQuery.builder(spark).byEntities()
     .buildDataset()
 )
 
-rows = df.collect()
+rows = ds.collect()
 
-
+print(rows)
 
