@@ -96,6 +96,13 @@ class LoggingDB(object):
         sparkconf=None,
         sparkprops=None,
     ):
+        """
+        High level interface to CALS and NXCALS service
+
+          source: can be one of 'all', 'ldb', 'mdb', 'nxcals'
+          sparkconf: None, 'small', 'medium', 'large'
+
+        """
         # Check nxcals version
         check_nxcals_version()
 
