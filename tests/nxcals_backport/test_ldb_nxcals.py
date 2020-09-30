@@ -505,3 +505,23 @@ class TestIntegration:
         ):
             t, v = nxcals.getVariable(variable, t1, t2)
             assert v[idx1][idx2] == value
+
+    class TestMetadata():
+
+        @pytest.mark.parametrize(
+            "pattern_or_list, variable, system",
+            [
+                (
+                    ["UAT2_UMI1_171RS.OFFST", "DQQDS.B15R3.RQF.A34:U_REF_N1"],
+                    "UAT2_UMI1_171RS.OFFST",
+                    "WINCCOA"
+                ),
+                (
+                    "DQQDS.B15R3.RQF.A34:%",
+                    "DQQDS.B15R3.RQF.A34:U_REF_N1",
+                    "CMW"
+                ),
+            ],
+        )
+        def test_variables_origin(self, nxcals, pattern_or_list, variable, system):
+            assert nxcals.getVariablesOrigin(pattern_or_list)[variable] == system

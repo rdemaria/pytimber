@@ -982,6 +982,14 @@ class LoggingDB(object):
             out[jvar.getVariableName()] = ts, vv
         return out
 
+    def getVariablesOrigin(self, pattern_or_list):
+        result = {}
+        if self._source == "nxcals":
+            variables = self.getVariableSet(pattern_or_list)
+            for var in list(variables.getVariables()):
+                result[var.getVariableName()] = var.getSystem()
+        return result
+
 
 class Hierarchy(object):
     def __init__(self, name, obj, src, varsrc, vardtype):
