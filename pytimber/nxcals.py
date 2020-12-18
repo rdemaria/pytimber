@@ -17,6 +17,9 @@ username = getpass.getuser()
 
 NANOSECONDS_PER_SECOND = 1e9
 
+NXC_EXTR_VARIABLE_NAME = "nxcals_variable_name"
+NXC_EXTR_TIMESTAMP = "nxcals_timestamp"
+NXC_EXTR_VALUE = "nxcals_value"
 
 def schema2dtype(schema):
     dtype = []
@@ -103,7 +106,7 @@ class NXCals(object):
 
     @classmethod
     def _get_timestamp_col_name(cls, col_names: Iterable[str]) -> Optional[str]:
-        for col_name in ("nxcals_timestamp", "timestamp", "acqStamp"):
+        for col_name in (NXC_EXTR_TIMESTAMP, "timestamp", "acqStamp"):
             if col_name in col_names:
                 return col_name
         return None
@@ -115,7 +118,7 @@ class NXCals(object):
         names = list(rows[0].schema().names())
         data = (row.values() for row in rows)
         df = pd.DataFrame.from_records(data, columns=names, nrows=len(rows))
-        for idx in "nxcals_timestamp", "timestamp", "acqStamp":
+        for idx in NXC_EXTR_TIMESTAMP, "timestamp", "acqStamp":
             if idx in names:
                 df.set_index(idx)
             break
@@ -285,6 +288,30 @@ klist
         ]
         return sorted(out)
 
+    def searchByVariables(self, pattern_or_list, t1, t2, system = "CMW"):
+        result = {}
+        variables = self.getVariablesList(pattern_or_list, system=system)
+
+        if variables:
+            query = self.DataQuery.byVariables().system(system).startTime(t1).endTime(t2)
+
+            for vv in variables:
+                query = query.variable(vv)
+
+            dfp = query.build()\
+                .sort(NXC_EXTR_VARIABLE_NAME, NXC_EXTR_TIMESTAMP)\
+                .na().drop()\
+                .select(NXC_EXTR_TIMESTAMP, NXC_EXTR_VALUE, NXC_EXTR_VARIABLE_NAME)
+
+            data = np.fromiter(
+                (tuple(dd.values()) for dd in dfp.collect()),
+                dtype=[('ts', int), ('val', float), ('var', 'U32')])
+
+            for var in set(data['var']):
+                sel = data['var'] == var
+                result[var] = (data['ts'][sel] / NANOSECONDS_PER_SECOND, data['val'][sel])
+        return result
+
     @property
     def DataQuery(self):
         return self._builders.DataQuery.builder(self.spark)
@@ -322,8 +349,8 @@ klist
 
     def processVariable(self, ds):
         data = (
-            ds.sort("nxcals_timestamp")
-                .select("nxcals_timestamp", "nxcals_value")
+            ds.sort(NXC_EXTR_TIMESTAMP)
+                .select(NXC_EXTR_TIMESTAMP, NXC_EXTR_VALUE)
                 .na()
                 .drop()
         )
@@ -331,28 +358,28 @@ klist
         val_type = data.dtypes()[1]._2()
         ts = np.array(
             self._SparkDataFrameConversions.extractDoubleColumn(
-                data, "nxcals_timestamp"
+                data, NXC_EXTR_TIMESTAMP
             )
         )
         if val_type == "FloatType" or val_type == "DoubleType":
             val = np.array(
                 self._SparkDataFrameConversions.extractDoubleColumn(
-                    data, "nxcals_value"
+                    data, NXC_EXTR_VALUE
                 )
             )
         elif val_type == "LongType":
             val = np.array(
                 self._SparkDataFrameConversions.extractLongColumn(
-                    data, "nxcals_value"
+                    data, NXC_EXTR_VALUE
                 )
             )
         else:
             val = np.array(
                 self._SparkDataFrameConversions.extractColumn(
-                    data, "nxcals_value"
+                    data, NXC_EXTR_VALUE
                 )
             )
-        return ts[:] / 1e9, val
+        return ts[:] / NANOSECONDS_PER_SECOND, val
 
     def searchEntity(self, pattern):
         out = []
