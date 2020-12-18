@@ -22,7 +22,7 @@ from .nxcals import NXCals
 from .check_kerberos import check_kerberos
 from .sparkresources import SparkResources
 
-__version__ = "3.0.3"
+__version__ = "3.1.0"
 
 __cmmnbuild_deps__ = [
     "pytimber-utils",
